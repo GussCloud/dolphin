@@ -28,6 +28,7 @@ import {
 } from './indentation'
 import { FolderPathStatusIndicator } from './FolderPathStatusIndicator'
 import { RepoScanUnavailableIndicator } from './RepoScanUnavailableIndicator'
+import { FolderRepoTag } from './FolderRepoTag'
 import {
   ProjectGroupCreateWorkspaceButton,
   ProjectGroupHeaderMenu
@@ -341,8 +342,15 @@ export function renderWorktreeSectionHeaderRow(args: {
               <RepoForkIndicator upstream={row.repo?.upstream} />
               <FolderPathStatusIndicator status={projectGroupPathStatus} />
               {isRepoHeader ? <RepoScanUnavailableIndicator repo={row.repo!} /> : null}
+              {isRepoHeader ? <FolderRepoTag repo={row.repo!} /> : null}
             </div>
           </div>
+          {/* Why: hover actions overlay this count on desktop, so it needs no reserved width. */}
+          {showHeaderCollapseAffordance ? (
+            <span className="shrink-0 text-[11px] leading-none tabular-nums text-worktree-sidebar-foreground/45">
+              {row.count}
+            </span>
+          ) : null}
         </div>
 
         <ProjectHeaderActions>

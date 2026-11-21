@@ -8,7 +8,11 @@ import { cn } from '@/lib/utils'
 import { getAgentDotState } from './worktree-card-agent-summary'
 import { translate } from '@/i18n/i18n'
 import { getAgentRowPrimaryText } from '@/lib/agent-row-primary-text'
-import { formatAgentToolPreview } from '@/lib/agent-row-tool-preview'
+import {
+  formatAgentToolPreview,
+  getAgentToolPreviewParts,
+  type AgentToolPreviewParts
+} from '@/lib/agent-row-tool-preview'
 import { agentNoUpdateLabel } from '@/lib/agent-row-decay-state'
 import { useAgentRowConversationName } from '@/components/dashboard/use-agent-row-conversation-name'
 import { lastEnteredDoneAt } from '@/components/dashboard/agent-finished-timestamp'
@@ -23,11 +27,7 @@ function getCompactAgentPrimary(
   return prompt || agentStateLabel(getAgentDotState(agent))
 }
 
-export function getCompactAgentSecondary(
-  agent: DashboardAgentRowData,
-  now: number,
-  lastAssistantMessageOverride?: string
-): string {
+function getCompactAgentStatusLine(agent: DashboardAgentRowData, now: number): string | null {
   if (agent.entry.interrupted === true) {
     return 'Interrupted by user'
   }
@@ -39,6 +39,29 @@ export function getCompactAgentSecondary(
   // Why: the lead turn is over in monitoring, so its last tool line is stale; name the state instead.
   if (agent.state === 'working' && agent.entry.workingMode === 'monitoring') {
     return agentStateLabel('monitoring')
+  }
+  return null
+}
+
+/** Tool telemetry for the inset block, only when it is what the secondary line would show. */
+export function getCompactAgentToolTelemetry(
+  agent: DashboardAgentRowData,
+  now: number
+): AgentToolPreviewParts | null {
+  if (getCompactAgentStatusLine(agent, now) !== null) {
+    return null
+  }
+  return getAgentToolPreviewParts(agent.entry, agent.state)
+}
+
+export function getCompactAgentSecondary(
+  agent: DashboardAgentRowData,
+  now: number,
+  lastAssistantMessageOverride?: string
+): string {
+  const statusLine = getCompactAgentStatusLine(agent, now)
+  if (statusLine !== null) {
+    return statusLine
   }
   const toolPreview = formatAgentToolPreview(agent.entry, agent.state)
   if (toolPreview) {
@@ -140,11 +163,20 @@ export const CompactAgentRow = React.memo(function CompactAgentRow({
   const stableMessage =
     turnHoldable && !currentMessage && held?.turn === turn ? held.message : undefined
   const secondary = getCompactAgentSecondary(agent, now, stableMessage)
+  const toolTelemetry = getCompactAgentToolTelemetry(agent, now)
   // Why: sidebar truncation must preserve the passive-vs-active distinction.
   const leadingText = dotState === 'monitoring' ? secondary : primary
+  // Why: live tool telemetry moves to its own inset line instead of repeating inline.
   const trailingText =
-    dotState === 'monitoring' ? (primary === secondary ? '' : primary) : secondary
-  const rowTitle = `${leadingText}${trailingText ? ` - ${trailingText}` : ''}`
+    dotState === 'monitoring'
+      ? primary === secondary
+        ? ''
+        : primary
+      : toolTelemetry
+        ? ''
+        : secondary
+  const titleTrailing = trailingText || (toolTelemetry ? secondary : '')
+  const rowTitle = `${leadingText}${titleTrailing ? ` - ${titleTrailing}` : ''}`
   const model = agent.entry.model?.trim() ?? ''
   const shortTime = getCompactAgentTime(agent, now)
   const cacheTimer = usePromptCacheCountdownForPane(agent.paneKey, cacheTimerActive)
@@ -294,7 +326,7 @@ export const CompactAgentRow = React.memo(function CompactAgentRow({
         // Why: hang the chevron in the card gutter so the state dot keeps the column of chevron-less rows.
         hasChildDisclosure && disclosureInGutter && '-ml-5',
         isLineageChild && 'worktree-agent-lineage-child-row',
-        'flex h-6 items-center gap-1',
+        'flex flex-col',
         isFocusedPane && 'bg-worktree-sidebar-accent',
         sendTargetStatus === 'sending' && 'cursor-progress opacity-75',
         sendTargetStatus === 'disabled' && 'cursor-default opacity-60'
@@ -311,7 +343,23 @@ export const CompactAgentRow = React.memo(function CompactAgentRow({
       aria-expanded={hasChildDisclosure ? childAgentsExpanded : undefined}
       title={sendTargetDisabledReason}
     >
-      {rowBody}
+      <div className="flex h-6 items-center gap-1 min-w-0">{rowBody}</div>
+      {toolTelemetry ? (
+        <div
+          data-agent-tool-telemetry=""
+          className={cn(
+            'mr-1 mb-1 flex min-w-0 items-center gap-1 rounded-md border border-worktree-sidebar-border bg-worktree-sidebar-accent/40 px-1.5 py-0.5 font-mono text-[11px] leading-4',
+            // Why: start under the identity column, past the dot (and the gutter chevron).
+            hasChildDisclosure ? 'ml-8.5' : 'ml-3.5'
+          )}
+          title={sendTargetDisabledReason ? undefined : secondary}
+        >
+          <span className="shrink-0 text-muted-foreground">{toolTelemetry.toolName}</span>
+          {toolTelemetry.toolInput ? (
+            <span className="min-w-0 truncate text-foreground">{toolTelemetry.toolInput}</span>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   )
 })

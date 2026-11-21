@@ -33,14 +33,14 @@ export function SidebarDesignNavButton(): React.JSX.Element | null {
           onClick={openDesignPage}
           aria-current={active ? 'page' : undefined}
           className={cn(
-            'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
+            'flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-[13px] font-medium tracking-tight transition-colors',
             active
               ? 'bg-worktree-sidebar-accent text-worktree-sidebar-accent-foreground'
-              : 'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8'
+              : 'text-worktree-sidebar-foreground/85 hover:bg-worktree-sidebar-foreground/8'
           )}
         >
           <PenTool
-            className={cn('size-4 shrink-0', !active && 'text-worktree-sidebar-foreground/30')}
+            className={cn('size-4 shrink-0', !active && 'text-worktree-sidebar-foreground/50')}
             strokeWidth={active ? 2.25 : 1.75}
           />
           <span className="flex-1">

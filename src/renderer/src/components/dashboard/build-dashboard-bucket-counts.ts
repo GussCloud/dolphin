@@ -64,9 +64,9 @@ export function createDashboardBucketCountsCache(): DashboardBucketCountsCache {
  * four slices keyed here — see the read-set note on `DashboardWorkspaceState`.
  * Every other slice it can touch sits behind an `includeMapMetadata` gate.
  */
-function selectActiveDashboardWorkspaces(
+export function selectActiveDashboardWorkspaces(
   state: DashboardWorkspaceState,
-  cache: DashboardBucketCountsCache | undefined
+  cache: Pick<DashboardBucketCountsCache, 'activeWorkspaces'> | undefined
 ): ActiveDashboardWorkspace[] {
   const memo = cache?.activeWorkspaces
   if (

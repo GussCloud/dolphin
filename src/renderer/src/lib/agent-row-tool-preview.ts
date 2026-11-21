@@ -13,18 +13,32 @@ export function showsAgentToolPreview(state: AgentRowState | null | undefined): 
   return state === 'working' || state === 'waiting'
 }
 
+export type AgentToolPreviewParts = { toolName: string; toolInput: string }
+
+/** Trimmed tool name and input under the shared state gate, or null when there is nothing to show. */
+export function getAgentToolPreviewParts(
+  entry: Pick<AgentStatusEntry, 'toolName' | 'toolInput'>,
+  state: AgentRowState | null | undefined
+): AgentToolPreviewParts | null {
+  if (!showsAgentToolPreview(state)) {
+    return null
+  }
+  const toolName = entry.toolName?.trim() ?? ''
+  // Why: an input without a tool name has nothing to label it, so it is never shown alone.
+  if (!toolName) {
+    return null
+  }
+  return { toolName, toolInput: entry.toolInput?.trim() ?? '' }
+}
+
 /** One-line `tool: input` preview, or '' when the state or the entry has nothing to show. */
 export function formatAgentToolPreview(
   entry: Pick<AgentStatusEntry, 'toolName' | 'toolInput'>,
   state: AgentRowState | null | undefined
 ): string {
-  if (!showsAgentToolPreview(state)) {
+  const parts = getAgentToolPreviewParts(entry, state)
+  if (!parts) {
     return ''
   }
-  const toolName = entry.toolName?.trim() ?? ''
-  const toolInput = entry.toolInput?.trim() ?? ''
-  if (toolName && toolInput) {
-    return `${toolName}: ${toolInput}`
-  }
-  return toolName
+  return parts.toolInput ? `${parts.toolName}: ${parts.toolInput}` : parts.toolName
 }

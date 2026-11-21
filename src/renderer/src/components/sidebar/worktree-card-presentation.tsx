@@ -10,6 +10,7 @@ import {
   WorktreeCardMetaBadges
 } from './WorktreeCardMeta'
 import { WorktreeCardPortsDetails, WorktreeCardPortsTrigger } from './WorktreeCardPorts'
+import { reviewHasFailedChecks } from './worktree-review-helpers'
 import type { WorktreeCardController } from './use-worktree-card-controller'
 
 export function buildWorktreeCardPresentation(card: WorktreeCardController) {
@@ -45,6 +46,7 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
     metaLinearIssue,
     metaJiraIssue,
     metaReview,
+    statusLaneReview,
     metaComment,
     metaAutomationProvenance,
     metaCliProvenance,
@@ -266,6 +268,10 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
   const hasSecondaryCardContent =
     hasMetaRow || !!remoteBranchConflict || showInlineAgentList || showLineageChildChip
   const titleOnlyCard = !hasSecondaryCardContent
+  // Why: follow the toggle that already shows the review cue in each style (status lane vs PR badge).
+  const showChecksFailed = reviewHasFailedChecks(
+    newCardStyle ? (showStatus ? statusLaneReview : null) : metaReview
+  )
 
   return {
     showPinnedRepoIcon,
@@ -292,7 +298,8 @@ export function buildWorktreeCardPresentation(card: WorktreeCardController) {
     cardStyle,
     detailsAndPorts,
     titleRowIndicators,
-    titleOnlyCard
+    titleOnlyCard,
+    showChecksFailed
   }
 }
 

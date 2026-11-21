@@ -3,7 +3,11 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import type { DashboardAgentRow as DashboardAgentRowData } from '@/components/dashboard/useDashboardData'
-import { CompactAgentRow, getCompactAgentSecondary } from './worktree-card-compact-agent-row'
+import {
+  CompactAgentRow,
+  getCompactAgentSecondary,
+  getCompactAgentToolTelemetry
+} from './worktree-card-compact-agent-row'
 import { getAgentDotState, summarizeAgents } from './worktree-card-agent-summary'
 
 function monitoringAgent(): DashboardAgentRowData {
@@ -101,5 +105,36 @@ describe('worktree card agent summary', () => {
     }
 
     expect(summarizeAgents([done, interrupted], 'Agents')).toBe('Agents: 1 interrupted, 1 done')
+  })
+})
+
+describe('compact agent row tool telemetry', () => {
+  function toolAgent(): DashboardAgentRowData {
+    const agent = monitoringAgent()
+    agent.entry.workingMode = undefined
+    agent.entry.prompt = 'Fix the build'
+    agent.entry.toolName = 'Edit'
+    agent.entry.toolInput = 'src/main/index.ts'
+    return agent
+  }
+
+  it('renders the live tool in its own inset block, not inline', () => {
+    const markup = renderCompactAgentRow({ agent: toolAgent(), now: 2000, onActivate: vi.fn() })
+
+    expect(markup).toMatch(
+      /data-agent-tool-telemetry=""[^>]*><span[^>]*>Edit<\/span><span[^>]*truncate[^>]*>src\/main\/index\.ts<\/span>/
+    )
+    expect(markup).not.toContain(' - Edit: src/main/index.ts</span>')
+    expect(markup).toContain('title="Fix the build - Edit: src/main/index.ts"')
+  })
+
+  it('keeps the status line when the row says monitoring instead', () => {
+    const agent = toolAgent()
+    agent.entry.workingMode = 'monitoring'
+
+    expect(getCompactAgentToolTelemetry(agent, 2000)).toBeNull()
+    expect(renderCompactAgentRow({ agent, now: 2000, onActivate: vi.fn() })).not.toContain(
+      'data-agent-tool-telemetry'
+    )
   })
 })

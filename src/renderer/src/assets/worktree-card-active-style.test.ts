@@ -14,7 +14,7 @@ function getCssRuleBody(selector: string): string {
 }
 
 describe('worktree card active styling', () => {
-  it('keeps the primary selection wash translucent so card text stays legible', () => {
+  it('marks the primary selection with a faint ring border over a translucent accent fill', () => {
     const primary = getCssRuleBody(
       "[data-worktree-card-surface][data-worktree-card-active='primary']"
     )
@@ -22,13 +22,13 @@ describe('worktree card active styling', () => {
       ".dark [data-worktree-card-surface][data-worktree-card-active='primary']"
     )
 
-    expect(primary).toContain(
-      'background: color-mix(in srgb, var(--worktree-sidebar-foreground) 8%, transparent)'
-    )
-    expect(darkPrimary).toContain(
-      'background: color-mix(in srgb, var(--worktree-sidebar-foreground) 10%, transparent)'
-    )
-    expect(darkPrimary).toContain('var(--worktree-sidebar-border)')
+    for (const rule of [primary, darkPrimary]) {
+      expect(rule).toMatch(
+        /border-color: color-mix\(in srgb, var\(--worktree-sidebar-ring\) \d+%, transparent\)/
+      )
+      // Why translucent: custom sidebar backgrounds must still show through the selection.
+      expect(rule).toMatch(/var\(--worktree-sidebar-accent\)\) \d+%,\s+transparent\s*\)/)
+    }
   })
 
   it('keeps the secondary selection ring when CSS owns the active state', () => {

@@ -10,24 +10,82 @@ function formatSectionActivityLabel(count: number, label: string): string {
   return `${count} ${label}${count === 1 ? '' : 's'}`
 }
 
-function SectionMetricsBadge({ count }: { count: number }): React.JSX.Element {
+function SectionMetricsCount({ count }: { count: number }): React.JSX.Element {
   const totalLabel = formatSectionActivityLabel(count, 'workspace')
 
   return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className="shrink-0 text-[11px] leading-none tabular-nums text-worktree-sidebar-foreground/45"
+          aria-label={totalLabel}
+        >
+          <span aria-hidden>·</span> {count}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" sideOffset={6}>
+        {totalLabel}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
+export type HostContactVerdict = 'live' | 'unverifiable'
+
+// Why: host contact, not process liveness — never 'exited'; refused/retired/unknown show nothing.
+export function getHostContactVerdict(
+  row: Pick<HostHeaderRow, 'kind' | 'health' | 'connectionStatus' | 'compatibility'>
+): HostContactVerdict | null {
+  if (row.kind === 'ssh') {
+    switch (row.connectionStatus) {
+      case 'connected':
+        return 'live'
+      case 'connecting':
+      case 'deploying-relay':
+      case 'reconnecting':
+      case 'reconnection-failed':
+      case 'error':
+      case 'disconnected':
+        return 'unverifiable'
+      case 'auth-failed':
+      case undefined:
+        return null
+    }
+  }
+  if (row.kind === 'runtime') {
+    // Why not 'error': a closed control channel's lastError may be the host refusing us.
+    if (row.health === 'connecting') {
+      return 'unverifiable'
+    }
+    // Why compatibility: only a host that answered with status carries it; fallback rows don't.
+    if (row.health === 'available' && row.compatibility !== undefined) {
+      return 'live'
+    }
+  }
+  return null
+}
+
+function HostContactPill({ verdict }: { verdict: HostContactVerdict }): React.JSX.Element {
+  return (
     <span
-      className="inline-flex h-4 shrink-0 overflow-hidden rounded-full border border-worktree-sidebar-border bg-worktree-sidebar-accent text-[9px] font-medium leading-none text-muted-foreground/90"
-      aria-label={totalLabel}
+      data-host-contact-verdict={verdict}
+      className={cn(
+        'inline-flex h-4 shrink-0 items-center gap-1 rounded-full border px-1.5 text-[10px] font-medium leading-none',
+        verdict === 'live'
+          ? 'border-status-success-border bg-status-success-background text-status-success'
+          : 'border-status-warning-border text-worktree-sidebar-foreground/70'
+      )}
     >
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="inline-flex h-full min-w-4 items-center justify-center px-1.5">
-            {count}
-          </span>
-        </TooltipTrigger>
-        <TooltipContent side="bottom" sideOffset={6}>
-          {totalLabel}
-        </TooltipContent>
-      </Tooltip>
+      <span
+        aria-hidden
+        className={cn(
+          'size-1.5 rounded-full',
+          verdict === 'live' ? 'bg-status-success' : 'border border-status-warning'
+        )}
+      />
+      {verdict === 'live'
+        ? translate('auto.components.sidebar.WorktreeList.hostContactLive', 'live')
+        : translate('auto.components.sidebar.WorktreeList.hostContactUnverifiable', 'unverifiable')}
     </span>
   )
 }
@@ -92,6 +150,7 @@ export function HostSectionHeader({
   const isBlocked = row.health === 'blocked'
   const isDisconnected = row.health === 'disconnected'
   const detail = getHostHeaderDetail(row)
+  const contactVerdict = getHostContactVerdict(row)
   return (
     <div className="px-2 pt-1">
       {/* Why: outlined card + server glyph marks hosts as machines, not mere groups. */}
@@ -125,12 +184,12 @@ export function HostSectionHeader({
           <Server className="size-3.5 shrink-0 text-muted-foreground" />
         )}
         <HostHeaderHealthIcon health={row.health} />
-        {/* Why: badge hugs the label (like repo headers) instead of floating by the hover controls. */}
+        {/* Why: count hugs the label (like repo headers) instead of floating by the hover controls. */}
         <div className="flex min-w-0 flex-1 items-baseline gap-1.5">
           <span
             className={cn(
-              'min-w-0 truncate text-[12px] font-semibold leading-none',
-              isDisconnected ? 'text-muted-foreground' : 'text-foreground'
+              'min-w-0 truncate text-[12px] font-medium leading-none',
+              isDisconnected ? 'text-muted-foreground' : 'text-worktree-sidebar-foreground/85'
             )}
           >
             {row.label}
@@ -145,8 +204,9 @@ export function HostSectionHeader({
               {detail.text}
             </span>
           ) : null}
-          <SectionMetricsBadge count={row.count} />
+          <SectionMetricsCount count={row.count} />
         </div>
+        {contactVerdict ? <HostContactPill verdict={contactVerdict} /> : null}
         <div className="flex size-4 shrink-0 items-center justify-center text-muted-foreground/60 can-hover:opacity-0 transition-opacity group-hover/host-header:opacity-100">
           <ChevronDown
             className={cn('size-3.5 transition-transform', row.collapsed && '-rotate-90')}

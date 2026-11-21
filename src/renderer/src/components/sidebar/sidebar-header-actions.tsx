@@ -55,14 +55,14 @@ function NewWorkspaceButton({
     openWorkspaceCreationComposerWithTourHandoff()
   }, [])
 
+  // Why outline: the header's primary action stands out from its ghost siblings.
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Button
-          variant="ghost"
+          variant="outline"
           size="icon-xs"
           type="button"
-          className="text-muted-foreground"
           aria-label={label}
           data-workspace-board-preserve-open={preserveWorkspaceBoardOpen ? '' : undefined}
           data-contextual-tour-target="workspace-create-control"

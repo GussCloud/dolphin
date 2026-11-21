@@ -51,7 +51,7 @@ const SidebarHeader = React.memo(function SidebarHeader({
         <span
           // Why truncate: the action cluster is shrink-0, so a long localized title
           // (es "Espacios de trabajo") otherwise wraps out of the h-8 row.
-          className="min-w-0 truncate select-none pl-2 pr-0.5 text-xs font-semibold text-muted-foreground/80"
+          className="min-w-0 truncate select-none pl-2 pr-0.5 text-[11px] font-semibold uppercase tracking-[0.05em] text-worktree-sidebar-foreground/55"
           data-sidebar-section-title={groupBy === 'repo' ? 'projects' : 'workspaces'}
         >
           {sidebarTitle}

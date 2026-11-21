@@ -514,19 +514,19 @@ describe('SidebarNav', () => {
     ).toBeTruthy()
   })
 
-  it('hides the worktree palette shortcut until the search field is hovered or focused', async () => {
+  it('renders the search entry as a field with its palette shortcut always visible', async () => {
     const container = await renderSidebarNav()
 
     const searchButton = container.querySelector(
       'button[aria-label="Search worktrees and browser tabs"]'
     )
     expect(searchButton).not.toBeNull()
-    expect(searchButton?.className).toContain('bg-worktree-sidebar-foreground/5')
+    expect(searchButton?.className).toContain('border-worktree-sidebar-border')
+    expect(searchButton?.textContent).toContain('Search workspaces, branches…')
 
-    const shortcuts = searchButton?.querySelector('span.hidden')
-    expect(shortcuts?.className).toContain('hidden')
-    expect(shortcuts?.className).toContain('group-hover:flex')
-    expect(shortcuts?.className).toContain('group-focus-within:flex')
+    const shortcuts = searchButton?.querySelector('[data-search-shortcut]')
+    expect(shortcuts).not.toBeNull()
+    expect(shortcuts?.className).not.toContain('hidden')
     expect(shortcuts?.textContent).toContain('⌘')
     expect(shortcuts?.textContent).toContain('J')
     expect(searchButton?.querySelector('kbd')).toBeNull()

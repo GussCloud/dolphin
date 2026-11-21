@@ -124,16 +124,23 @@ const SidebarNav = React.memo(function SidebarNav() {
           'auto.components.sidebar.SidebarNav.0c3395fd32',
           'Search worktrees and browser tabs'
         )}
-        className="group flex w-full items-center gap-2 rounded-md bg-worktree-sidebar-foreground/5 px-2 py-1.5 text-left text-[13px] font-medium tracking-tight text-worktree-sidebar-foreground/60 transition-colors hover:bg-worktree-sidebar-foreground/8"
+        // Why: an input-like surface so the entry reads as search, not as another nav row.
+        className="mb-1 flex h-8 w-full items-center gap-2 rounded-md border border-worktree-sidebar-border bg-worktree-sidebar-foreground/5 px-2 text-left text-[13px] tracking-tight text-worktree-sidebar-foreground/50 transition-colors hover:bg-worktree-sidebar-foreground/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-worktree-sidebar-ring"
       >
         <Search
-          className="size-4 shrink-0 text-worktree-sidebar-foreground/30"
+          className="size-4 shrink-0 text-worktree-sidebar-foreground/50"
           strokeWidth={1.75}
         />
-        <span className="flex-1">
-          {translate('auto.components.sidebar.SidebarNav.80611a8b10', 'Search')}
+        <span className="min-w-0 flex-1 truncate">
+          {translate(
+            'auto.components.sidebar.SidebarNav.searchPlaceholder',
+            'Search workspaces, branches…'
+          )}
         </span>
-        <span className="pointer-events-none hidden shrink-0 items-center gap-1 group-hover:flex group-focus-within:flex">
+        <span
+          data-search-shortcut=""
+          className="pointer-events-none flex shrink-0 items-center gap-1"
+        >
           {worktreePaletteShortcutCombos.map((combo) => (
             <ShortcutKeyCombo
               key={combo.keys.join('-')}
@@ -156,16 +163,16 @@ const SidebarNav = React.memo(function SidebarNav() {
               onClick={openArtifactsPage}
               aria-current={artifactsActive ? 'page' : undefined}
               className={cn(
-                'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
+                'flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-[13px] font-medium tracking-tight transition-colors',
                 artifactsActive
                   ? 'bg-worktree-sidebar-accent text-worktree-sidebar-accent-foreground'
-                  : 'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8'
+                  : 'text-worktree-sidebar-foreground/85 hover:bg-worktree-sidebar-foreground/8'
               )}
             >
               <Files
                 className={cn(
                   'size-4 shrink-0',
-                  !artifactsActive && 'text-worktree-sidebar-foreground/30'
+                  !artifactsActive && 'text-worktree-sidebar-foreground/50'
                 )}
                 strokeWidth={artifactsActive ? 2.25 : 1.75}
               />
@@ -185,16 +192,16 @@ const SidebarNav = React.memo(function SidebarNav() {
               onClick={openSkillsPage}
               aria-current={skillsActive ? 'page' : undefined}
               className={cn(
-                'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
+                'flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-[13px] font-medium tracking-tight transition-colors',
                 skillsActive
                   ? 'bg-worktree-sidebar-accent text-worktree-sidebar-accent-foreground'
-                  : 'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8'
+                  : 'text-worktree-sidebar-foreground/85 hover:bg-worktree-sidebar-foreground/8'
               )}
             >
               <BookOpen
                 className={cn(
                   'size-4 shrink-0',
-                  !skillsActive && 'text-worktree-sidebar-foreground/30'
+                  !skillsActive && 'text-worktree-sidebar-foreground/50'
                 )}
                 strokeWidth={skillsActive ? 2.25 : 1.75}
               />
@@ -214,16 +221,16 @@ const SidebarNav = React.memo(function SidebarNav() {
               onClick={openAutomationsPage}
               aria-current={automationsActive ? 'page' : undefined}
               className={cn(
-                'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
+                'flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-[13px] font-medium tracking-tight transition-colors',
                 automationsActive
                   ? 'bg-worktree-sidebar-accent text-worktree-sidebar-accent-foreground'
-                  : 'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8'
+                  : 'text-worktree-sidebar-foreground/85 hover:bg-worktree-sidebar-foreground/8'
               )}
             >
               <CalendarClock
                 className={cn(
                   'size-4 shrink-0',
-                  !automationsActive && 'text-worktree-sidebar-foreground/30'
+                  !automationsActive && 'text-worktree-sidebar-foreground/50'
                 )}
                 strokeWidth={automationsActive ? 2.25 : 1.75}
               />
@@ -243,16 +250,16 @@ const SidebarNav = React.memo(function SidebarNav() {
               onClick={openAzurePrsPage}
               aria-current={azurePrsActive ? 'page' : undefined}
               className={cn(
-                'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
+                'flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-[13px] font-medium tracking-tight transition-colors',
                 azurePrsActive
                   ? 'bg-worktree-sidebar-accent text-worktree-sidebar-accent-foreground'
-                  : 'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8'
+                  : 'text-worktree-sidebar-foreground/85 hover:bg-worktree-sidebar-foreground/8'
               )}
             >
               <GitPullRequest
                 className={cn(
                   'size-4 shrink-0',
-                  !azurePrsActive && 'text-worktree-sidebar-foreground/30'
+                  !azurePrsActive && 'text-worktree-sidebar-foreground/50'
                 )}
                 strokeWidth={azurePrsActive ? 2.25 : 1.75}
               />
@@ -278,7 +285,7 @@ const SidebarNav = React.memo(function SidebarNav() {
                 'group flex w-full items-center rounded-md text-[13px] font-medium tracking-tight transition-colors',
                 mobileActive
                   ? 'bg-worktree-sidebar-accent text-worktree-sidebar-accent-foreground'
-                  : 'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8'
+                  : 'text-worktree-sidebar-foreground/85 hover:bg-worktree-sidebar-foreground/8'
               )}
             >
               <button
@@ -288,12 +295,12 @@ const SidebarNav = React.memo(function SidebarNav() {
                   openMobilePage()
                 }}
                 aria-current={mobileActive ? 'page' : undefined}
-                className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-left"
+                className="flex h-8 min-w-0 flex-1 items-center gap-2 rounded-md px-2 text-left"
               >
                 <Smartphone
                   className={cn(
                     'size-4 shrink-0',
-                    !mobileActive && 'text-worktree-sidebar-foreground/30'
+                    !mobileActive && 'text-worktree-sidebar-foreground/50'
                   )}
                   strokeWidth={mobileActive ? 2.25 : 1.75}
                 />
