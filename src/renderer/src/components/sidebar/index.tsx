@@ -7,6 +7,7 @@ import SidebarNav from './SidebarNav'
 import { setSidebarLiveWidth } from './sidebar-live-width'
 import SetupScriptPromptCard from './SetupScriptPromptCard'
 import WorktreeList from './WorktreeList'
+import NeedsYouSection from './NeedsYouSection'
 import SidebarToolbar from './SidebarToolbar'
 import WorkspaceKanbanDrawer from './WorkspaceKanbanDrawer'
 import type { VirtualizedScrollAnchor } from '@/hooks/useVirtualizedScrollAnchor'
@@ -185,6 +186,7 @@ function Sidebar({
             ) : (
               <>
                 <LocalGitToolchainScanBanner />
+                <NeedsYouSection />
                 <WorktreeList
                   scrollOffsetRef={worktreeScrollOffsetRef}
                   scrollAnchorRef={worktreeScrollAnchorRef}

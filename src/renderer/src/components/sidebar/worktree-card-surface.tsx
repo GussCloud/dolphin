@@ -40,7 +40,7 @@ export function WorktreeCardSurface({ card }: { card: WorktreeCardController }):
     showRenameErrorDialog,
     setShowRenameErrorDialog
   } = card
-  const { titleOnlyCard, cardStyle } = presentation
+  const { titleOnlyCard, cardStyle, showChecksFailed } = presentation
   const isSleeping = useIsSleepingWorktree(worktree.id)
 
   const parentCardContent = <WorktreeCardParentContent card={card} presentation={presentation} />
@@ -60,7 +60,9 @@ export function WorktreeCardSurface({ card }: { card: WorktreeCardController }):
             ? 'border border-transparent'
             : isMultiSelected
               ? 'border border-worktree-sidebar-ring/35 bg-worktree-sidebar-accent/70 ring-1 ring-worktree-sidebar-ring/30'
-              : 'border border-transparent worktree-sidebar-card-hover',
+              : showChecksFailed
+                ? 'border border-destructive/25 bg-destructive/5 worktree-sidebar-card-hover'
+                : 'border border-transparent worktree-sidebar-card-hover',
         isActiveSurface && isMultiSelected && 'ring-1 ring-worktree-sidebar-ring/35',
         revealHighlight && [
           'scroll-to-current-workspace-reveal-highlight',

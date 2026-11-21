@@ -25,6 +25,14 @@ export function getProviderName(review: WorktreeCardPrDisplay): string {
   return 'GitHub'
 }
 
+/** Failed checks on a review that is open (or whose state is still unknown). */
+export function reviewHasFailedChecks(review: WorktreeCardPrDisplay | null | undefined): boolean {
+  if (!review || (review.state && review.state !== 'open')) {
+    return false
+  }
+  return review.status === 'failure'
+}
+
 // Why: checks only gate a review that is actually open; draft/closed/merged keep
 // their state tone so the glyph agrees with its tooltip. A stateless row (folder
 // cards render one while a linked review is loading or its details failed) has no
@@ -34,7 +42,7 @@ function getCheckTone(review: WorktreeCardPrDisplay): string | null {
   if (review.state && review.state !== 'open') {
     return null
   }
-  if (review.status === 'failure') {
+  if (reviewHasFailedChecks(review)) {
     return 'text-rose-500/85'
   }
   if (review.status === 'pending') {

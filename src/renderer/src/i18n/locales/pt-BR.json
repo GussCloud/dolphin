@@ -5567,7 +5567,8 @@
           "artifacts": "Artefatos",
           "skills": "Skills",
           "azurePrs": "Azure (PRs)",
-          "design": "Design"
+          "design": "Design",
+          "searchPlaceholder": "Buscar workspaces, branches…"
         },
         "SidebarRepositoryFilterSection": {
           "d3a9c4cea1": "Limpar",
@@ -5735,6 +5736,7 @@
           "7d517f82e2": "primária",
           "4eba2ea99e": "Auto-nomenclatura falhou. Clique para ver detalhes.",
           "74522ee457": "falha na renomeação",
+          "checksFailed": "Checks falharam",
           "02e19349f4": "Auto-renomeação falhou: visualizar erro",
           "691ccfd622": "Excluindo…",
           "35ccfe2475": "Projeto {{value0}}",
@@ -5902,7 +5904,10 @@
           "groupRenameFailedDesc": "O Dolphin não pôde confirmar o novo nome com o host do grupo. Verifique novamente o grupo após reconectar.",
           "failedNestWorkspace": "Falha ao aninhar workspace",
           "sidebarRowMissing": "O alvo não existe mais",
-          "failedUnnestWorkspace": "Falha ao desaninhar workspace"
+          "failedUnnestWorkspace": "Falha ao desaninhar workspace",
+          "hostContactLive": "live",
+          "hostContactUnverifiable": "unverifiable",
+          "folderRepoTag": "pasta"
         },
         "WorktreeMetaDialog": {
           "3db0a2a593": "Cancelar",
@@ -19247,6 +19252,13 @@
             "spaces": "espaços"
           }
         }
+      }
+    },
+    "sidebar": {
+      "needsYou": {
+        "permission": "Permissão",
+        "needsInput": "Aguardando resposta",
+        "reply": "Responder"
       }
     }
   },

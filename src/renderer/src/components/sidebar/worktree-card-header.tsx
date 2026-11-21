@@ -1,5 +1,5 @@
 import React from 'react'
-import { AlertCircle, Server, ServerOff, Star, Trash2 } from 'lucide-react'
+import { AlertCircle, CircleX, Server, ServerOff, Star, Trash2 } from 'lucide-react'
 
 import { RepoIconGlyph } from '@/components/repo/repo-icon'
 import { Badge } from '@/components/ui/badge'
@@ -87,7 +87,8 @@ export function WorktreeCardHeader({
     showDeleteQuickAction,
     showTitleRowIndicators,
     titleRowIndicators,
-    titleWrapper
+    titleWrapper,
+    showChecksFailed
   } = presentation
 
   return (
@@ -215,6 +216,15 @@ export function WorktreeCardHeader({
             </TooltipContent>
           </Tooltip>
         ) : null}
+        {showChecksFailed && (
+          <span
+            data-worktree-checks-failed=""
+            className="inline-flex h-4 shrink-0 items-center gap-0.5 rounded border border-destructive/40 bg-destructive/10 px-1 text-[10px] font-medium leading-none text-destructive"
+          >
+            <CircleX className="size-2.5" aria-hidden="true" />
+            {translate('auto.components.sidebar.WorktreeCard.checksFailed', 'Checks failed')}
+          </span>
+        )}
         {!compactCards && worktree.isMainWorktree && !isFolder && (
           <Tooltip>
             <TooltipTrigger asChild>

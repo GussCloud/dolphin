@@ -1287,21 +1287,26 @@ html.native-shell .app-layout {
   background: color-mix(in srgb, var(--sidebar-accent) 40%, transparent);
 }
 
-/* Why: the brighter border carries the selected state; a translucent wash keeps
-   card text legible instead of lifting the surface toward the foreground color. */
+/* Why: a faint ring-tinted border names the selected card; the accent fill is
+   nudged toward the foreground because light accents sit almost on the sidebar
+   fill, and stays translucent so custom sidebar backgrounds show through. */
 [data-worktree-card-surface][data-worktree-card-active='primary'] {
-  border-color: color-mix(in srgb, var(--worktree-sidebar-border) 40%, transparent);
-  background: color-mix(in srgb, var(--worktree-sidebar-foreground) 8%, transparent);
+  border-color: color-mix(in srgb, var(--worktree-sidebar-ring) 35%, transparent);
+  background: color-mix(
+    in srgb,
+    color-mix(in srgb, var(--worktree-sidebar-foreground) 6%, var(--worktree-sidebar-accent)) 85%,
+    transparent
+  );
   box-shadow: 0 1px 2px color-mix(in srgb, var(--worktree-sidebar-foreground) 4%, transparent);
 }
 
 .dark [data-worktree-card-surface][data-worktree-card-active='primary'] {
-  border-color: color-mix(
+  border-color: color-mix(in srgb, var(--worktree-sidebar-ring) 40%, transparent);
+  background: color-mix(
     in srgb,
-    var(--worktree-sidebar-foreground) 18%,
-    var(--worktree-sidebar-border)
+    color-mix(in srgb, var(--worktree-sidebar-foreground) 4%, var(--worktree-sidebar-accent)) 85%,
+    transparent
   );
-  background: color-mix(in srgb, var(--worktree-sidebar-foreground) 10%, transparent);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--worktree-sidebar-foreground) 3%, transparent);
 }
 

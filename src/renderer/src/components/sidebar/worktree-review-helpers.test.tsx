@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
-import { ReviewIcon } from './worktree-review-helpers'
+import { reviewHasFailedChecks, ReviewIcon } from './worktree-review-helpers'
 import { derivePipelineStatus } from '../../../../main/gitlab/mappers'
 import type { WorktreeCardPrDisplay } from './worktree-card-pr-display'
 
@@ -124,5 +124,20 @@ describe('ReviewIcon', () => {
     expect(stateless('failure')).toContain('text-rose-500/85')
     expect(stateless('pending')).toContain('text-amber-500/85')
     expect(stateless('success')).not.toContain('text-emerald-500/80')
+  })
+})
+
+describe('reviewHasFailedChecks', () => {
+  it('flags failed checks only while the review is open or its state is unknown', () => {
+    expect(reviewHasFailedChecks({ ...gitlabReview, status: 'failure' })).toBe(true)
+    expect(reviewHasFailedChecks({ ...gitlabReview, state: undefined, status: 'failure' })).toBe(
+      true
+    )
+    // Why: a merged or closed review's last check run no longer gates anything.
+    for (const state of ['merged', 'closed', 'draft'] as const) {
+      expect(reviewHasFailedChecks({ ...gitlabReview, state, status: 'failure' })).toBe(false)
+    }
+    expect(reviewHasFailedChecks({ ...gitlabReview, status: 'pending' })).toBe(false)
+    expect(reviewHasFailedChecks(null)).toBe(false)
   })
 })

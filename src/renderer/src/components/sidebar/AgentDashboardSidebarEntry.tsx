@@ -77,12 +77,12 @@ export default function AgentDashboardSidebarEntry(): React.JSX.Element {
         }
       }}
       className={cn(
-        'flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-[13px] font-medium tracking-tight transition-colors',
-        'text-worktree-sidebar-foreground/60 hover:bg-worktree-sidebar-foreground/8'
+        'flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-[13px] font-medium tracking-tight transition-colors',
+        'text-worktree-sidebar-foreground/85 hover:bg-worktree-sidebar-foreground/8'
       )}
     >
       <LayoutDashboard
-        className="size-4 shrink-0 text-worktree-sidebar-foreground/30"
+        className="size-4 shrink-0 text-worktree-sidebar-foreground/50"
         strokeWidth={1.75}
       />
       <span className="flex-1">
