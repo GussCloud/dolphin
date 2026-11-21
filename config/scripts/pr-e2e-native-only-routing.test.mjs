@@ -1,7 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
-import { hasNativeImeSourceChange, shouldRunReusablePrE2e } from './pr-e2e-source-routing.mjs'
+import {
+  hasNativeImeSourceChange,
+  selectChangedE2eSpecs,
+  shouldRunChangedE2e,
+  shouldRunReusablePrE2e
+} from './pr-e2e-source-routing.mjs'
 
 const workflow = parse(readFileSync('.github/workflows/pr.yml', 'utf8'))
 const filterStep = workflow.jobs.code_paths.steps.find((step) => step.id === 'e2e_filter')
@@ -27,7 +32,30 @@ describe('native-only PR E2E routing', () => {
         true
       )
     }
-    expect(filterStep.run).toContain('pr-e2e-source-routing.mjs --reusable-workflow')
+    expect(filterStep.run).toContain('pr-e2e-source-routing.mjs --changed-reusable')
     expect(filterStep.run).toContain('if [ "$SHOULD_RUN" = true ]; then')
+  })
+
+  it('runs the reusable workflow on a PR only for the specs it changed, never the native one', () => {
+    expect(shouldRunChangedE2e(['tests/e2e/terminal-ibus-hangul-native.spec.ts'])).toBe(false)
+    expect(shouldRunChangedE2e(['src/main/ssh/connection.ts'])).toBe(false)
+    expect(shouldRunChangedE2e(['tests/e2e/future.spec.ts'])).toBe(true)
+  })
+
+  it('selects only the e2e files the PR changed, ignoring the source they cover', () => {
+    expect(
+      selectChangedE2eSpecs([
+        'src/main/ssh/connection.ts',
+        'tests/e2e/b.spec.ts',
+        'tests/e2e/a.spec.ts',
+        'tests/e2e/ssh-browser-network-execution-route.docker.unit.test.ts',
+        'tests/e2e/helpers/app.ts',
+        'tests/e2e/b.spec.ts'
+      ])
+    ).toEqual([
+      'tests/e2e/a.spec.ts',
+      'tests/e2e/b.spec.ts',
+      'tests/e2e/ssh-browser-network-execution-route.docker.unit.test.ts'
+    ])
   })
 })

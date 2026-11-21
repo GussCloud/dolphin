@@ -304,6 +304,32 @@ export function hasWslSourceChange(changedPaths) {
   return changedPaths.some(route.matches)
 }
 
+// Why changed specs only: PRs run the e2e their own change wrote or edited; the whole suite,
+// source routes included, runs on develop twice a day and before every promote (e2e-develop.yml).
+const CHANGED_E2E_SPEC = /^tests\/e2e\/.*\.(?:spec\.ts|docker\.unit\.test\.ts)$/
+const NATIVE_IME_SPEC = 'tests/e2e/terminal-ibus-hangul-native.spec.ts'
+
+export function selectChangedE2eSpecs(changedPaths) {
+  return [...new Set(changedPaths.filter((file) => CHANGED_E2E_SPEC.test(file)))].sort((a, b) =>
+    a.localeCompare(b)
+  )
+}
+
+/** The native IME spec needs its own ibus session, so it never uses the reusable workflow. */
+export function shouldRunChangedE2e(changedPaths) {
+  return selectChangedE2eSpecs(changedPaths).some((spec) => spec !== NATIVE_IME_SPEC)
+}
+
+/** The real-WSL lane runs when a PR edits that lane's own specs or workflow. */
+export function changesWslLane(changedPaths) {
+  const route = PR_E2E_SOURCE_ROUTES.find(
+    (candidate) => candidate.id === 'terminal.windows-wsl-launch-and-paste'
+  )
+  return changedPaths.some(
+    (file) => route.specs.includes(file) || file === '.github/workflows/windows-wsl-e2e.yml'
+  )
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   let input = ''
   process.stdin.setEncoding('utf8')
@@ -311,7 +337,13 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     input += chunk
   }
   const changedPaths = input.split(/\r?\n/).filter(Boolean)
-  if (process.argv.includes('--ssh-source')) {
+  if (process.argv.includes('--changed-specs')) {
+    process.stdout.write(`${JSON.stringify(selectChangedE2eSpecs(changedPaths))}\n`)
+  } else if (process.argv.includes('--changed-reusable')) {
+    process.stdout.write(`${shouldRunChangedE2e(changedPaths)}\n`)
+  } else if (process.argv.includes('--changed-wsl')) {
+    process.stdout.write(`${changesWslLane(changedPaths)}\n`)
+  } else if (process.argv.includes('--ssh-source')) {
     process.stdout.write(`${hasSshSourceChange(changedPaths)}\n`)
   } else if (process.argv.includes('--reusable-workflow')) {
     process.stdout.write(`${shouldRunReusablePrE2e(changedPaths)}\n`)

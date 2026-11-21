@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
-import { hasWslSourceChange, selectPrE2eSpecs } from './pr-e2e-source-routing.mjs'
+import { changesWslLane, hasWslSourceChange, selectPrE2eSpecs } from './pr-e2e-source-routing.mjs'
 
 const read = (path) => readFileSync(new URL(`../../${path}`, import.meta.url), 'utf8')
 
@@ -37,6 +37,12 @@ describe('real WSL terminal lane', () => {
     expect(hasWslSourceChange([path])).toBe(false)
   })
 
+  it('runs on a PR only when the lane itself changes', () => {
+    expect(changesWslLane(['tests/e2e/golden-tab-bar-agent-launch.spec.ts'])).toBe(true)
+    expect(changesWslLane(['.github/workflows/windows-wsl-e2e.yml'])).toBe(true)
+    expect(changesWslLane(['src/main/wsl-availability.ts'])).toBe(false)
+  })
+
   it('runs the reusable lane at the immutable PR head', () => {
     const pr = parse(read('.github/workflows/pr.yml'))
     expect(pr.jobs.windows_wsl.if).toBe("needs.code_paths.outputs.wsl_source_changed == 'true'")
@@ -44,12 +50,8 @@ describe('real WSL terminal lane', () => {
     const detector = pr.jobs['code_paths'].steps.find(
       (step) => step.name === 'Filter changed E2E specs'
     )
-    expect(detector.run).toContain(
-      'WSL_CHANGED="$(git diff --name-only --no-renames --diff-filter=ACDMR'
-    )
-    expect(detector.run).toContain(
-      '"$WSL_CHANGED" | node config/scripts/pr-e2e-source-routing.mjs --wsl-source'
-    )
+    // Why the lane's own files only: WSL source is covered by the full runs on develop and promote.
+    expect(detector.run).toContain('pr-e2e-source-routing.mjs --changed-wsl')
     const workflow = parse(read('.github/workflows/windows-wsl-e2e.yml'))
     const steps = workflow.jobs['wsl-terminal'].steps
     expect(steps[0].with.ref).toBe('${{ inputs.ref || github.sha }}')

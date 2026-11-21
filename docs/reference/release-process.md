@@ -4,10 +4,10 @@ Pull requests never change a version: not `package.json`, not `mobile/app.json`'
 
 Branches: every pull request targets `develop`. `main` is what is officially published, and only the promote workflow moves it. Two workflows produce versions, and both build a commit that is already on `develop`:
 
-| Workflow                                                       | Runs                                | Produces                                          | Gate                                                                 |
-| -------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------- | -------------------------------------------------------------------- |
-| [Release Beta](../../.github/workflows/release-beta.yml)       | Every push to `develop`, or by hand | Desktop `vX.Y.Z-rc.N`, mobile `X.Y.Z` beta builds | The commit is on `develop`                                           |
-| [Release Promote](../../.github/workflows/release-promote.yml) | By hand                             | Desktop `vX.Y.Z`, mobile `X.Y.Z` official builds  | `production` approval, commit on `develop`, its PR's `verify` passed |
+| Workflow                                                       | Runs                                | Produces                                          | Gate                                                                |
+| -------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------- | ------------------------------------------------------------------- |
+| [Release Beta](../../.github/workflows/release-beta.yml)       | Every push to `develop`, or by hand | Desktop `vX.Y.Z-rc.N`, mobile `X.Y.Z` beta builds | The commit is on `develop`                                          |
+| [Release Promote](../../.github/workflows/release-promote.yml) | By hand                             | Desktop `vX.Y.Z`, mobile `X.Y.Z` official builds  | Commit on `develop`, its PR's `verify` passed, full e2e suite green |
 
 Both call the per-platform workflows (`dolphin-windows-release.yml`, which also builds macOS; `dolphin-android-release.yml`; `dolphin-ios-release.yml`) through `workflow_call`. Those no longer run on a push or a tag; the desktop one cannot be dispatched by hand at all, and a manual Android or iOS dispatch never publishes a GitHub release.
 
@@ -51,6 +51,8 @@ The `resolve` job checks four things before anything is built:
 - `X.Y.Z` does not exist yet and is newer than the last stable release;
 - the rc tag's commit is on `develop`;
 - the pull request that landed that commit has a successful `verify` check, which is `pr.yml`'s aggregate (`verify-release-commit.mjs`).
+
+Alongside the approval, the `e2e` and `e2e_wsl` jobs run the **whole** e2e suite (`e2e.yml` with no spec list: 14 shards plus the Docker-SSH lanes, and the real-WSL lane) on that commit. No build starts, and `main` does not move, unless both pass. This adds about 30 minutes to a promote. Pull requests run only the e2e they wrote or edited, and [E2E develop](../../.github/workflows/e2e-develop.yml) runs the same full suite on `develop` at 03:13 and 13:13 (Brasília) when `develop` changed, opening or updating one issue that names the PRs merged since the last green run, so a red suite is usually known before a promote.
 
 The owner's approval is the dispatch itself: only someone who can run workflows starts a promote (agents cannot). If the `production` environment has required reviewers, the run also waits there for one. It then rebuilds **the commit the rc tag points at**, versioned `X.Y.Z`:
 

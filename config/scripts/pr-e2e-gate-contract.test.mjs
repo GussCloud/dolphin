@@ -87,15 +87,17 @@ describe('restart-survival E2E routing', () => {
 })
 
 describe('PR E2E gate contract', () => {
-  it('keeps E2E advisory while the suite is red on main', () => {
-    // Why: pin the deliberate choice so it reads as intentional rather than as
-    // the "forgot to wire the gate" bug this file originally caught. Gating on a
-    // suite that fails every scheduled run would block the PRs that fix it.
-    // Flipping to blocking means updating this expectation too — see the comment
-    // on verify's Require-successful-checks step for the exact wiring.
-    expect(prWorkflow.jobs.verify.needs).not.toContain('e2e')
-    expect(verifyStep.env.E2E).toBeUndefined()
-    expect(verifyStep.run).not.toContain('$E2E')
+  it('blocks verify on the e2e the PR itself wrote or edited', () => {
+    // Why blocking is safe: the PR runs only its own specs, so a red result is the PR's own.
+    // The whole suite runs on develop and before promote (e2e-develop.yml, release-promote.yml).
+    expect(prWorkflow.jobs.verify.needs).toEqual(expect.arrayContaining(['e2e', 'windows_wsl']))
+    expect(verifyStep.run).toContain('check_job e2e "$E2E" "$E2E_SHOULD_RUN"')
+    expect(verifyStep.run).toContain(
+      'check_job windows_wsl "$WINDOWS_WSL" "$WINDOWS_WSL_SHOULD_RUN"'
+    )
+    expect(filterStep.run).toContain('pr-e2e-source-routing.mjs --changed-specs')
+    expect(filterStep.run).toContain('pr-e2e-source-routing.mjs --changed-reusable')
+    expect(filterStep.run).not.toContain('--ssh-source')
   })
 
   it('passes only changed specs to the reusable E2E workflow', () => {
@@ -358,14 +360,9 @@ describe('PR E2E gate contract', () => {
     expect(sshLaneCondition).toContain("inputs.ssh_source_changed == 'true' ||")
 
     expect(e2eWorkflow.on.workflow_call.inputs.ssh_source_changed.type).toBe('string')
-    expect(prWorkflow.jobs.code_paths.outputs.ssh_source_changed).toBe(
-      '${{ steps.e2e_filter.outputs.ssh_source_changed }}'
-    )
-    expect(prWorkflow.jobs.e2e.with.ssh_source_changed).toBe(
-      '${{ needs.code_paths.outputs.ssh_source_changed }}'
-    )
-    expect(filterStep.run).toContain('pr-e2e-source-routing.mjs --ssh-source')
-    expect(filterStep.run).toContain('ssh_source_changed=$SSH_SOURCE_CHANGED')
+    // Why PRs pass no source signal: they run only their own specs; the Docker-SSH lane still
+    // runs for a PR that edits an SSH spec, and on every full run (develop and promote).
+    expect(prWorkflow.jobs.e2e.with.ssh_source_changed).toBeUndefined()
   })
 
   it('gives every Docker-gated SSH spec a lane that runs it', () => {

@@ -50,6 +50,7 @@ jobs:
       mobile_tag: ${{ steps.mobile.outputs.tag }}
       android_version_code: ${{ steps.mobile.outputs.android_version_code }}
       mobile_sha: ${{ steps.mobile_commit.outputs.sha }}
+      target_sha: ${{ steps.target.outputs.sha }}
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -96,6 +97,22 @@ jobs:
           node config/scripts/verify-release-commit.mjs "$sha" --branch develop --require-checks
           echo "sha=$sha" >>"$GITHUB_OUTPUT"
 
+      # Why the newer of the two: both rc commits are on develop, so it contains the other; the full
+      # e2e suite runs on it and main moves to it.
+      - name: Pick the commit main will point at
+        id: target
+        env:
+          DESKTOP_SHA: ${{ steps.desktop_commit.outputs.sha }}
+          MOBILE_SHA: ${{ steps.mobile_commit.outputs.sha }}
+        run: |
+          set -euo pipefail
+          target="${DESKTOP_SHA:-$MOBILE_SHA}"
+          if [[ -n "$DESKTOP_SHA" && -n "$MOBILE_SHA" ]]; then
+            status="$(gh api "repos/$GITHUB_REPOSITORY/compare/$DESKTOP_SHA...$MOBILE_SHA" --jq .status)"
+            [[ "$status" == "ahead" ]] && target="$MOBILE_SHA"
+          fi
+          echo "sha=$target" >>"$GITHUB_OUTPUT"
+
       - name: Summary
         env:
           DESKTOP_RC: ${{ steps.desktop.outputs.rc_tag }}
@@ -123,8 +140,25 @@ jobs:
       - name: Approved
         run: echo "Promotion approved by $GITHUB_TRIGGERING_ACTOR."
 
+  # Why before any build: main may only move to a commit the whole e2e suite passed on.
+  e2e:
+    needs: resolve
+    permissions:
+      contents: read
+    uses: ./.github/workflows/e2e.yml
+    with:
+      ref: ${{ needs.resolve.outputs.target_sha }}
+
+  e2e_wsl:
+    needs: resolve
+    permissions:
+      contents: read
+    uses: ./.github/workflows/windows-wsl-e2e.yml
+    with:
+      ref: ${{ needs.resolve.outputs.target_sha }}
+
   desktop:
-    needs: [resolve, approve]
+    needs: [resolve, approve, e2e, e2e_wsl]
     if: inputs.app != 'mobile'
     permissions:
       contents: write
@@ -136,7 +170,7 @@ jobs:
     secrets: inherit
 
   android:
-    needs: [resolve, approve]
+    needs: [resolve, approve, e2e, e2e_wsl]
     if: inputs.app != 'desktop'
     permissions:
       contents: write
@@ -150,7 +184,7 @@ jobs:
     secrets: inherit
 
   ios:
-    needs: [resolve, approve]
+    needs: [resolve, approve, e2e, e2e_wsl]
     if: inputs.app != 'desktop'
     uses: ./.github/workflows/dolphin-ios-release.yml
     with:
@@ -161,7 +195,7 @@ jobs:
 
   # Why after every build: main must only ever point at something that was actually published.
   fast-forward-main:
-    needs: [resolve, desktop, android, ios]
+    needs: [resolve, e2e, e2e_wsl, desktop, android, ios]
     if: ${{ !cancelled() && !failure() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
