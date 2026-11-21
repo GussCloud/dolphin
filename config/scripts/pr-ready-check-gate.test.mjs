@@ -2,11 +2,12 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
 import { runProcess } from '../../src/shared/child-process/run-process'
-import { PR_CHECK_JOBS } from './pr-code-change-scope.mjs'
 
 const workflow = parse(readFileSync('.github/workflows/pr.yml', 'utf8'))
 const gate = workflow.jobs.verify.steps.find((step) => step.name === 'Require successful checks')
 const variable = (job) => job.replaceAll('-', '_').toUpperCase()
+// Why from verify.needs: jobs gated outside pr-code-change-scope (e2e, windows_wsl) must count too.
+const PR_CHECK_JOBS = workflow.jobs.verify.needs.filter((job) => job !== 'code_paths')
 
 function requiredResults(shouldRun) {
   return Object.fromEntries(

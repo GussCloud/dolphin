@@ -54,9 +54,9 @@ jobs:
       security: ${{ steps.readiness.outputs.reused != 'true' && steps.filter.outputs.security }}
       e2e_should_run: ${{ steps.e2e_filter.outputs.should_run }}
       test_files: ${{ steps.e2e_filter.outputs.test_files }}
-      ssh_source_changed: ${{ steps.e2e_filter.outputs.ssh_source_changed }}
-      native_ime_source_changed: ${{ steps.e2e_filter.outputs.native_ime_source_changed }}
       wsl_source_changed: ${{ steps.e2e_filter.outputs.wsl_source_changed }}
+      e2e: ${{ steps.e2e_filter.outputs.should_run }}
+      windows_wsl: ${{ steps.e2e_filter.outputs.wsl_source_changed }}
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -121,30 +121,20 @@ jobs:
           BASE="${{ github.event.pull_request.base.sha }}"
           HEAD="${{ github.event.pull_request.head.sha }}"
           CHANGED="$(git diff --name-only --diff-filter=AMCR --merge-base "$BASE" "$HEAD")"
-          # Source routes are executable contracts so a test can prove exact
-          # authorities, exclusions, and sentinels without evaluating workflow shell.
-          TEST_FILES_JSON="$(printf '%s\n' "$CHANGED" | node config/scripts/pr-e2e-source-routing.mjs)"
+          # Why only the PR's own specs: the whole suite, area routes included, runs on develop
+          # twice a day and before every promote (e2e-develop.yml), so a PR waits only on the
+          # e2e its change wrote or edited.
+          TEST_FILES_JSON="$(printf '%s\n' "$CHANGED" | node config/scripts/pr-e2e-source-routing.mjs --changed-specs)"
           echo "test_files=$TEST_FILES_JSON" >> "$GITHUB_OUTPUT"
-          # Why a separate signal: the Docker-SSH lane must trigger on SSH source, not on a
-          # spec name surviving in a route's list. Same routes, so the two cannot drift.
-          SSH_SOURCE_CHANGED="$(printf '%s\n' "$CHANGED" | node config/scripts/pr-e2e-source-routing.mjs --ssh-source)"
-          echo "ssh_source_changed=$SSH_SOURCE_CHANGED" >> "$GITHUB_OUTPUT"
-          echo "SSH source changed: $SSH_SOURCE_CHANGED"
-          # Why its own signal: the real-IME lane is a whole ibus session, not a spec, so it must
-          # trigger on IME source rather than on a spec name in some route's list.
-          NATIVE_IME_SOURCE_CHANGED="$(printf '%s\n' "$CHANGED" | node config/scripts/pr-e2e-source-routing.mjs --native-ime-source)"
-          echo "native_ime_source_changed=$NATIVE_IME_SOURCE_CHANGED" >> "$GITHUB_OUTPUT"
-          WSL_CHANGED="$(git diff --name-only --no-renames --diff-filter=ACDMR --merge-base "$BASE" "$HEAD")"
-          WSL_SOURCE_CHANGED="$(printf '%s\n' "$WSL_CHANGED" | node config/scripts/pr-e2e-source-routing.mjs --wsl-source)"
-          echo "wsl_source_changed=$WSL_SOURCE_CHANGED" >> "$GITHUB_OUTPUT"
-          echo "Native IME source changed: $NATIVE_IME_SOURCE_CHANGED"
-          SHOULD_RUN="$(printf '%s\n' "$CHANGED" | node config/scripts/pr-e2e-source-routing.mjs --reusable-workflow)"
+          WSL_LANE_CHANGED="$(printf '%s\n' "$CHANGED" | node config/scripts/pr-e2e-source-routing.mjs --changed-wsl)"
+          echo "wsl_source_changed=$WSL_LANE_CHANGED" >> "$GITHUB_OUTPUT"
+          SHOULD_RUN="$(printf '%s\n' "$CHANGED" | node config/scripts/pr-e2e-source-routing.mjs --changed-reusable)"
           if [ "$SHOULD_RUN" = true ]; then
             echo "should_run=true" >> "$GITHUB_OUTPUT"
             echo "Changed E2E specs: $TEST_FILES_JSON"
           else
             echo "should_run=false" >> "$GITHUB_OUTPUT"
-            echo "No specs requiring the reusable E2E workflow"
+            echo "The PR changes no E2E spec"
           fi
 
   static_analysis:
@@ -1151,7 +1141,6 @@ jobs:
       # workflow is queued. The head SHA is immutable and works for every PR.
       ref: ${{ github.event.pull_request.head.sha }}
       test_files: ${{ needs.code_paths.outputs.test_files }}
-      ssh_source_changed: ${{ needs.code_paths.outputs.ssh_source_changed }}
 
   windows_wsl:
     name: real WSL terminal
@@ -1288,19 +1277,15 @@ jobs:
       - windows_boundaries
       - performance
       - security
+      - e2e
+      - windows_wsl
     # Evaluating job results only needs the lightweight container runner.
     runs-on: ubuntu-slim
     timeout-minutes: 5
 
     steps:
-      # Why: e2e is deliberately absent from needs. The suite is currently red on
-      # main (every scheduled run), so gating merges on it would block any PR that
-      # touches tests/e2e/** — including the ones fixing the suite. Until it is
-      # green the job runs and reports for E2E-path PRs without blocking. To flip
-      # it on: add `e2e` to needs, add E2E to the env below, and require
-      # `"$E2E" = success || skipped` after the loop — skipped is the normal
-      # result for a path-filtered job and must keep passing, so it has to be
-      # checked outside the loop or it would excuse the jobs above.
+      # Why e2e blocks: it runs only the specs this PR wrote or edited, so a red result is this
+      # PR's own. The whole suite runs on develop and before promote (e2e-develop.yml).
       - name: Require successful checks
         env:
           CODE_PATHS: ${{ needs.code_paths.result }}
@@ -1335,6 +1320,10 @@ jobs:
           PERFORMANCE_SHOULD_RUN: ${{ needs.code_paths.outputs.performance }}
           SECURITY: ${{ needs.security.result }}
           SECURITY_SHOULD_RUN: ${{ needs.code_paths.outputs.security }}
+          E2E: ${{ needs.e2e.result }}
+          E2E_SHOULD_RUN: ${{ needs.code_paths.outputs.e2e }}
+          WINDOWS_WSL: ${{ needs.windows_wsl.result }}
+          WINDOWS_WSL_SHOULD_RUN: ${{ needs.code_paths.outputs.windows_wsl }}
         run: |
           if [ "$CODE_PATHS" != "success" ]; then
             exit 1
@@ -1373,4 +1362,6 @@ jobs:
           check_job windows_boundaries "$WINDOWS_BOUNDARIES" "$WINDOWS_BOUNDARIES_SHOULD_RUN"
           check_job performance "$PERFORMANCE" "$PERFORMANCE_SHOULD_RUN"
           check_job security "$SECURITY" "$SECURITY_SHOULD_RUN"
+          check_job e2e "$E2E" "$E2E_SHOULD_RUN"
+          check_job windows_wsl "$WINDOWS_WSL" "$WINDOWS_WSL_SHOULD_RUN"
           exit "$failed"

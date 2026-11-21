@@ -479,7 +479,9 @@ describe('PR workflow parallelism', () => {
       'package_windows',
       'windows_boundaries',
       'performance',
-      'security'
+      'security',
+      'e2e',
+      'windows_wsl'
     ])
     const verifyStep = workflow.jobs.verify.steps.find(
       (step) => step.name === 'Require successful checks'

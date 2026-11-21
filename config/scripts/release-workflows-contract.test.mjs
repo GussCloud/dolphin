@@ -113,10 +113,32 @@ describe('release workflows', () => {
     ])
   })
 
+  it('runs the whole e2e suite on the promoted commit before any build', () => {
+    const { jobs } = workflow('release-promote')
+    expect(jobs.e2e.uses).toBe('./.github/workflows/e2e.yml')
+    expect(jobs.e2e.with).toEqual({ ref: '${{ needs.resolve.outputs.target_sha }}' })
+    expect(jobs.e2e_wsl.uses).toBe('./.github/workflows/windows-wsl-e2e.yml')
+    for (const build of ['desktop', 'android', 'ios']) {
+      expect(jobs[build].needs).toEqual(expect.arrayContaining(['approve', 'e2e', 'e2e_wsl']))
+    }
+  })
+
+  it('runs the whole suite on develop twice a day and reports failures in one issue', () => {
+    const nightly = workflow('e2e-develop')
+    expect(nightly.on.schedule).toEqual([{ cron: '13 6,16 * * *' }])
+    expect(nightly.jobs.suite.uses).toBe('./.github/workflows/e2e.yml')
+    // Why no test_files: an empty list is what makes e2e.yml run every shard and lane.
+    expect(nightly.jobs.suite.with).toEqual({ ref: '${{ github.sha }}' })
+    expect(nightly.jobs.wsl.uses).toBe('./.github/workflows/windows-wsl-e2e.yml')
+    expect(nightly.jobs.report.permissions).toEqual({ contents: 'read', issues: 'write' })
+    expect(nightly.concurrency).toEqual({ group: 'e2e-develop', 'cancel-in-progress': false })
+  })
+
   it('moves main after a promote, never by force', () => {
     const { jobs } = workflow('release-promote')
     const job = jobs['fast-forward-main']
-    expect(job.needs).toEqual(['resolve', 'desktop', 'android', 'ios'])
+    // Why e2e in needs: a failed suite skips the builds, and a skipped build is not a failure.
+    expect(job.needs).toEqual(['resolve', 'e2e', 'e2e_wsl', 'desktop', 'android', 'ios'])
     expect(job.permissions).toEqual({ contents: 'write' })
     const run = job.steps.map((step) => step.run ?? '').join('\n')
     expect(run).toContain('git push origin "$new_main:refs/heads/main"')
