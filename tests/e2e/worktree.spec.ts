@@ -29,6 +29,7 @@ import {
   ensureTerminalVisible,
   worktreeExists
 } from './helpers/store'
+import { advanceComposerToCreateStep } from './helpers/composer-wizard'
 
 test.describe('Create Workspace', () => {
   test.beforeEach(async ({ appPage }) => {
@@ -97,6 +98,7 @@ test.describe('Create Workspace', () => {
       // 4. Click Create. This fires the full submitQuick path:
       // createWorktree IPC, applyWorktreeMeta, activateAndRevealWorktree,
       // and closeModal via onCreated.
+      await advanceComposerToCreateStep(dialog)
       const createButton = dialog.getByRole('button', { name: /Create (Workspace|Worktree)/i })
       await expect(createButton).toBeEnabled()
       await createButton.click()
@@ -166,6 +168,7 @@ test.describe('Create Workspace', () => {
       const nameInput = dialog.getByPlaceholder(/Type a name/i)
       await nameInput.fill(workspaceName)
 
+      await advanceComposerToCreateStep(dialog)
       const createButton = dialog.getByRole('button', { name: /Create (Workspace|Worktree)/i })
       await expect(createButton).toBeEnabled()
       await createButton.click()
@@ -262,6 +265,7 @@ test.describe('Create Workspace', () => {
       await expect(nameInput).toBeVisible()
       await nameInput.fill(workspaceName)
 
+      await advanceComposerToCreateStep(dialog)
       const createButton = dialog.getByRole('button', { name: /Create (Workspace|Worktree)/i })
       await expect(createButton).toBeEnabled()
       await createButton.click()
@@ -368,6 +372,7 @@ test.describe('Create Workspace', () => {
           })
         )
         .toEqual({ githubLookupCount: 1, resolvePrBaseCount: 0 })
+      await advanceComposerToCreateStep(dialog)
       const createButton = dialog.getByRole('button', { name: /Create (Workspace|Worktree)/i })
       await expect(createButton).toBeEnabled()
       await createButton.click()
@@ -461,6 +466,7 @@ test.describe('Create Workspace', () => {
       await expect(suggestion).toBeVisible()
       await appPage.keyboard.press('Enter')
 
+      await advanceComposerToCreateStep(dialog)
       const createButton = dialog.getByRole('button', { name: /Create (Workspace|Worktree)/i })
       await expect(createButton).toBeEnabled()
       await createButton.click()

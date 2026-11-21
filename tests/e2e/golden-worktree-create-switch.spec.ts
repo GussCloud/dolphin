@@ -16,12 +16,14 @@ import {
 } from './helpers/terminal'
 import { splitMarkerEchoCommand } from './terminal-marker-echo-command'
 import { waitForPtyShellEcho } from './terminal-pty-readiness'
+import { advanceComposerToCreateStep } from './helpers/composer-wizard'
 
 async function createWorkspace(page: Page, name: string): Promise<void> {
   await openSidebarWorkspaceComposer(page)
   const dialog = page.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
   await expect(dialog).toBeVisible()
   await dialog.getByPlaceholder(/Type a name/i).fill(name)
+  await advanceComposerToCreateStep(dialog)
   await dialog.getByRole('button', { name: /Create (Workspace|Worktree)/i }).click()
   await expect(dialog).toBeHidden({ timeout: 20_000 })
 }

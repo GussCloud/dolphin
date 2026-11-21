@@ -3,6 +3,7 @@ import { writeFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { test, expect } from './helpers/dolphin-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
+import { advanceComposerToCreateStep } from './helpers/composer-wizard'
 
 test.use({ dolphinAppExtraEnv: { DOLPHIN_BACKGROUND_LAUNCH: '1' } })
 
@@ -59,6 +60,7 @@ test('Create more clears the GitHub PR source before the next worktree', async (
   await appPage.getByRole('option', { name: '#4242 Fix workspace task reset', exact: true }).click()
   const pill = dialog.locator('[data-workspace-source-pill="true"]')
   await expect(pill).toContainText('Fix workspace task reset')
+  await advanceComposerToCreateStep(dialog)
   await dialog.getByRole('switch', { name: 'Create more' }).click()
   await dialog.getByRole('button', { name: /^Create/ }).click()
   await expect(dialog).toBeVisible()
@@ -83,6 +85,7 @@ test('Create more clears the GitHub PR source before the next worktree', async (
   })
   await cdp.detach()
   await expect(pill).toHaveCount(0)
+  await advanceComposerToCreateStep(dialog)
   await expect(dialog.getByRole('switch', { name: 'Create more' })).toHaveAttribute(
     'aria-checked',
     'true'

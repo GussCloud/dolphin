@@ -3,6 +3,7 @@ import type { ElectronApplication, Page } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import type { LinearIssue } from '../../src/shared/linear/issue-types'
+import { advanceComposerToCreateStep } from './helpers/composer-wizard'
 
 const LINEAR_URL =
   'https://linear.app/gusscloud/issue/STA-4084/restore-osc-133-shell-integration-when-an-exec-in-user-rc-files-strips'
@@ -168,6 +169,7 @@ test.describe('Linear URL workspace entry', () => {
     const sourcePill = dialog.locator('[data-workspace-source-pill="true"]')
     await expect(sourcePill).toContainText(LINEAR_ISSUE.title)
     await expect(dialog.getByPlaceholder('Workspace name')).toHaveValue(EXPECTED_WORKSPACE_NAME)
+    await advanceComposerToCreateStep(dialog)
     await expect(dialog.getByRole('button', { name: /Create (Workspace|Worktree)/i })).toBeEnabled()
     await testInfo.attach('linear-url-smart-entry-composer.png', {
       body: await dialog.screenshot(),
@@ -199,8 +201,9 @@ test.describe('Linear URL workspace entry', () => {
       await input.press('Escape')
     }
     await expect(input).not.toHaveAttribute('aria-busy', 'true')
+    // Why the Mode step: the agent picker moved off Basics, so a plain Enter on the name advances.
     await input.press('Enter')
-    await expect(dialog.locator('[data-agent-combobox-root="true"][role="combobox"]')).toBeFocused()
+    await expect(dialog.getByRole('button', { name: /Create (Workspace|Worktree)/i })).toBeVisible()
   })
 
   test('pasting into Cmd+J previews the Linear issue and opens the linked composer', async ({
@@ -232,6 +235,7 @@ test.describe('Linear URL workspace entry', () => {
     const sourcePill = dialog.locator('[data-workspace-source-pill="true"]')
     await expect(sourcePill).toContainText(LINEAR_ISSUE.title)
     await expect(dialog.getByPlaceholder('Workspace name')).toHaveValue(EXPECTED_WORKSPACE_NAME)
+    await advanceComposerToCreateStep(dialog)
     await expect(dialog.getByRole('button', { name: /Create (Workspace|Worktree)/i })).toBeEnabled()
     await testInfo.attach('linear-url-cmd-j-composer.png', {
       body: await dialog.screenshot(),
