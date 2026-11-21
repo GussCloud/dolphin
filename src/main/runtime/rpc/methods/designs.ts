@@ -25,6 +25,7 @@ import {
   DesignShowParams,
   DesignStartParams
 } from '../../../../shared/rpc-contract/design-params'
+import { designAgentStatusFromTerminal } from '../../../designs/design-agent-terminal-status'
 import { getDesignStore } from '../../../designs/design-store-instance'
 import { toDesignListEntry } from '../../../designs/design-store'
 import { OrchestrationError } from '../../orchestration/orchestration-error'
@@ -186,7 +187,12 @@ export const DESIGN_METHODS = [
         return { live: false, status: null }
       }
       try {
-        return { live: true, status: (await context.runtime.getTerminalAgentStatus(handle)).status }
+        return {
+          live: true,
+          status: designAgentStatusFromTerminal(
+            await context.runtime.getTerminalAgentStatus(handle)
+          )
+        }
       } catch {
         // Why not live=false: a failed read is not evidence the pane exited.
         return { live: true, status: null }

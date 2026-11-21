@@ -29,6 +29,16 @@ function row(overrides: Partial<AgentStatusIpcPayload> = {}): AgentStatusIpcPayl
 }
 
 describe('selectFreshExplicitAgentStatus', () => {
+  it('carries monitoring only with the working state it qualifies', () => {
+    const args = { handle: HANDLE, paneKey: PANE_KEY }
+    expect(
+      selectFreshExplicitAgentStatus({ ...args, hookRows: [row({ workingMode: 'monitoring' })] })
+    ).toMatchObject({ status: 'working', workingMode: 'monitoring' })
+    expect(selectFreshExplicitAgentStatus({ ...args, hookRows: [row()] })).not.toHaveProperty(
+      'workingMode'
+    )
+  })
+
   it('matches on the terminal handle when the pane key has moved', () => {
     const selected = selectFreshExplicitAgentStatus({
       handle: HANDLE,

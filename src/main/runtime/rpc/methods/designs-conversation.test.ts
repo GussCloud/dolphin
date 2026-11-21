@@ -90,6 +90,9 @@ describe('design conversation RPC methods', () => {
     await expect(
       call('design.answer', { id, decisionId, selected: ['Card', 'Pix'] })
     ).rejects.toMatchObject({ code: 'design_invalid_answer' })
+    await expect(
+      call('design.answer', { id, decisionId, selected: [], note: '  ' })
+    ).rejects.toThrow(/Pick an option or write an answer/)
     await call('design.answer', { id, decisionId, selected: ['Pix'], note: 'cheaper' })
     await expect(
       call('design.answer', { id, decisionId, selected: ['Card'] })

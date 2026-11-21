@@ -157,6 +157,16 @@ describe('DesignStore conversation', () => {
     expect(toDesignListEntry(designs.get(id)!).openDecisionCount).toBe(1)
   })
 
+  it('accepts a written answer with no option picked', () => {
+    const designs = store()
+    const id = designWithCanvas(designs)
+    const [decision] = designs.addDecisions(id, [{ question: 'Pay how?', options: OPTIONS }])
+    expect(
+      designs.answerDecision(id, { decisionId: decision!.id, selected: [], note: 'Boleto' }).answer
+    ).toMatchObject({ selected: [], note: 'Boleto' })
+    expect(pendingDesignInbox(designs.get(id)!)).toHaveLength(1)
+  })
+
   it('answers a decision once, with valid options, and queues it for the agent', () => {
     const designs = store()
     const id = designWithCanvas(designs)
@@ -164,7 +174,10 @@ describe('DesignStore conversation', () => {
     const answer = (selected: string[]) =>
       designs.answerDecision(id, { decisionId: decision!.id, selected, note: 'cheaper' })
     expect(() => answer(['Bitcoin'])).toThrow(/Not an option.*Bitcoin/)
-    expect(() => answer(['Card', 'Pix'])).toThrow(/exactly one option/)
+    expect(() => answer(['Card', 'Pix'])).toThrow(/at most one option/)
+    expect(() => designs.answerDecision(id, { decisionId: decision!.id, selected: [] })).toThrow(
+      /needs an option or a written answer/
+    )
     expect(() => designs.answerDecision(id, { decisionId: 'd-none', selected: ['Card'] })).toThrow(
       /not on design/
     )

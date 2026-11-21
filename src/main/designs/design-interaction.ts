@@ -196,10 +196,16 @@ export function answerDecision(
       `Not an option of decision ${decision.id}: ${unknown.join(', ')}.`
     )
   }
-  if (!decision.multiSelect && selected.length !== 1) {
+  if (selected.length === 0 && !answer.note) {
     throw new DesignRefusal(
       'design_invalid_answer',
-      `Decision ${decision.id} takes exactly one option.`
+      `Decision ${decision.id} needs an option or a written answer.`
+    )
+  }
+  if (!decision.multiSelect && selected.length > 1) {
+    throw new DesignRefusal(
+      'design_invalid_answer',
+      `Decision ${decision.id} takes at most one option.`
     )
   }
   const answered: DesignDecision = {
