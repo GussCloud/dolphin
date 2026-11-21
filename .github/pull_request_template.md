@@ -19,9 +19,8 @@ Fixes #
 
 ## Visual Proof
 
-<!-- REQUIRED for UI / behavior changes. Please attach a BEFORE and AFTER that can easily tabbed/switched. Use videos for when appropriate over screenshots -->
-<!-- If there is truly no visual or interaction change, write exactly: `N/A` and briefly say why. -->
-<!-- For attachments NEVER add directly to the PR files (do not commit to files), use `gh image` extension or drag + drop (works for any attachment) -->
+<!-- The CI is the proof: link the e2e test that covers the changed flow and the PR's CI run. Do not attach screenshots or videos, and never have an agent capture them. -->
+<!-- If no flow changes visually, write exactly: `N/A` and briefly say why. -->
 
 ## Testing
 
@@ -48,8 +47,8 @@ Ensure no issues in: Security, Cross-platoform support (Linux, Windows, Mac), Re
 ## Checklist
 
 - [ ] This PR is small and focused
-- [ ] I explained what changed and why (ELI5, the user-facing before/after, the mechanism, and why over the alternatives)
-- [ ] Before/after screenshots or videos attached for UI changes, or `N/A` with reason
+- [ ] I explained what changed and why (ELI5, the user-facing before/after in words, the mechanism, and why over the alternatives)
+- [ ] UI changes are covered by an e2e test the CI runs, or `N/A` with reason
 - [ ] Self-reviewed for correctness, security, and performance
 - [ ] Cross-platform, SSH/remote, and path/shortcut impact considered (or N/A)
 - [ ] `pnpm verify:pr-local` passes; the full suite, e2e and packaging are covered by CI

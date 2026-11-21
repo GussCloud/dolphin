@@ -10,11 +10,11 @@ All UI work — layout, color, typography, spacing, component selection, UX beha
 
 Always run tests and agent-launched apps in the background with `DOLPHIN_BACKGROUND_LAUNCH=1`.
 Never steal monitor focus or reveal test windows: no `show()`, `showInactive()`, `bringToFront()`,
-`app.focus()`, or OS activation. Use CDP screenshots of hidden renderers. Keep native-focus and
+`app.focus()`, or OS activation. Tests drive hidden renderers only. Keep native-focus and
 visible-window tests paused on the user's desktop; run them on an isolated display or CI.
 Rebuild modified launch-policy code before running an app; stale build wrappers are not safe.
 
-For rendered Dolphin UI checks use Playwright: the e2e harness (`tests/playwright.config.ts`, project `electron-headless`) or CDP screenshots of hidden renderers. Do not use computer-use for Dolphin UI validation.
+Rendered UI is proven by e2e tests the CI runs: write them with the Playwright harness (`tests/playwright.config.ts`, project `electron-headless`). Agents do not launch the app, take screenshots or spawn agents to collect evidence (see `CLAUDE.md`, Evidência). Do not use computer-use for Dolphin UI validation.
 
 # Style
 
@@ -62,7 +62,7 @@ When asked to compare Dolphin with another project, follow [`docs/reference/comp
 Fill in [`.github/pull_request_template.md`](./.github/pull_request_template.md), written for a reviewer who has never seen this code:
 
 - No jargon — plain language, no internal shorthand.
-- The before and after as the user experiences it.
+- The before and after as the user experiences it, in words.
 - The mechanism you changed, not just the symptom.
 - Why this approach over the alternatives you considered.
 

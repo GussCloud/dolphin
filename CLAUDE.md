@@ -19,11 +19,12 @@ Bug fix, em qualquer tamanho: aponte a etapa exata da falha com evidência (não
 
 # Evidência
 
-Código implementado não é demanda concluída: termine com evidência de que o resultado foi entregue, adequada ao tipo (UI: fluxo no app real; API/backend: contrato e testes; performance: medição antes/depois; integração: comunicação real e falhas).
+A evidência é o CI, nunca uma etapa do agente. O agente **não** abre o app, não tira screenshot, não grava vídeo e não sobe outro agente para provar o resultado; no PR ele aponta os checks do CI.
 
-- **Rotule a origem de toda evidência:** `app real (CI)`, `app real (local)`, `teste com mock de X` ou `reconstrução`. Mock e reconstrução nunca são apresentados como prova do comportamento real.
+- **O que o agente faz:** escreve ou atualiza o teste que prova a mudança, na camada certa (UI: teste e2e do fluxo em `tests/e2e/`; API/backend: contrato e testes; performance: o contrato ou benchmark do CI; integração: teste contra o componente real). O CI roda; o agente só roda localmente os testes focados do que mudou.
+- **Rótulo de origem** em toda afirmação de que algo funciona: `app real (CI)`, `teste com mock de X` ou `reconstrução`. Mock e reconstrução nunca são apresentados como prova do comportamento real.
 - **Bug fix:** o teste de regressão precisa falhar sem a correção (rode-o no commit base e mostre) e não pode mockar a camada que a correção altera.
-- **O que não dá para verificar aqui** (aparelho físico, host SSH real, Windows/macOS) fica escrito como "não verificado em X".
+- **O que o CI não cobre** (aparelho físico, host SSH real, macOS) fica escrito no PR como "não verificado em X"; não é motivo para o agente tentar verificar por conta própria.
 
 # Portões do Pipeline
 
@@ -39,5 +40,5 @@ O check obrigatório `verify` bloqueia só três coisas: **código quebrado** (t
 1. Rode `node config/scripts/verify-pr-local.mjs --fix` uma única vez na árvore final; a suíte completa, e2e e empacotamento ficam com o CI.
 2. Se a demanda teve mais de um pedido (inclusive complementos durante o trabalho), liste-os com o estado de cada um antes do PR.
 3. Abra o PR para `develop` (nunca `main`) seguindo `.github/pull_request_template.md`. O merge em `develop` gera o beta sozinho; a promoção para oficial segue manual e aprovada pelo dono, e só então `main` avança.
-4. Acompanhe o CI. Faça merge só com `verify` verde e com evidência real da camada de risco; senão, investigue e reporte.
+4. Acompanhe o CI. Faça merge quando o `verify` estiver verde; se falhar, investigue e corrija ou reporte.
    - Nunca pare esperando alguém re-executar um job. Se uma falha não é do PR e o re-run não é possível, dispare o CI de novo com um commit real e útil (ex.: um teste que faltava), nunca com commit vazio nem fechando e reabrindo o PR. Se falhar de novo, trate como falha real.
