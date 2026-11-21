@@ -9,7 +9,6 @@ import Animated, {
   interpolate,
   Extrapolation
 } from 'react-native-reanimated'
-import { scheduleOnRN } from 'react-native-worklets'
 import { useBackClaim } from '../navigation/use-back-claim'
 import { colors, spacing } from '../theme/mobile-theme'
 // Why: mount-before-commit logic is anchor-agnostic, so the X-axis drawer reuses
@@ -91,11 +90,7 @@ function MountedRightDrawer({
       progress.value = drawerProgressTiming(1, SHOW_DURATION)
     } else {
       Keyboard.dismiss()
-      progress.value = drawerProgressTiming(0, HIDE_DURATION, (finished) => {
-        if (finished) {
-          scheduleOnRN(onHidden)
-        }
-      })
+      progress.value = drawerProgressTiming(0, HIDE_DURATION, onHidden)
     }
   }, [onHidden, visible])
 

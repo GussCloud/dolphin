@@ -19,7 +19,6 @@ import Animated, {
   interpolate,
   Extrapolation
 } from 'react-native-reanimated'
-import { scheduleOnRN } from 'react-native-worklets'
 import { spacing } from '../theme/mobile-theme'
 import { resolveBottomDrawerFillHeight } from './bottom-drawer-fill-height'
 import { resolveBottomDrawerKeyboardInset } from './bottom-drawer-keyboard-inset'
@@ -127,11 +126,7 @@ export function MountedBottomDrawer({
     } else {
       Keyboard.dismiss()
       setKeyboardInset(0)
-      progress.value = drawerProgressTiming(0, BOTTOM_DRAWER_HIDE_DURATION_MS, (finished) => {
-        if (finished) {
-          scheduleOnRN(onHidden)
-        }
-      })
+      progress.value = drawerProgressTiming(0, BOTTOM_DRAWER_HIDE_DURATION_MS, onHidden)
     }
   }, [onHidden, visible])
 
@@ -198,11 +193,7 @@ export function MountedBottomDrawer({
       return
     }
     Keyboard.dismiss()
-    progress.value = drawerProgressTiming(0, BOTTOM_DRAWER_HIDE_DURATION_MS, (finished) => {
-      if (finished) {
-        scheduleOnRN(onClose)
-      }
-    })
+    progress.value = drawerProgressTiming(0, BOTTOM_DRAWER_HIDE_DURATION_MS, onClose)
   }, [onClose, progress, visible])
 
   // One seam, both platforms: natively this is the hardware key, and inside the shell's page it is

@@ -13,17 +13,26 @@ import { scheduleOnRN } from 'react-native-worklets'
 // iOS sheet curve; withTiming's default in-out quad starts slow exactly when the sheet appears.
 const EASE_SHEET = Easing.bezier(0.32, 0.72, 0, 1)
 
-/** Animates a drawer's open progress. Never reduced: with reduce motion it drives a crossfade. */
+/**
+ * Animates a drawer's open progress and runs `onFinished` on the RN runtime once it lands. Never
+ * reduced: with reduce motion it drives a crossfade.
+ */
 export function drawerProgressTiming(
   to: number,
   duration: number,
-  onFinished?: (finished?: boolean) => void
+  onFinished?: () => void
 ): number {
   'worklet'
   return withTiming(
     to,
     { duration, easing: EASE_SHEET, reduceMotion: ReduceMotion.Never },
-    onFinished
+    // Why inline: only a callback written in the withTiming call is workletized; one passed in is a
+    // plain function, which a release build hands the UI thread as an uncallable object (a crash).
+    (finished) => {
+      if (finished && onFinished) {
+        scheduleOnRN(onFinished)
+      }
+    }
   )
 }
 
