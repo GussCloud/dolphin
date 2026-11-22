@@ -44,6 +44,8 @@ export type UseComposerStateOptions = {
   initialBaseBranch?: string
   persistDraft: boolean
   onCreated?: () => void
+  /** Runs after a Create more submit clears the form for the next workspace. */
+  onResetForNextCreate?: () => void
   isSubmissionCancelled?: () => boolean
   repoIdOverride?: string
   onRepoIdOverrideChange?: (value: string) => void

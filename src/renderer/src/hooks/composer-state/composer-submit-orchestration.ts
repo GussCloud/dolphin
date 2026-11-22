@@ -147,6 +147,7 @@ export function useComposerSubmitOrchestration(
   const multipleCreateReset = useMultipleCreateReset({
     handleClearSmartNameSelection: source.issueSourceActions.handleClearSmartNameSelection,
     lastAutoNameRef: target.asyncComposerState.lastAutoNameRef,
+    onReset: target.composerTargetStore.onResetForNextCreate,
     nameInputRef: target.asyncComposerState.nameInputRef,
     setAgentPrompt: target.sourceContextState.setAgentPrompt,
     setAttachmentPaths: target.sourceContextState.setAttachmentPaths,
