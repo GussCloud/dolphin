@@ -391,9 +391,22 @@ test('paired client keeps revealed remote terminals interactive', async ({ appPa
       await openClientTab(client.page, worktreeId, decoys[0].webTabId)
       const originalGrid = await readActivePaneGrid(client.page, target.webTabId)
       await client.page.setViewportSize({ width: 960, height: 800 })
+      // Why the host PTY too: until this client's viewport claim lands, another desktop
+      // still owns the decoy and its xterm can be held back at that owner's grid.
       await expect
-        .poll(() => readActivePaneGrid(client.page, decoys[0].webTabId))
-        .not.toEqual(originalGrid)
+        .poll(
+          async () => {
+            const paneGrid = await readActivePaneGrid(client.page, decoys[0].webTabId)
+            return {
+              resized: JSON.stringify(paneGrid) !== JSON.stringify(originalGrid),
+              ownsPtyGrid:
+                JSON.stringify(readPtyGridFromContent(readSink(decoys[0].sinkPath))) ===
+                JSON.stringify(paneGrid)
+            }
+          },
+          { timeout: 30_000, message: 'decoy never claimed the resized viewport' }
+        )
+        .toEqual({ resized: true, ownsPtyGrid: true })
       const revealGrid = await readActivePaneGrid(client.page, decoys[0].webTabId)
       if (!revealGrid) {
         throw new Error('visible decoy has no grid')
