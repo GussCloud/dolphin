@@ -7,6 +7,7 @@ import type { GlobalSettings } from '../../src/shared/global-settings-types'
 import { test, expect } from './helpers/dolphin-app'
 import { ensureTerminalVisible, waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import { waitForActivePaneHookDescriptor, waitForActiveTerminalManager } from './helpers/terminal'
+import { NATIVE_CHAT_OLDER_HISTORY_PREFETCH_PX } from '../../src/renderer/src/components/native-chat/use-native-chat-older-history-autoload'
 
 const TRANSCRIPT_ROWS = 650
 
@@ -148,61 +149,87 @@ test.describe('Native chat transcript anchoring', () => {
       })
       const scroll = appPage.locator('[data-native-chat-scroll]')
       const transcriptWindow = appPage.locator('[data-native-chat-window]')
-      const loadEarlier = appPage.getByRole('button', { name: 'Load earlier messages' })
       await expect(transcriptWindow).toBeVisible({ timeout: 30_000 })
-      await expect(loadEarlier).toBeAttached({ timeout: 30_000 })
       await expect
         .poll(() => transcriptWindow.locator(':scope > [data-index]').count())
         .toBeGreaterThan(3)
 
-      const initialTotalSize = await transcriptWindow.evaluate((element) => element.offsetHeight)
-      const anchor = await scroll.evaluate(async (element) => {
-        element.scrollTop = element.scrollHeight * 0.55
-        element.dispatchEvent(new Event('scroll', { bubbles: true }))
-        let previousGeometry = ''
-        let stableFrames = 0
-        for (let frame = 0; frame < 120 && stableFrames < 5; frame += 1) {
-          await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()))
-          const geometry = `${element.scrollHeight}:${element.scrollTop}`
-          stableFrames = geometry === previousGeometry ? stableFrames + 1 : 0
-          previousGeometry = geometry
-        }
-        const scrollRect = element.getBoundingClientRect()
-        const candidates = Array.from(
-          element.querySelectorAll<HTMLElement>('[data-native-chat-window] > [data-index]')
-        ).filter((row) => {
-          const rect = row.getBoundingClientRect()
-          return rect.top >= scrollRect.top + 40 && rect.bottom <= scrollRect.bottom - 40
-        })
-        const row = candidates[Math.floor(candidates.length / 2)]
-        const marker = row
-          ? Array.from(row.querySelectorAll('p')).find((paragraph) =>
-              /^E2E transcript row \d{4}$/.test(paragraph.textContent?.trim() ?? '')
-            )
-          : undefined
-        if (!row || !marker) {
-          return null
-        }
-        return {
-          index: Number(row.dataset.index),
-          marker: marker.textContent?.trim() ?? '',
-          scrollHeight: element.scrollHeight,
-          scrollTop: element.scrollTop,
-          viewportOffset: row.getBoundingClientRect().top - scrollRect.top
-        }
-      })
-      expect(anchor, 'expected a fully visible measured row to anchor').not.toBeNull()
-      if (!anchor) {
-        throw new Error('Expected a fully visible measured row to anchor')
-      }
+      // Older history pages in on its own once the reader nears the top, so the reader is moved
+      // there and the row it is reading is captured every frame until the prepend lands.
+      const anchor = await scroll.evaluate(
+        async (element, { prefetchPx }) => {
+          const nextFrame = (): Promise<void> =>
+            new Promise((resolve) => requestAnimationFrame(() => resolve()))
+          const waitForStableGeometry = async (): Promise<void> => {
+            let previousGeometry = ''
+            let stableFrames = 0
+            for (let frame = 0; frame < 120 && stableFrames < 5; frame += 1) {
+              await nextFrame()
+              const geometry = `${element.scrollHeight}:${element.scrollTop}`
+              stableFrames = geometry === previousGeometry ? stableFrames + 1 : 0
+              previousGeometry = geometry
+            }
+          }
+          const markerOf = (row: HTMLElement): string | undefined =>
+            Array.from(row.querySelectorAll('p'))
+              .map((paragraph) => paragraph.textContent?.trim() ?? '')
+              .find((text) => /^E2E transcript row \d{4}$/.test(text))
+          const capture = () => {
+            const scrollRect = element.getBoundingClientRect()
+            const candidates = Array.from(
+              element.querySelectorAll<HTMLElement>('[data-native-chat-window] > [data-index]')
+            ).filter((row) => {
+              const rect = row.getBoundingClientRect()
+              return (
+                rect.top >= scrollRect.top + 40 &&
+                rect.bottom <= scrollRect.bottom - 40 &&
+                markerOf(row) !== undefined
+              )
+            })
+            const row = candidates[Math.floor(candidates.length / 2)]
+            if (!row) {
+              return null
+            }
+            return {
+              index: Number(row.dataset.index),
+              marker: markerOf(row) ?? '',
+              scrollHeight: element.scrollHeight,
+              scrollTop: element.scrollTop,
+              viewportOffset: row.getBoundingClientRect().top - scrollRect.top
+            }
+          }
+          const indexOfMarker = (marker: string): number | null => {
+            const row = Array.from(
+              element.querySelectorAll<HTMLElement>('[data-native-chat-window] > [data-index]')
+            ).find((candidate) => markerOf(candidate) === marker)
+            return row ? Number(row.dataset.index) : null
+          }
 
-      // The button stays off-screen so invoking it here exercises the real pagination
-      // handler without Playwright first scrolling the reader to the transcript head.
-      await loadEarlier.evaluate((button: HTMLButtonElement) => button.click())
-      await expect
-        .poll(() => transcriptWindow.evaluate((element) => element.offsetHeight))
-        .toBeGreaterThan(initialTotalSize)
-      await expect(loadEarlier).toBeAttached({ timeout: 30_000 })
+          // Settle out of prefetch range first, so the overscanned rows the jump lands on are
+          // already measured; the jump then only moves the reader, and no page can land before
+          // the synchronous capture after it.
+          element.scrollTop = prefetchPx * 2.5
+          element.dispatchEvent(new Event('scroll', { bubbles: true }))
+          await waitForStableGeometry()
+          element.scrollTop = prefetchPx / 2
+          element.dispatchEvent(new Event('scroll', { bubbles: true }))
+          let snapshot = capture()
+          for (let frame = 0; frame < 900; frame += 1) {
+            await nextFrame()
+            // The page landed when the captured row moved to a later index.
+            if (snapshot && indexOfMarker(snapshot.marker) !== snapshot.index) {
+              return snapshot
+            }
+            snapshot = capture()
+          }
+          return null
+        },
+        { prefetchPx: NATIVE_CHAT_OLDER_HISTORY_PREFETCH_PX }
+      )
+      expect(anchor, 'expected older history to page in under a measured row').not.toBeNull()
+      if (!anchor) {
+        throw new Error('Expected older history to page in under a measured row')
+      }
 
       const anchoredMarker = appPage.getByText(anchor.marker, { exact: true })
       await expect(anchoredMarker).toBeAttached({ timeout: 15_000 })
