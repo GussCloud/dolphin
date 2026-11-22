@@ -53,7 +53,7 @@ async function fill(azMode: 'token' | 'lapsed' | 'absent'): Promise<{
     cwd: home,
     input: `url=${REMOTE}\n\n`,
     env: {
-      PATH: azMode === 'absent' ? (process.env.PATH ?? '') : `${bin}:${process.env.PATH ?? ''}`,
+      PATH: `${bin}:${process.env.PATH ?? ''}`,
       HOME: home,
       GIT_CONFIG_NOSYSTEM: '1',
       GIT_TERMINAL_PROMPT: '0',
@@ -73,6 +73,9 @@ describe.skipIf(process.platform === 'win32')('"Default sign-in" helper under re
     await writeScript(
       join(bin, 'az'),
       [
+        // Why not the real PATH for "absent": CI runners ship Azure CLI in /usr/bin, whose real az
+        // then writes ~/.azure while the cleanup removes it. 127 is what a missing command returns.
+        '[ "$FAKE_AZ_MODE" = absent ] && exit 127',
         'case "$1 $2" in',
         '  "account get-access-token") [ "$FAKE_AZ_MODE" = token ] && { echo az-token; exit 0; }',
         '    echo "AADSTS70043: The refresh token has expired" >&2; exit 1;;',

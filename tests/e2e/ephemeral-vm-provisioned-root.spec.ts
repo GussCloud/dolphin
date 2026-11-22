@@ -14,6 +14,7 @@ import {
   type DockerSshRelayTarget
 } from './helpers/docker-ssh-relay-target'
 import { ensureTerminalVisible, waitForSessionReady } from './helpers/store'
+import { advanceComposerToCreateStep } from './helpers/composer-wizard'
 
 test.use({ seedTestRepo: false })
 
@@ -42,6 +43,7 @@ test('adopts a recipe-provisioned SSH root without creating a linked worktree', 
 
     const workspaceName = `provisioned-root-${Date.now()}`
     await dialog.getByPlaceholder(/Type a name/i).fill(workspaceName)
+    await advanceComposerToCreateStep(dialog)
     await dialog.getByRole('button', { name: /Create (Workspace|Worktree)/i }).click()
     const trustDialog = appPage.getByRole('dialog', { name: /Run VM recipe/ })
     await expect(trustDialog).toBeVisible()

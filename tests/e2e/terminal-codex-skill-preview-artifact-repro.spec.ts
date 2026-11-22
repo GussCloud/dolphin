@@ -17,6 +17,7 @@ import {
   waitForPaneIdentitySnapshot
 } from './helpers/terminal'
 import { compareTerminalScreenshots } from './terminal-screenshot-diff'
+import { advanceComposerToCreateStep } from './helpers/composer-wizard'
 
 const RUN_REPRO = process.env.DOLPHIN_E2E_CODEX_SKILL_PREVIEW_REPRO === '1'
 const EXPECT_NO_ARTIFACTS = process.env.DOLPHIN_E2E_EXPECT_NO_CODEX_SKILL_PREVIEW_ARTIFACTS === '1'
@@ -175,6 +176,7 @@ async function createWorkspaceThroughComposer(page: Page, workspaceName: string)
   const nameInput = dialog.getByPlaceholder(/Type a name/i)
   await nameInput.fill(workspaceName)
 
+  await advanceComposerToCreateStep(dialog)
   const createButton = dialog.getByRole('button', { name: /Create (Workspace|Worktree)/i })
   await expect(createButton).toBeEnabled({ timeout: 10_000 })
   await createButton.click()

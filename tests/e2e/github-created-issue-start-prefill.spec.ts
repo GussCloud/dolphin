@@ -5,6 +5,7 @@ import path from 'node:path'
 import { test as base, expect } from './helpers/dolphin-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import { getTerminalContent } from './helpers/terminal'
+import { advanceComposerToCreateStep } from './helpers/composer-wizard'
 
 const ISSUE_NUMBER = 6613
 const ISSUE_TITLE = 'Start a newly created issue without losing its context'
@@ -180,6 +181,7 @@ test('starting a just-created GitHub issue launches Claude with its URL prefille
   const createWorkspaceButton = composer.getByRole('button', {
     name: /Create (workspace|worktree)/i
   })
+  await advanceComposerToCreateStep(composer)
   await expect(createWorkspaceButton).toBeEnabled({ timeout: 15_000 })
   await createWorkspaceButton.click()
   await expect(composer).toBeHidden({ timeout: 20_000 })

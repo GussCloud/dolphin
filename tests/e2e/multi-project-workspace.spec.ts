@@ -15,6 +15,7 @@ import { expect, test } from './helpers/dolphin-app'
 import { createRestartSession } from './helpers/dolphin-restart'
 import { waitForSessionReady } from './helpers/store'
 import { runProcess } from '../../src/shared/child-process/run-process'
+import { advanceComposerToCreateStep } from './helpers/composer-wizard'
 
 const GIT_IDENTITY = ['-c', 'user.name=Test', '-c', 'user.email=test@example.com']
 
@@ -114,6 +115,7 @@ test('creates a workspace from projects in unrelated folders and keeps it across
     ).toBeVisible()
     await dialog.getByPlaceholder(/Type a name/i).fill('mp-feature')
     await page.screenshot({ path: testInfo.outputPath('1-composer.png') })
+    await advanceComposerToCreateStep(dialog)
     await dialog.getByRole('button', { name: /Create multi-project workspace/ }).click()
     await expect(dialog).toBeHidden({ timeout: 60_000 })
 
