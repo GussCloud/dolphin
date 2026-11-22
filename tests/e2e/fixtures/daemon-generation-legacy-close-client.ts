@@ -5,6 +5,7 @@ import { RpcDispatcher } from '../../../src/main/runtime/rpc/dispatcher'
 import { SESSION_TAB_METHODS } from '../../../src/main/runtime/rpc/methods/session-tabs'
 import { SESSION_TAB_CLOSE_INTENT_RUNTIME_CAPABILITY } from '../../../src/shared/protocol-version'
 import type { RuntimeMobileSessionTabsSnapshot } from '../../../src/shared/runtime-types'
+import { createRepoLessRuntimeStore } from './daemon-generation-runtime-store'
 import { createDesktopDiscoveredDaemonRouter } from './daemon-generation-desktop-discovery'
 
 type FixtureSession = {
@@ -149,7 +150,7 @@ async function main(): Promise<void> {
       }
     }
 
-    const runtime = new DolphinRuntimeService()
+    const runtime = new DolphinRuntimeService(createRepoLessRuntimeStore())
     const calls: Record<string, unknown>[] = []
     const sessionByTabId = new Map(config.sessions.map((session) => [session.tabId, session]))
     runtime.setPtyController({
