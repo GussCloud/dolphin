@@ -17,7 +17,6 @@ import {
   waitForPaneCount,
   waitForPaneIdentitySnapshot
 } from './helpers/terminal'
-import { advanceComposerToCreateStep } from './helpers/composer-wizard'
 
 const tempRoots: string[] = []
 const SORTABLE_TAB = '[data-testid="sortable-tab"]'
@@ -241,7 +240,6 @@ async function createWorkspace(page: Page, workspaceName: string): Promise<void>
   const nameInput = dialog.getByPlaceholder(/Type a name/i)
   await expect(nameInput).toBeVisible()
   await nameInput.fill(workspaceName)
-  await advanceComposerToCreateStep(dialog)
   await dialog.getByRole('button', { name: /Create (Workspace|Worktree)/i }).click()
   await expect(dialog).toBeHidden({ timeout: 20_000 })
   await expectActiveWorkspaceVisible(page, workspaceName)
@@ -399,7 +397,6 @@ async function completeWorkspaceCreationTour(page: Page, workspaceName: string):
   const composer = page.getByRole('dialog', { name: /Create (Workspace|Worktree)/i })
   await expect(composer).toBeVisible()
   await composer.getByPlaceholder(/Type a name/i).fill(workspaceName)
-  await advanceComposerToCreateStep(composer)
   await composer.getByRole('button', { name: /Create (Workspace|Worktree)/i }).click()
   await expect(composer).toBeHidden({ timeout: 20_000 })
   await expectActiveWorkspaceVisible(page, workspaceName)
