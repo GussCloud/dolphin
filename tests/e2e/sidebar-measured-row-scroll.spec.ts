@@ -51,6 +51,15 @@ async function readGeometry(page: Page, fixture: SidebarFixture) {
 }
 
 async function settledGeometry(page: Page, fixture: SidebarFixture) {
+  // Collapsing rows starts a translate-only row-removal motion; a hidden test window may never
+  // advance it, so land it on its end state before reading the resting layout.
+  await page.evaluate(() => {
+    document
+      .querySelector<HTMLElement>('[data-worktree-sidebar]')
+      ?.getAnimations({ subtree: true })
+      .filter((animation) => Number.isFinite(animation.effect?.getComputedTiming().endTime))
+      .forEach((animation) => animation.finish())
+  })
   let previous = ''
   let stableSamples = 0
   await expect
