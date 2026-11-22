@@ -18,6 +18,7 @@ import {
   waitForSessionReady
 } from './helpers/store'
 import { BROWSER_ADDRESS_BAR_MIN_INLINE_WIDTH } from '../../src/renderer/src/components/browser-pane/assemble-chrome/browser-address-bar-expansion'
+import { BROWSER_CHROME_ADDRESS_SLOT_ATTRIBUTE } from '../../src/renderer/src/components/browser-pane/assemble-chrome/browser-chrome-address-slot'
 
 // Why: the toolbar must land in a band — squeezed enough that the inline field
 // collapses, roomy enough that the overlay itself has somewhere to go. Target
@@ -84,6 +85,15 @@ function addressBarOverlay(page: Page): Locator {
   return page.locator('[data-dolphin-browser-address-bar-overlay="true"]')
 }
 
+// Why the slot and not the input: the slot is what the bar measures to decide it is collapsed, and
+// unlike the input it keeps its width while a late focus re-grab opens the overlay.
+async function addressSlotWidth(page: Page): Promise<number> {
+  return browserToolbar(page)
+    .locator(`[${BROWSER_CHROME_ADDRESS_SLOT_ATTRIBUTE}]`)
+    .first()
+    .evaluate((node) => node.getBoundingClientRect().width)
+}
+
 async function addressBarInputWidth(page: Page): Promise<number> {
   return addressBarInput(page).evaluate((node) => node.getBoundingClientRect().width)
 }
@@ -146,8 +156,11 @@ test.describe('Browser address bar in a narrow toolbar', () => {
       await settleToSqueezedRestingState(appPage, electronApp)
 
       const overlay = addressBarOverlay(appPage)
-      // The bug: the inline field is squeezed away entirely.
-      await expect.poll(() => addressBarInputWidth(appPage), { timeout: 10_000 }).toBeLessThan(40)
+      // Tool folding keeps the slot at BROWSER_CHROME_ADDRESS_MIN_WIDTH_PX, so the bug now shows as
+      // a slot too narrow to edit a URL in rather than a zero-width input.
+      await expect
+        .poll(() => addressSlotWidth(appPage), { timeout: 10_000 })
+        .toBeLessThan(BROWSER_ADDRESS_BAR_MIN_INLINE_WIDTH)
 
       await appPage.locator('form:has(> [data-dolphin-browser-address-bar="true"])').click()
 
