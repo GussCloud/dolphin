@@ -127,8 +127,8 @@ async function expectQuickOpenAndRuntimeHealthy(
             sha256: 'a6259174bf63bccb04ec461aed9b316f8ef78fe0474a6a101d4f11a383414125'
           }
         : {
-            oracleByteLength: 89,
-            sha256: '9e7399e32001d443105e0f612f0eb2eee88fba50902dc75c926c547538e93eb5'
+            oracleByteLength: 95,
+            sha256: '7229248298d7187862cc11478f9d899d68d48fc7b16fee686f4ae44d7f1ee65f'
           }
     )
 
