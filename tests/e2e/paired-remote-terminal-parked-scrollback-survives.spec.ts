@@ -47,6 +47,7 @@ import {
   waitForPairedPaneMarker,
   type PairedHostTerminal
 } from './helpers/paired-host-terminal'
+import { readTerminalMultiplexLifecycle } from './helpers/remote-terminal-lifecycle-observer'
 import { focusActiveTerminalInput } from './helpers/terminal'
 import { waitForTabParked } from './helpers/terminal-hidden-parking'
 
@@ -150,6 +151,50 @@ function classifyParkedHome(homes: ScrollbackHomes): ParkRevealOutcome['parkedHo
   return homes.localOnlyLength > 0 ? 'local-only' : 'none'
 }
 
+/** Why the client's stream and not the fixture's READY line: READY is written at spawn, before the
+ *  client subscribes, and a host that cannot answer a snapshot never replays it. */
+async function waitForClientStream(clientPage: Page, terminal: string): Promise<void> {
+  await expect
+    .poll(
+      () => readClientStreamTerminals(clientPage).then((terminals) => terminals.includes(terminal)),
+      {
+        timeout: PAINT_BUDGET_MS,
+        message: `client never subscribed to host terminal ${terminal}`
+      }
+    )
+    .toBe(true)
+}
+
+/** Empty until the client's first remote subscription installs the e2e gate. */
+async function readClientStreamTerminals(clientPage: Page): Promise<string[]> {
+  if (!(await clientPage.evaluate(() => '__remoteTerminalMultiplexAckGate' in window))) {
+    return []
+  }
+  return (await readTerminalMultiplexLifecycle(clientPage)).activeStreams.map(
+    (stream) => stream.terminal
+  )
+}
+
+/** Logged on failure: whether the pane ever got bytes and how its connection resolved. */
+async function readPaneDiagnostics(clientPage: Page, webTabId: string): Promise<string> {
+  const streamTerminals = await readClientStreamTerminals(clientPage)
+  const pane = await clientPage.evaluate((id) => {
+    const manager = window.__paneManagers?.get(id)
+    const active = manager?.getActivePane?.() ?? manager?.getPanes?.()[0] ?? null
+    const recorded = '__ptyConnectDiag' in window ? window.__ptyConnectDiag : undefined
+    const connectLog = Array.isArray(recorded) ? recorded.map(String) : []
+    return {
+      mounted: manager !== undefined,
+      boundPtyId: active?.container?.dataset?.ptyId ?? null,
+      content: (active?.serializeAddon?.serialize?.() ?? '').slice(-600),
+      connectLog: connectLog
+        .filter((line) => line.includes(id) || line.includes('ATTACH'))
+        .slice(-8)
+    }
+  }, webTabId)
+  return JSON.stringify({ ...pane, streamTerminals })
+}
+
 async function typeToken(
   clientPage: Page,
   webTabId: string
@@ -200,7 +245,7 @@ async function parkByRetentionBudget(
   )
   createdTerminals.push(decoy.terminal)
   await openPairedClientTab(clientPage, otherWorktreeId, decoy.webTabId)
-  await waitForPairedPaneMarker(clientPage, decoy.webTabId, 'READY', PAINT_BUDGET_MS)
+  await waitForClientStream(clientPage, decoy.terminal)
   // Why a non-terminal view: both worktrees must be hidden for the budget to rank them.
   await clientPage.evaluate(() => window.__store?.getState().setActiveView('tasks'))
 }
@@ -226,8 +271,14 @@ async function runParkRevealScenario(args: {
   createdTerminals.push(target.terminal)
 
   await openPairedClientTab(clientPage, worktreeId, target.webTabId)
-  await waitForPairedPaneMarker(clientPage, target.webTabId, 'READY', PAINT_BUDGET_MS)
+  await waitForClientStream(clientPage, target.terminal)
   const { token, painted: tokenBeforePark } = await typeToken(clientPage, target.webTabId)
+  // Why assert here: every later oracle reads the pane's capture, so a pane that never received
+  // the echo would fail downstream as a lost capture and blame the park or the inventory frame.
+  expect(
+    tokenBeforePark,
+    `the echoed token never reached the client pane before the park: ${await readPaneDiagnostics(clientPage, target.webTabId)}`
+  ).toBe(true)
 
   await (parkKind === 'ordinary'
     ? parkOrdinarily(clientPage, environmentId, worktreeId, createdTerminals)
@@ -262,6 +313,10 @@ async function runParkRevealScenario(args: {
     `[parked-scrollback] after-park ${JSON.stringify({ parkKind, ...afterPark, ...parkDiagnostics })}`
   )
   const parkedHome = classifyParkedHome(afterPark)
+  expect(
+    parkedHome,
+    'the park left no client copy of a pane that held the token (capture before any inventory frame)'
+  ).not.toBe('none')
 
   // Why a forced inventory frame: without one this spec passes whether or not the mirrored-layout
   // rebuild carries the shared capture, because no frame happens to land in its window. A host
@@ -299,7 +354,7 @@ async function runParkRevealScenario(args: {
       : afterInventoryFrame.localOnlyLength > 0
   expect(
     { survivedInventoryFrame },
-    'a host inventory frame wiped the park capture before the reveal'
+    `a host inventory frame wiped the park capture before the reveal: ${JSON.stringify({ afterPark, afterInventoryFrame })}`
   ).toEqual({ survivedInventoryFrame: true })
 
   await openPairedClientTab(clientPage, worktreeId, target.webTabId)
