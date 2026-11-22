@@ -6,7 +6,7 @@
   "version": "1.0.0",
   "description": "Command aliases and optional shortcuts for frequent Dolphin views.",
   "repository": "https://github.com/gusscloud/dolphin-navigation-shortcuts",
-  "engines": { "dolphin": ">=1.4.0" },
+  "engines": { "dolphin": ">=0.2.32" },
   "pluginApi": 1,
   "contributes": {
     "commands": [
