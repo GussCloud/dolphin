@@ -65,11 +65,18 @@ function latestFrame(text: string): number {
 }
 
 function heartbeatFrame(heartbeatPath: string): number {
-  try {
-    return Number(readFileSync(heartbeatPath, 'utf8').trim())
-  } catch {
-    return -1
+  // Why retry: an empty read is a write in flight, never a real frame (Number('') is 0).
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    try {
+      const text = readFileSync(heartbeatPath, 'utf8').trim()
+      if (text !== '') {
+        return Number(text)
+      }
+    } catch {
+      return -1
+    }
   }
+  return -1
 }
 
 // Why the pane resolves by tab (not a captured ptyId): agent quick-launch
