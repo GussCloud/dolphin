@@ -116,6 +116,16 @@ afterEach(async () => {
   await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true })))
 })
 
+describe('PluginService readiness', () => {
+  it('starts discovery for a client that asks before startup initialized it', async () => {
+    const harness = createHarness(await pluginRoot())
+
+    await harness.service.whenReady()
+
+    expect(harness.service.findValidPlugin(pluginKey)).not.toBeNull()
+  })
+})
+
 describe('PluginService worker reconciliation', () => {
   it('blocks every runtime surface until a saved override resolves a content conflict', async () => {
     const conflictingManifest = (id: string): PluginManifest =>

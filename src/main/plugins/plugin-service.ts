@@ -117,7 +117,9 @@ export class PluginService {
   }
 
   async whenReady(): Promise<void> {
-    await (this.initPromise ?? Promise.resolve()).catch(() => undefined)
+    // Why initialize here: startup defers discovery past first paint, so a consumer
+    // that arrives first must start it rather than read an empty install set.
+    await this.initialize().catch(() => undefined)
     // Client reads wait for the complete transaction so rollback-based content
     // validation cannot expose a partially activated plugin between passes.
     await waitForPluginRefreshSettlement(() => this.refreshChain)
