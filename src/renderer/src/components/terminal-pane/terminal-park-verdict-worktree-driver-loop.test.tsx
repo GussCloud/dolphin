@@ -48,7 +48,8 @@ vi.mock('./terminal-parked-tab-watchers', () => ({
 }))
 
 vi.mock('./terminal-parking-e2e-overrides', () => ({
-  getTerminalParkingPolicyOverrides: () => ({ coldParkDelayMs: 0, hotRetainMs: 0 })
+  getTerminalParkingPolicyOverrides: () => ({ coldParkDelayMs: 0, hotRetainMs: 0 }),
+  getTerminalParkFlipNoticeLimitOverride: () => undefined
 }))
 
 import { useAppStore } from '../../store'

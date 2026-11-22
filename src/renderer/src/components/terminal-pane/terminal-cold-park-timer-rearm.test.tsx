@@ -47,6 +47,7 @@ vi.mock('./terminal-parked-tab-watchers', () => ({
 const COLD_PARK_DELAY_MS = 60_000
 
 vi.mock('./terminal-parking-e2e-overrides', () => ({
+  getTerminalParkFlipNoticeLimitOverride: () => undefined,
   getTerminalParkingPolicyOverrides: () => {
     park.effectRuns += 1
     return { coldParkDelayMs: 60_000, hotRetainMs: 60_000 }

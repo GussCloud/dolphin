@@ -65,6 +65,7 @@ vi.mock('./terminal-parked-tab-watchers', () => ({
 // Counts cold-park effect executions: the effect clears and re-arms its recheck
 // timers on every run, so this is also the per-commit work the identity dep costs.
 vi.mock('./terminal-parking-e2e-overrides', () => ({
+  getTerminalParkFlipNoticeLimitOverride: () => undefined,
   getTerminalParkingPolicyOverrides: () => {
     harness.parkEffectRuns += 1
     return { coldParkDelayMs: 0, hotRetainMs: 0 }

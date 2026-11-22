@@ -57,6 +57,7 @@ vi.mock('../native-chat/use-native-chat-toggle-shortcut', () => ({
 }))
 
 vi.mock('./terminal-parking-e2e-overrides', () => ({
+  getTerminalParkFlipNoticeLimitOverride: () => undefined,
   getTerminalParkingPolicyOverrides: () => ({})
 }))
 
