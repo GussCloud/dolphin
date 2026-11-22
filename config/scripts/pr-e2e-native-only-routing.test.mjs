@@ -42,6 +42,17 @@ describe('native-only PR E2E routing', () => {
     expect(shouldRunChangedE2e(['tests/e2e/future.spec.ts'])).toBe(true)
   })
 
+  it('adds the specs that import a helper the PR changed', () => {
+    const specs = () => [
+      { path: 'tests/e2e/uses.spec.ts', source: "import { x } from './helpers/picker'" },
+      { path: 'tests/e2e/other.spec.ts', source: "import { y } from './helpers/pickerish'" }
+    ]
+    expect(selectChangedE2eSpecs(['tests/e2e/helpers/picker.ts'], specs)).toEqual([
+      'tests/e2e/uses.spec.ts'
+    ])
+    expect(selectChangedE2eSpecs(['src/main/x.ts'], specs)).toEqual([])
+  })
+
   it('selects only the e2e files the PR changed, ignoring the source they cover', () => {
     expect(
       selectChangedE2eSpecs([

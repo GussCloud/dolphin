@@ -112,6 +112,15 @@ export async function returnToAppShell(page: Page): Promise<void> {
   await closeOpenDialogs(page)
 }
 
+/**
+ * The host picker in Add a project. Why not getByRole('combobox'): the dialog also carries the
+ * project's account pickers (GitHub, Azure DevOps, Claude, Codex, commit author); only the host
+ * picker is a popover trigger.
+ */
+export function addProjectHostPicker(addProjectDialog: Locator): Locator {
+  return addProjectDialog.locator('[data-slot="popover-trigger"][role="combobox"]')
+}
+
 /** Add Project → Host → Add remote host → Add SSH host → form dialog. */
 export async function openAddSshHostDialog(page: Page): Promise<Locator> {
   await returnToAppShell(page)
@@ -119,7 +128,7 @@ export async function openAddSshHostDialog(page: Page): Promise<Locator> {
   const addProjectDialog = page.getByRole('dialog', { name: /Add a project/i })
   await expect(addProjectDialog).toBeVisible({ timeout: 10_000 })
 
-  const hostCombobox = addProjectDialog.getByRole('combobox')
+  const hostCombobox = addProjectHostPicker(addProjectDialog)
   await expect(hostCombobox).toBeVisible()
   await hostCombobox.click()
 

@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from 'node:fs'
 import process from 'node:process'
 import { pathToFileURL } from 'node:url'
 
@@ -309,10 +310,32 @@ export function hasWslSourceChange(changedPaths) {
 const CHANGED_E2E_SPEC = /^tests\/e2e\/.*\.(?:spec\.ts|docker\.unit\.test\.ts)$/
 const NATIVE_IME_SPEC = 'tests/e2e/terminal-ibus-hangul-native.spec.ts'
 
-export function selectChangedE2eSpecs(changedPaths) {
-  return [...new Set(changedPaths.filter((file) => CHANGED_E2E_SPEC.test(file)))].sort((a, b) =>
-    a.localeCompare(b)
-  )
+const E2E_HELPER = /^tests\/e2e\/helpers\/([^/]+)\.ts$/
+
+function readSpecSources() {
+  return readdirSync('tests/e2e')
+    .filter((name) => name.endsWith('.spec.ts'))
+    .map((name) => ({
+      path: `tests/e2e/${name}`,
+      source: readFileSync(`tests/e2e/${name}`, 'utf8')
+    }))
+}
+
+/**
+ * The specs a PR changed, plus the specs that import a helper it changed: a helper fix must run
+ * the specs it repairs, or the PR proves nothing. Direct imports only, to keep the set small.
+ */
+export function selectChangedE2eSpecs(changedPaths, specSources = readSpecSources) {
+  const specs = new Set(changedPaths.filter((file) => CHANGED_E2E_SPEC.test(file)))
+  const helpers = changedPaths.map((file) => E2E_HELPER.exec(file)?.[1]).filter(Boolean)
+  if (helpers.length > 0) {
+    for (const { path, source } of specSources()) {
+      if (helpers.some((name) => source.includes(`from './helpers/${name}'`))) {
+        specs.add(path)
+      }
+    }
+  }
+  return [...specs].sort((a, b) => a.localeCompare(b))
 }
 
 /** The native IME spec needs its own ibus session, so it never uses the reusable workflow. */
