@@ -22,12 +22,13 @@ import {
   injectSameIdLocalActivationCollision,
   installFinalActivationGate
 } from './pr11346-selected-runtime-identity-oracle'
+import { addProjectHostPicker } from './helpers/ssh-config-host-picker'
 
 async function selectRuntimeHost(page: Page, runtimeName: string): Promise<Locator> {
   await openSidebarProjectDialog(page)
   const dialog = page.getByRole('dialog', { name: /Add a project/i })
   await expect(dialog).toBeVisible()
-  const hostPicker = dialog.getByRole('combobox')
+  const hostPicker = addProjectHostPicker(dialog)
   if (!(await hostPicker.textContent())?.includes(runtimeName)) {
     await hostPicker.click()
     await page.locator('[cmdk-item]').filter({ hasText: runtimeName }).click()

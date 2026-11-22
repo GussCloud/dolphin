@@ -75,6 +75,7 @@ jobs:
             /config/scripts/pr-code-change-scope.mjs
             /config/scripts/pr-e2e-source-routing.mjs
             /config/scripts/pr-ready-check-reuse.mjs
+            /tests/e2e/*.spec.ts
           sparse-checkout-cone-mode: false
           persist-credentials: false
 
