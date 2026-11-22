@@ -12,6 +12,7 @@ import type {
 import type { WorkspaceSessionState } from '../../shared/workspace-session-state-types'
 import { DolphinRuntimeService } from './dolphin-runtime'
 import * as mobileSessionTerminalProjection from './mobile-session-terminal-projection'
+import type { MobileSessionTabsChangeDelivery } from './mobile-session-tabs-change-delivery'
 
 // Freshness predicate of shouldApplyWebSessionTabsSnapshot in
 // src/renderer/src/runtime/web-session-tabs-sync.ts, copied as a literal
@@ -101,7 +102,11 @@ function createRuntime(initialSession: WorkspaceSessionState) {
     }
   })
   const events: RuntimeMobileSessionTabsResult[] = []
-  const unsubscribe = runtime.onMobileSessionTabsChanged((snapshot) => events.push(snapshot))
+  const deliveries: (MobileSessionTabsChangeDelivery | undefined)[] = []
+  const unsubscribe = runtime.onMobileSessionTabsChanged((snapshot, _sequence, delivery) => {
+    events.push(snapshot)
+    deliveries.push(delivery)
+  })
   const setSession = (next: WorkspaceSessionState): void => {
     session = next
   }
@@ -115,7 +120,7 @@ function createRuntime(initialSession: WorkspaceSessionState) {
       mobileSessionTabs
     })
   }
-  return { runtime, events, sync, setSession, unsubscribe }
+  return { runtime, events, deliveries, sync, setSession, unsubscribe }
 }
 
 function makeRendererSnapshot(args: {
@@ -239,17 +244,22 @@ describe('graph-sync mobile snapshot gating', () => {
   })
 
   it('still emits when the renderer publishes a new version with identical content', () => {
-    const { events, sync } = createRuntime(makeSession())
+    const { events, deliveries, sync } = createRuntime(makeSession())
 
     sync([makeRendererSnapshot({ version: 1 })])
     vi.advanceTimersByTime(300)
     events.length = 0
+    deliveries.length = 0
 
     // Byte-identical content, but a fresh version: a higher version is the
-    // renderer saying "this worktree changed", so it must emit.
+    // renderer saying "this worktree changed", so the runtime must notify —
+    // main may have published a newer live title than its stored copy, so only
+    // a subscription knows whether its client payload actually moved. The
+    // restatement mark is what lets it drop a version-only repeat.
     sync([makeRendererSnapshot({ version: 2 })])
     vi.advanceTimersByTime(60)
     expect(events).toHaveLength(1)
+    expect(deliveries).toEqual([{ rendererRestatement: true }])
   })
 
   it('accepts a renderer-reload epoch with a reset snapshotVersion and emits', () => {

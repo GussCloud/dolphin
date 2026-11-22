@@ -303,6 +303,8 @@ describe.skipIf(runningBaselineOracle)('real runtime session tabs census boundar
     ])
   })
 
+  // Why: every publish here is a renderer restatement, yet wt-b v2 must still ship — this
+  // subscriber was never sent wt-b, so there is no prior frame for it to merely repeat.
   it('coalesces ordinary same-structure churn and replays worktrees in sequence order', async () => {
     const harness = createRuntimeHarness()
     const worktreeB1 = runtimeSnapshot('wt-b', 1)

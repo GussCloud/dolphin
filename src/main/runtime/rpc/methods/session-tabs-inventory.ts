@@ -6,6 +6,11 @@ import { projectSessionTabAgentStatus } from './session-tab-agent-status-project
 import { projectSessionTabBrowserPlacements } from './session-tab-browser-placement-projection'
 import { createSessionTabsRetirementProofDelta } from './session-tabs-retirement-proof-delta'
 import { isStructuredNativeChatEnabled } from './structured-agent-session-policy'
+import {
+  foldMobileSessionTabsChangeDelivery,
+  isSnapshotVersionOnlyRepublish,
+  type MobileSessionTabsChangeDelivery
+} from '../../mobile-session-tabs-change-delivery'
 
 type SessionTabsInventory = {
   snapshots: RuntimeMobileSessionTabsResult[]
@@ -106,7 +111,11 @@ export async function subscribeSessionTabsInventory(
   context.signal?.addEventListener('abort', onTransportAbort, { once: true })
   let initialized = false
   let closed = false
-  const bufferedChanges: { snapshot: SessionTabsChange; changeSequence: number }[] = []
+  const bufferedChanges: {
+    snapshot: SessionTabsChange
+    changeSequence: number
+    delivery?: MobileSessionTabsChangeDelivery
+  }[] = []
   const bufferedOrdinaryChangeByWorktree = new Map<
     string,
     { index: number; membershipKey: string; changeSequence: number }
@@ -154,7 +163,11 @@ export async function subscribeSessionTabsInventory(
     clearBufferedChanges()
     censusInvalidated = true
   }
-  const bufferChange = (snapshot: SessionTabsChange, changeSequence: number): void => {
+  const bufferChange = (
+    snapshot: SessionTabsChange,
+    changeSequence: number,
+    delivery?: MobileSessionTabsChangeDelivery
+  ): void => {
     if (snapshot.navigationIntent !== undefined) {
       const previous = bufferedNavigationIntentByWorktree.get(snapshot.worktree)
       if (previous) {
@@ -173,31 +186,39 @@ export async function subscribeSessionTabsInventory(
     const previous = bufferedOrdinaryChangeByWorktree.get(snapshot.worktree)
     if (previous?.membershipKey === nextMembershipKey) {
       if (changeSequence > previous.changeSequence) {
-        bufferedChanges[previous.index] = { snapshot, changeSequence }
+        const earlier = bufferedChanges[previous.index]
+        const folded = foldMobileSessionTabsChangeDelivery(earlier, delivery)
+        bufferedChanges[previous.index] = { snapshot, changeSequence, delivery: folded }
         previous.changeSequence = changeSequence
       }
       return
     }
     reserveBufferedChange()
-    const index = bufferedChanges.push({ snapshot, changeSequence }) - 1
+    const index = bufferedChanges.push({ snapshot, changeSequence, delivery }) - 1
     bufferedOrdinaryChangeByWorktree.set(snapshot.worktree, {
       index,
       membershipKey: nextMembershipKey,
       changeSequence
     })
   }
-  const publishChange = (snapshot: SessionTabsChange, changeSequence: number): void => {
+  const publishChange = (
+    snapshot: SessionTabsChange,
+    changeSequence: number,
+    delivery?: MobileSessionTabsChangeDelivery
+  ): void => {
     const projected = projectChange(snapshot)
     const state = withoutNavigationIntent(projected)
     const published = publishedSnapshotsByWorktree.get(snapshot.worktree)
-    if (projected.navigationIntent === undefined && isDeepStrictEqual(published, state)) {
+    if (
+      (projected.navigationIntent === undefined && isDeepStrictEqual(published, state)) ||
+      // Why: keep `published` at the version this client holds; a skipped version is harmless
+      // because every client gate only rejects versions older than the one it applied.
+      isSnapshotVersionOnlyRepublish(published, projected, delivery)
+    ) {
       deliveredChangeSequenceByWorktree.set(snapshot.worktree, changeSequence)
       return
     }
-    emit({
-      type: 'updated',
-      ...withProofDelta(projected)
-    })
+    emit({ type: 'updated', ...withProofDelta(projected) })
     if (projected.removed === true) {
       publishedSnapshotsByWorktree.delete(snapshot.worktree)
       deliveredChangeSequenceByWorktree.delete(snapshot.worktree)
@@ -206,20 +227,23 @@ export async function subscribeSessionTabsInventory(
       deliveredChangeSequenceByWorktree.set(snapshot.worktree, changeSequence)
     }
   }
-  const unsubscribe = runtime.onMobileSessionTabsChanged((runtimeSnapshot, changeSequence) => {
-    const snapshot = runtimeSnapshot as SessionTabsChange
-    if (!initialized) {
-      bufferChange(snapshot, changeSequence)
-      return
-    }
-    if (
-      changeSequence <= (censusChangeSequence ?? 0) ||
-      changeSequence <= (deliveredChangeSequenceByWorktree.get(snapshot.worktree) ?? 0)
-    ) {
-      return
-    }
-    publishChange(snapshot, changeSequence)
-  }, pairedDeviceId)
+  const unsubscribe = runtime.onMobileSessionTabsChanged(
+    (runtimeSnapshot, changeSequence, delivery) => {
+      const snapshot = runtimeSnapshot as SessionTabsChange
+      if (!initialized) {
+        bufferChange(snapshot, changeSequence, delivery)
+        return
+      }
+      if (
+        changeSequence <= (censusChangeSequence ?? 0) ||
+        changeSequence <= (deliveredChangeSequenceByWorktree.get(snapshot.worktree) ?? 0)
+      ) {
+        return
+      }
+      publishChange(snapshot, changeSequence, delivery)
+    },
+    pairedDeviceId
+  )
   runtime.registerSubscriptionCleanup(
     subscriptionId,
     () => {
@@ -278,7 +302,7 @@ export async function subscribeSessionTabsInventory(
       break
     }
     if (buffered.changeSequence > changeSequence) {
-      publishChange(buffered.snapshot, buffered.changeSequence)
+      publishChange(buffered.snapshot, buffered.changeSequence, buffered.delivery)
     }
   }
   clearBufferedChanges()

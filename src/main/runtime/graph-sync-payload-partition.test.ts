@@ -136,7 +136,10 @@ describe('graph-sync mobile payload partition', () => {
     expect(storedB).toBeDefined()
     events.length = 0
 
-    // A publishes a change; B is withheld as unchanged rather than omitted.
+    // A publishes a change; B is withheld as unchanged rather than omitted. A's
+    // content is identical, yet the runtime still notifies it: the version bump
+    // is the renderer's change signal, and dropping version-only repeats is a
+    // per-subscription decision (mobile-session-tabs-change-delivery.ts).
     sync([makeSnapshot(WT_A, 3)], [WT_B])
     vi.advanceTimersByTime(300)
 

@@ -269,9 +269,11 @@ export class DolphinRuntimeWithSyncWindowGraph extends DolphinRuntimeWithAttachW
       })
       changedMobileWorktrees.add(worktreeId)
     }
+    // Why: every edge here is the renderer graph restating state; a subscriber whose client
+    // payload is unchanged by it gets no frame (mobile-session-tabs-change-delivery.ts).
     for (const worktreeId of changedMobileWorktrees) {
       if (this.mobileSessionTabsByWorktree.has(worktreeId)) {
-        this.scheduleMobileSessionTabsChanged(worktreeId)
+        this.scheduleMobileSessionTabsChanged(worktreeId, { rendererRestatement: true })
       }
     }
     const isAuthoritativeGraphPublisher = windowId === this.authoritativeWindowId

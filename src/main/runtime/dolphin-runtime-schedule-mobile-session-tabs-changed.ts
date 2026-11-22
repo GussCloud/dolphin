@@ -9,9 +9,23 @@ import type {
 } from '../../shared/runtime-types'
 import { UNPUBLISHED_WORKTREE_PUBLICATION_EPOCH } from '../../shared/runtime-types'
 import { getRuntimeBrowserPageRegistry } from './runtime-browser-page-registry'
+import type { MobileSessionTabsChangeDelivery } from './mobile-session-tabs-change-delivery'
 
 export class DolphinRuntimeWithScheduleMobileSessionTabsChanged extends DolphinRuntimeWithStoredMobileSnapshotHasStalePreservedTab {
-  protected scheduleMobileSessionTabsChanged(worktreeId: string): void {
+  protected scheduleMobileSessionTabsChanged(
+    worktreeId: string,
+    options: { rendererRestatement?: boolean } = {}
+  ): void {
+    const alreadyPending = this.pendingMobileSessionTabsChangeSequenceByWorktree.has(worktreeId)
+    // Why: one main-local edge in the window makes the coalesced emit unconditional.
+    if (
+      options.rendererRestatement === true &&
+      (!alreadyPending || this.pendingRendererRestatementOnlyMobileSessionTabs.has(worktreeId))
+    ) {
+      this.pendingRendererRestatementOnlyMobileSessionTabs.add(worktreeId)
+    } else {
+      this.pendingRendererRestatementOnlyMobileSessionTabs.delete(worktreeId)
+    }
     this.pendingMobileSessionTabsChangeSequenceByWorktree.set(
       worktreeId,
       ++this.mobileSessionTabsChangeSequence
@@ -22,6 +36,7 @@ export class DolphinRuntimeWithScheduleMobileSessionTabsChanged extends DolphinR
   protected cancelScheduledMobileSessionTabsChanged(worktreeId: string): void {
     this.mobileSessionTabsNotifyCoalescer.cancel(worktreeId)
     this.pendingMobileSessionTabsChangeSequenceByWorktree.delete(worktreeId)
+    this.pendingRendererRestatementOnlyMobileSessionTabs.delete(worktreeId)
   }
 
   protected flushScheduledMobileSessionTabsChanged(worktreeId: string): void {
@@ -29,11 +44,21 @@ export class DolphinRuntimeWithScheduleMobileSessionTabsChanged extends DolphinR
     if (changeSequence === undefined) {
       return
     }
+    const rendererRestatement =
+      this.pendingRendererRestatementOnlyMobileSessionTabs.delete(worktreeId)
     this.pendingMobileSessionTabsChangeSequenceByWorktree.delete(worktreeId)
-    this.notifyMobileSessionTabsChangedNow(worktreeId, changeSequence)
+    this.notifyMobileSessionTabsChangedNow(
+      worktreeId,
+      changeSequence,
+      rendererRestatement ? { rendererRestatement: true } : undefined
+    )
   }
 
-  protected notifyMobileSessionTabsChangedNow(worktreeId: string, changeSequence: number): void {
+  protected notifyMobileSessionTabsChangedNow(
+    worktreeId: string,
+    changeSequence: number,
+    delivery?: MobileSessionTabsChangeDelivery
+  ): void {
     if (this.mobileSessionTabListeners.size === 0) {
       return
     }
@@ -46,7 +71,8 @@ export class DolphinRuntimeWithScheduleMobileSessionTabsChanged extends DolphinR
     for (const subscription of this.mobileSessionTabListeners) {
       subscription.listener(
         this.projectMobileSessionTabsForClient(result, subscription.clientNavigationId),
-        changeSequence
+        changeSequence,
+        delivery
       )
     }
   }

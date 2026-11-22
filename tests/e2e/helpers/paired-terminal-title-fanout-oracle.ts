@@ -13,6 +13,8 @@ type TitleTarget = {
 }
 
 type TitleTransportEvent = {
+  /** The frame as the client received it, minus `snapshotVersion`. */
+  contentKey: string
   decodedEnvelopeBytes: number
   snapshotVersion: number
   title: string
@@ -160,6 +162,7 @@ async function installTitleProbe(page: Page, targets: TitleTarget[]): Promise<vo
                 typeof title === 'string'
               ) {
                 probe.transportEvents.push({
+                  contentKey: JSON.stringify({ ...snapshot, snapshotVersion: null }),
                   worktreeId: snapshot.worktree,
                   snapshotVersion: snapshot.snapshotVersion,
                   title,
@@ -291,15 +294,14 @@ async function expectTitles(page: Page, targets: TitleTarget[], expected: string
     .toEqual(Array(targets.length).fill(true))
 }
 
-// Why a bound, not an exact count: a headed host's renderer graph restates each title main
-// already published, at a newer version with identical client content (one echo per
-// transition). Spinner frames fanned out would still blow well past it.
+// Why a bound, not an exact count: a worktree can legitimately republish under one title when
+// other client-visible state settles (a frame of a different size). What must never ship is a
+// frame that repeats the previous one under a newer version — a headed host's renderer graph
+// echo of a title main already published (mobile-session-tabs-change-delivery.ts).
 const MAX_PUBLICATIONS_PER_TITLE_TRANSITION = 2
 
+// The probe records only target worktrees, so the per-target bound below also bounds the total.
 function expectTitleFanoutSample(sample: TitleProbeSample, targets: TitleTarget[]): void {
-  expect(sample.transportEvents.length).toBeLessThanOrEqual(
-    targets.length * 2 * MAX_PUBLICATIONS_PER_TITLE_TRANSITION
-  )
   expect(sample.storeChanges).toHaveLength(targets.length * 2)
   for (const target of targets) {
     const transport = sample.transportEvents.filter(
@@ -310,6 +312,8 @@ function expectTitleFanoutSample(sample: TitleProbeSample, targets: TitleTarget[
     )
     expect(transitions.map((event) => event.title)).toEqual([INITIAL_TITLE, FINAL_TITLE])
     expect(transport.length).toBeLessThanOrEqual(2 * MAX_PUBLICATIONS_PER_TITLE_TRANSITION)
+    const contentKeys = transport.map((event) => event.contentKey)
+    expect(contentKeys.filter((key, index) => key === contentKeys[index - 1])).toEqual([])
     const versions = transport.map((event) => event.snapshotVersion)
     expect(versions).toEqual([...versions].sort((left, right) => left - right))
     expect(transport.every((event) => event.decodedEnvelopeBytes > 0)).toBe(true)
