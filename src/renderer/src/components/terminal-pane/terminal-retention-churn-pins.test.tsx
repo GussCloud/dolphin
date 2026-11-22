@@ -35,6 +35,7 @@ vi.mock('./terminal-parked-tab-watchers', () => ({
 
 // Isolate the worktree verdict from the separate per-tab aging policy.
 vi.mock('./terminal-parking-e2e-overrides', () => ({
+  getTerminalParkFlipNoticeLimitOverride: () => undefined,
   getTerminalParkingPolicyOverrides: () => ({ coldParkDelayMs: 24 * 60 * 60_000 })
 }))
 

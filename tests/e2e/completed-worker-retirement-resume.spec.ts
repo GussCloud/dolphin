@@ -340,14 +340,9 @@ for (const closeMode of ['terminal-close-cli', 'worker-release'] as const) {
       )
       .toEqual({ dispatch: 'completed', task: 'completed' })
 
-    await client.call('terminal.send', {
-      terminal: workerHandle,
-      text: 'DOLPHIN_E2E_EXIT_AFTER_DONE',
-      enter: true
-    })
-    await expect
-      .poll(() => readCompletedWorkerLedger().filter((event) => event.event === 'normal-exit'))
-      .toHaveLength(1)
+    // Why close with the completed agent still in the foreground: once its pane
+    // confirms a shell, the record is cleared there (#21714), so a close after
+    // that exit would no longer prove the close itself retires the record.
     expect(
       await appPage.evaluate(
         ({ paneKey, tabId, worktreeId }) => {

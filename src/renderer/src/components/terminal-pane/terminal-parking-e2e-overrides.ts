@@ -4,6 +4,7 @@ import {
   type TerminalColdParkPolicyOverrides
 } from './terminal-hidden-view-parking'
 import { getParkedTerminalWatcherTabIds } from './terminal-parked-tab-watchers'
+import { TERMINAL_TAB_PARK_FLIP_NOTICE_LIMIT } from './terminal-park-verdict-flip-telemetry'
 import { resolveTabScrollbackBuffers } from './leaf-scrollback-resolution'
 import { useAppStore } from '@/store'
 
@@ -43,6 +44,18 @@ export function getTerminalParkingPolicyOverrides(): TerminalColdParkPolicyOverr
       ? { retentionLimit }
       : {})
   }
+}
+
+// Why: the per-window flip notice limit assumes the production park delay; a shrunk
+// delay lets honest park/reveal cycles reach it, so scale the limit by the same ratio.
+export function getTerminalParkFlipNoticeLimitOverride(): number | undefined {
+  const delayMs = getTerminalParkingPolicyOverrides().coldParkDelayMs
+  if (delayMs === undefined || delayMs >= TERMINAL_TAB_COLD_PARK_DELAY_MS) {
+    return undefined
+  }
+  return Math.ceil(
+    (TERMINAL_TAB_PARK_FLIP_NOTICE_LIMIT * TERMINAL_TAB_COLD_PARK_DELAY_MS) / delayMs
+  )
 }
 
 export function registerTerminalParkingDebugHandle(): void {

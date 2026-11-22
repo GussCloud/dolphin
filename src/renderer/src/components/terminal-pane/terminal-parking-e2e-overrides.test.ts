@@ -29,6 +29,7 @@ type TerminalParkingE2EOverridesModule = {
     retentionLimit?: number
   }
   registerTerminalParkingDebugHandle: () => void
+  getTerminalParkFlipNoticeLimitOverride: () => number | undefined
 }
 
 async function importOverridesModule(): Promise<TerminalParkingE2EOverridesModule> {
@@ -107,6 +108,23 @@ describe('getTerminalParkingPolicyOverrides', () => {
     expect(overridesModule.getTerminalParkingPolicyOverrides()).toEqual({})
     mockE2EConfig = { exposeStore: true, terminalParkingDelayMs: null, terminalRetentionLimit: 0 }
     expect(overridesModule.getTerminalParkingPolicyOverrides()).toEqual({})
+  })
+
+  it('scales the park flip notice limit by the shrunk park delay', async () => {
+    mockE2EConfig = { exposeStore: true, terminalParkingDelayMs: 500, terminalRetentionLimit: null }
+    const { getTerminalParkFlipNoticeLimitOverride } = await importOverridesModule()
+    // 12 flips per window at the 30s production delay → 720 at 500ms.
+    expect(getTerminalParkFlipNoticeLimitOverride()).toBe(720)
+  })
+
+  it('keeps the production park flip notice limit without a delay override', async () => {
+    mockE2EConfig = {
+      exposeStore: false,
+      terminalParkingDelayMs: 500,
+      terminalRetentionLimit: null
+    }
+    const { getTerminalParkFlipNoticeLimitOverride } = await importOverridesModule()
+    expect(getTerminalParkFlipNoticeLimitOverride()).toBeUndefined()
   })
 
   it('registers window.__terminalParkingDebug on import under exposeStore', async () => {

@@ -137,6 +137,21 @@ describe('terminal link action routing', () => {
     expect(run).toHaveBeenCalledOnce()
   })
 
+  it('leaves a plain click with the terminal when plain-click actions are off', () => {
+    const context = actionContext()
+    context.plainClickBehavior = 'none'
+    context.middleClickBehavior = 'open'
+    expect(
+      requestTerminalLinkAction(plainEvent(), context, {
+        destination: 'https://example.com',
+        kind: 'url',
+        primary: { label: 'Open', run: vi.fn() }
+      })
+    ).toBe(false)
+    expect(context.claimPtyMouse).not.toHaveBeenCalled()
+    expect(context.request).not.toHaveBeenCalled()
+  })
+
   it('leaves PTY mouse ownership with an ineligible pointer gesture', () => {
     const context = actionContext()
     context.pointerGesture.canRequestAction = () => false

@@ -103,7 +103,8 @@ vi.mock('./terminal-parked-tab-watchers', async () => {
 })
 
 vi.mock('./terminal-parking-e2e-overrides', () => ({
-  getTerminalParkingPolicyOverrides: () => ({ coldParkDelayMs: 0, hotRetainMs: 0 })
+  getTerminalParkingPolicyOverrides: () => ({ coldParkDelayMs: 0, hotRetainMs: 0 }),
+  getTerminalParkFlipNoticeLimitOverride: () => undefined
 }))
 
 vi.mock('@/lib/crash-breadcrumb-recorder', () => ({

@@ -35,7 +35,11 @@ test('draws and copies a screenshot from a client-hosted browser without replaci
     const target = { urlPrefix: fixture.origin, remotePageId: browser.remotePageId }
     await waitForRenderedClientWebview(client.page, target, 'client-hosted fixture never rendered')
 
-    await client.page.getByRole('button', { name: 'Got it', exact: true }).click()
+    // Why: the Draw button's own first-use hint also says "Got it"; clicking Draw dismisses it.
+    await client.page
+      .getByRole('dialog', { name: 'This page renders on your desktop' })
+      .getByRole('button', { name: 'Got it', exact: true })
+      .click()
     await testInfo.attach('client-hosted-toolbar', {
       body: await client.page.screenshot({ path: testInfo.outputPath('toolbar.png') }),
       contentType: 'image/png'
@@ -46,6 +50,9 @@ test('draws and copies a screenshot from a client-hosted browser without replaci
     const overlay = client.page.locator('[data-dolphin-markup-overlay]')
     await expect(overlay).toBeVisible()
     await expect(overlay.locator('img')).toHaveAttribute('src', /^data:image\/png;base64,/)
+    // Why: a hidden test window composites only on demand, so input keeps hit-testing the frame
+    // drawn before the overlay, where the guest sits; a capture draws the overlay first.
+    await client.page.screenshot()
     const canvas = overlay.locator('canvas')
     const bounds = await canvas.boundingBox()
     if (!bounds) {

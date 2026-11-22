@@ -92,6 +92,9 @@ async function buildFixtureEntry(entryPoint: string, outfile: string): Promise<v
     target: 'node20',
     packages: 'external',
     external: ['node-pty'],
+    // Why: the bundle lives in the OS temp dir, so it resolves node-pty only through
+    // NODE_PATH, which ESM import() ignores; lower import() to require().
+    supported: { 'dynamic-import': false },
     logLevel: 'silent'
   })
 }
