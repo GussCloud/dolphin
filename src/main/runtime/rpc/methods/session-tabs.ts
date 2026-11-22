@@ -16,6 +16,7 @@ import { SESSION_TAB_MUTATION_METHODS } from './session-tab-mutation-methods'
 import { createSessionTabsRetirementProofDelta } from './session-tabs-retirement-proof-delta'
 import { restoreStructuredTabsIfSupported } from './structured-session-tab-restore'
 import { isStructuredNativeChatEnabled } from './structured-agent-session-policy'
+import { isSnapshotVersionOnlyRepublish } from '../../mobile-session-tabs-change-delivery'
 import { assertLegacyAiVaultResumeCommandAllowed } from '../../../ai-vault/structured-session-ownership'
 import { SessionTabsUnsubscribeAllParams } from '../../../../shared/rpc-contract/session-tabs-params'
 import { SESSION_TABS_SPLIT_GROUP_PLACEMENT_RUNTIME_CAPABILITY } from '../../../../shared/protocol-version'
@@ -129,36 +130,34 @@ export const SESSION_TAB_METHODS = [
         return
       }
       const withProofDelta = createSessionTabsRetirementProofDelta(clientCapabilities)
-      emit({
-        type: 'snapshot',
-        ...withProofDelta(
-          projectSessionTabsForClient(
-            initial,
-            clientKind,
-            clientCapabilities,
-            isStructuredNativeChatEnabled(runtime)
-          )
-        )
-      })
+      // Why: per stream, so a fresh subscribe (reconnect) always starts from a full snapshot.
+      let lastSent = projectSessionTabsForClient(
+        initial,
+        clientKind,
+        clientCapabilities,
+        isStructuredNativeChatEnabled(runtime)
+      )
+      emit({ type: 'snapshot', ...withProofDelta(lastSent) })
       initialized = true
       if (closed) {
         return
       }
 
-      unsubscribe = runtime.onMobileSessionTabsChanged((snapshot) => {
-        if (snapshot.worktree === subscribedWorktree) {
-          emit({
-            type: 'updated',
-            ...withProofDelta(
-              projectSessionTabsForClient(
-                snapshot,
-                clientKind,
-                clientCapabilities,
-                isStructuredNativeChatEnabled(runtime)
-              )
-            )
-          })
+      unsubscribe = runtime.onMobileSessionTabsChanged((snapshot, _changeSequence, delivery) => {
+        if (snapshot.worktree !== subscribedWorktree) {
+          return
         }
+        const projected = projectSessionTabsForClient(
+          snapshot,
+          clientKind,
+          clientCapabilities,
+          isStructuredNativeChatEnabled(runtime)
+        )
+        if (isSnapshotVersionOnlyRepublish(lastSent, projected, delivery)) {
+          return
+        }
+        lastSent = projected
+        emit({ type: 'updated', ...withProofDelta(projected) })
       }, pairedDeviceId)
       if (closed) {
         unsubscribe()

@@ -8,7 +8,7 @@ import {
 import type { ResolvedWorktree } from './runtime-worktree-path-identity'
 import { resolveWorktreeHostRouting } from './worktree-launch-host-repo'
 import { findRuntimeWorkspaceFileOwner } from '../../shared/runtime-workspace-file-owner'
-import type { RuntimeMobileSessionTabsResult } from '../../shared/runtime-types'
+import type { MobileSessionTabsChangeListener } from './mobile-session-tabs-change-delivery'
 import { randomUUID } from 'node:crypto'
 import type { PtyIncarnationId } from '../../shared/pty-incarnation'
 
@@ -84,7 +84,7 @@ export class DolphinRuntimeWithResolveKnownWorkspaceFileTarget extends DolphinRu
   }
 
   onMobileSessionTabsChanged(
-    listener: (snapshot: RuntimeMobileSessionTabsResult, changeSequence: number) => void,
+    listener: MobileSessionTabsChangeListener,
     clientNavigationId?: string
   ): () => void {
     // Why: a notify coalesced before this subscriber existed is already folded

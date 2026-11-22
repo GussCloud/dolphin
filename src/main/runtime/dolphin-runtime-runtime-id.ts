@@ -13,7 +13,6 @@ import type { RuntimeOrchestrationFederation } from './runtime-orchestration-fed
 import type {
   RuntimeGraphStatus,
   RuntimeMobileSessionCreateTerminalResult,
-  RuntimeMobileSessionTabsResult,
   RuntimeMobileSessionTabsSnapshot,
   RuntimeSyncedTab,
   RuntimeTerminalFocus,
@@ -30,6 +29,7 @@ import { WorktreeTerminalMutationLock } from './worktree-terminal-mutation-lock'
 import { RemoteRuntimeTerminalCreateIdempotency } from './remote-runtime-terminal-create-idempotency'
 import type { PtyIncarnationId } from '../../shared/pty-incarnation'
 import type { MobileSessionTabsNotifyCoalescer } from './mobile-session-tabs-notify-coalescer'
+import type { MobileSessionTabsChangeListener } from './mobile-session-tabs-change-delivery'
 import { createMobileSessionTabsNotifyCoalescer } from './mobile-session-tabs-notify-coalescer'
 import type { MobileSessionTabsAgentStatusHeartbeat } from './mobile-session-tabs-agent-status-heartbeat'
 import { createMobileSessionTabsAgentStatusHeartbeat } from './mobile-session-tabs-agent-status-heartbeat'
@@ -218,11 +218,15 @@ export class DolphinRuntimeWithRuntimeId {
   >()
 
   protected mobileSessionTabListeners = new Set<{
-    listener: (snapshot: RuntimeMobileSessionTabsResult, changeSequence: number) => void
+    listener: MobileSessionTabsChangeListener
     clientNavigationId?: string
   }>()
 
   protected pendingMobileSessionTabsChangeSequenceByWorktree = new Map<string, number>()
+
+  // Why: pending worktrees whose every coalesced edge was a renderer graph restatement; see
+  // mobile-session-tabs-change-delivery.ts.
+  protected pendingRendererRestatementOnlyMobileSessionTabs = new Set<string>()
 
   // Why: one watermark per repo replaces per-closed-pane fences while preserving stale-write safety.
   protected terminalTopologyRevisionByRepoId = new Map<string, number>()
