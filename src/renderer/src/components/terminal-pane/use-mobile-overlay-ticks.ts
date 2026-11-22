@@ -117,7 +117,8 @@ export function useMobileOverlayTicks({ managerRef, paneTransportsRef }: MobileO
             applyDesktopFitFallbackAfterReplay(pane, {
               ...event,
               // Why: the timeout/replay queue can outlive this pane binding; never apply old server dims to a replacement PTY.
-              shouldApply: () => getAffectedPanes().includes(pane)
+              // Why by id: getPanes() builds new view objects on every call.
+              shouldApply: () => getAffectedPanes().some((affected) => affected.id === pane.id)
             })
           }
         })
