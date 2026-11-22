@@ -81,7 +81,9 @@ function tick() {
   process.stdout.write(out)
   if (heartbeatPath) {
     try {
-      fs.writeFileSync(heartbeatPath, String(frame))
+      // Why rename: writeFileSync truncates first, so a racing reader sees '' (frame 0).
+      fs.writeFileSync(`${heartbeatPath}.tmp`, String(frame))
+      fs.renameSync(`${heartbeatPath}.tmp`, heartbeatPath)
     } catch {
       // heartbeat is best-effort; the stream itself is the product
     }

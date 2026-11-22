@@ -18,6 +18,7 @@ import { projectPluginAgentStatusChangedPayload } from '../plugins/plugin-agent-
 import { setMainPluginLanguagePacks, setMainUiLanguage } from '../i18n/main-i18n'
 import { rebuildAppMenu } from '../menu/register-app-menu'
 import { logStartupMilestone } from './startup-diagnostics'
+import { runAfterFirstWindowShown } from './first-window-deferral'
 import { agentHookServer } from '../agent-hooks/server'
 import { emitPluginWorktreeLifecycle } from './main-process-pty-startup'
 import { startMainProcessTelegramBridge } from './main-process-telegram'
@@ -34,13 +35,15 @@ import { startMainProcessOrchestrationChannel } from './main-process-orchestrati
 import { mainProcessState as state } from './main-process-state'
 import type { DolphinRuntimeService } from '../runtime/dolphin-runtime'
 
+// Headless serve has no window; its RPC consumers start discovery through whenReady().
+const PLUGIN_DISCOVERY_FALLBACK_MS = 5_000
+
 export async function initializeMainProcessPlugins(runtime: DolphinRuntimeService): Promise<void> {
   const store = state.store
   const keybindings = state.keybindings
   if (!store || !keybindings) {
     throw new Error('Store and keybindings must be initialized before plugins')
   }
-  const pluginSystemStartupStartedAt = performance.now()
   state.pluginKillListService = new PluginKillListService({
     pluginsDataDir: getPluginsDataDir(app.getPath('userData'))
   })
@@ -129,17 +132,6 @@ export async function initializeMainProcessPlugins(runtime: DolphinRuntimeServic
     applyEnablement: (pluginKey, enabled) =>
       applyPluginEnablement({ store, pluginService: state.pluginService!, pluginKey, enabled })
   })
-  // Lazy kernel: initialize() only discovers manifests — no worker forks, no
-  // panel reads. Zero plugin code runs before an explicit trigger.
-  void state.pluginService
-    .initialize()
-    .then(() => {
-      logStartupMilestone('plugin-system-initialized', {
-        durationMs: Number((performance.now() - pluginSystemStartupStartedAt).toFixed(2)),
-        installedPlugins: state.pluginService?.getDiscovered().length ?? 0
-      })
-    })
-    .catch((error) => console.warn('[plugins] failed to initialize plugin service:', error))
   if (app.isPackaged && store.getSettings().pluginSystemEnabled === true) {
     void state.pluginKillListService
       .refresh()
@@ -160,8 +152,24 @@ export async function initializeMainProcessPlugins(runtime: DolphinRuntimeServic
       }
     }
   })
-  requestBundledPluginBootstrap()
-  requestOfficialMarketplaceSeed()
+  // Why deferred: discovery and bundled publishing read every plugin dir on the libuv
+  // threadpool the first window paints from; consumers start it early via whenReady().
+  runAfterFirstWindowShown(() => {
+    const discoveryStartedAt = performance.now()
+    // Lazy kernel: initialize() only discovers manifests — no worker forks, no
+    // panel reads. Zero plugin code runs before an explicit trigger.
+    void state.pluginService
+      ?.initialize()
+      .then(() => {
+        logStartupMilestone('plugin-system-initialized', {
+          durationMs: Number((performance.now() - discoveryStartedAt).toFixed(2)),
+          installedPlugins: state.pluginService?.getDiscovered().length ?? 0
+        })
+      })
+      .catch((error) => console.warn('[plugins] failed to initialize plugin service:', error))
+    requestBundledPluginBootstrap()
+    requestOfficialMarketplaceSeed()
+  }, PLUGIN_DISCOVERY_FALLBACK_MS)
   // v0 plugin event seams: agent status (hook pipeline tap) + worktree
   // lifecycle (runtime tap). Server-side filtered per plugin subscription.
   agentHookServer.subscribeEnrichedStatus((enriched) => {
