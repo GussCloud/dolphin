@@ -14,6 +14,14 @@ export function browserOverlayOwnsShortcutTarget(
   )
 }
 
+/** Whether the target is a browser pane's renderer chrome (address bar, toolbar), not its guest page. */
+export function isBrowserChromeShortcutTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element) || target.tagName === 'WEBVIEW') {
+    return false
+  }
+  return target.closest('[data-browser-overlay-tab-id]') !== null
+}
+
 /** Whether a pane in this shortcut scope should answer a chrome-focus chord. */
 export function browserChromeShortcutOwnsEvent(
   chromeShortcutScope: BrowserChromeShortcutScope,

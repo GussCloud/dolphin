@@ -5,6 +5,7 @@ import {
   toModifierDoubleTapEvent
 } from '../../shared/modifier-double-tap-detector'
 import {
+  keybindingScopeMatchesInput,
   normalizeTerminalShortcutPolicy,
   type KeybindingMatchOptions
 } from '../../shared/keybindings'
@@ -201,6 +202,14 @@ export function installMainWindowShortcutRouting(args: {
       !input.alt &&
       !input.shift &&
       modForBold
+    ) {
+      return
+    }
+
+    // Why: a chord bound to a browser action (Mod+L) belongs to the focused browser chrome, not a window shortcut on the same keys.
+    if (
+      focus.isBrowserChromeFocused() &&
+      keybindingScopeMatchesInput('browser', input, process.platform, keybindings)
     ) {
       return
     }

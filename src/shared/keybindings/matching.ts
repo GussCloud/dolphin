@@ -3,9 +3,15 @@ import type {
   KeybindingInput,
   KeybindingOverrides,
   KeybindingMatchOptions,
+  KeybindingScope,
   ParsedKeybinding
 } from './types'
-import { DEFINITIONS_BY_ID, DIGIT_INDEX_KEY_PATTERN, isDigitIndexActionId } from './definitions'
+import {
+  DEFINITIONS_BY_ID,
+  DIGIT_INDEX_KEY_PATTERN,
+  KEYBINDING_DEFINITIONS,
+  isDigitIndexActionId
+} from './definitions'
 import { canonicalizeParsedKeybinding, parseKeybinding } from './parser'
 import {
   platformModifiers,
@@ -97,6 +103,21 @@ export function keybindingMatchesAction(
   }
   return getEffectiveKeybindingsForAction(actionId, platform, overrides).some((binding) =>
     keybindingMatchesInput(binding, input, platform)
+  )
+}
+
+/** Whether the input matches any effective binding of an action in `scope`. */
+export function keybindingScopeMatchesInput(
+  scope: KeybindingScope,
+  input: KeybindingInput,
+  platform: NodeJS.Platform,
+  overrides?: KeybindingOverrides,
+  options: KeybindingMatchOptions = {}
+): boolean {
+  return KEYBINDING_DEFINITIONS.some(
+    (definition) =>
+      definition.scope === scope &&
+      keybindingMatchesAction(definition.id, input, platform, overrides, options)
   )
 }
 

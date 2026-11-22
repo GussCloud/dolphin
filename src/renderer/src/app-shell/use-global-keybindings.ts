@@ -20,8 +20,11 @@ import {
 } from '../components/right-sidebar/file-search-include-pattern'
 import { usePluginCommands } from '@/store/plugin-panels'
 import { useAppStore } from '../store'
+import { installBrowserChromeFocusReporting } from '@/components/browser-pane/assemble-chrome/browser-chrome-focus-reporting'
+import { isBrowserChromeShortcutTarget } from '@/components/browser-pane/describe-page/browser-overlay-shortcut-target'
 import {
   keybindingMatchesAction,
+  keybindingScopeMatchesInput,
   type KeybindingActionId,
   type KeybindingMatchOptions
 } from '../../../shared/keybindings'
@@ -82,6 +85,7 @@ export function useGlobalKeybindings(args: {
 
   useEffect(() => {
     const doubleTapDetector = new ModifierDoubleTapDetector()
+    const uninstallBrowserChromeFocusReporting = installBrowserChromeFocusReporting()
 
     const unregisterAppCommandDispatcher = registerAppCommandDispatcher((actionId) =>
       (createAppCommandHandlers(shortcutStateRef.current).get(actionId) ?? (() => false))()
@@ -112,6 +116,13 @@ export function useGlobalKeybindings(args: {
       if (
         input.target instanceof Element &&
         input.target.closest('[data-shortcut-recorder-active]') !== null
+      ) {
+        return
+      }
+      // A browser chord pressed in browser chrome belongs to that pane (Mod+L focuses its address bar, not the right sidebar).
+      if (
+        isBrowserChromeShortcutTarget(input.target) &&
+        keybindingScopeMatchesInput('browser', input, shortcutPlatform, keybindings)
       ) {
         return
       }
@@ -320,6 +331,7 @@ export function useGlobalKeybindings(args: {
     window.addEventListener('blur', onBlur)
     return () => {
       unregisterAppCommandDispatcher()
+      uninstallBrowserChromeFocusReporting()
       window.removeEventListener('keydown', onKeyDown, { capture: true })
       window.removeEventListener('keyup', onKeyUp, { capture: true })
       window.removeEventListener('blur', onBlur)

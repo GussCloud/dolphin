@@ -129,6 +129,9 @@ export const uiClipboardAndWindowControlsApi = {
   setMarkdownEditorFocused: (focused: boolean): void => {
     ipcRenderer.send('ui:setMarkdownEditorFocused', focused)
   },
+  setBrowserChromeFocused: (focused: boolean): void => {
+    ipcRenderer.send('ui:setBrowserChromeFocused', focused)
+  },
   setRichMarkdownContextMenuTarget: (target: RichMarkdownContextMenuTableTarget | null): void => {
     ipcRenderer.send(richMarkdownContextMenuTargetChannel, target)
   },
