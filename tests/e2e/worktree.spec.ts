@@ -23,6 +23,7 @@ import { openSidebarWorkspaceComposer } from './helpers/sidebar-project-dialog'
 import type { ConsoleMessage } from '@playwright/test'
 import { test, expect } from './helpers/dolphin-app'
 import { advanceComposerToCreateStep } from './helpers/composer-wizard'
+import { removeSeededRepoRemotes } from './helpers/seeded-test-repo'
 import {
   waitForSessionReady,
   waitForActiveWorktree,
@@ -32,6 +33,12 @@ import {
 } from './helpers/store'
 
 test.describe('Create Workspace', () => {
+  // Why: the pasted-URL tests need a project with no origin; with another repo's
+  // origin the composer asks "Switch project?" instead of looking the URL up.
+  test.beforeAll(({ testRepoPath }) => {
+    removeSeededRepoRemotes(testRepoPath)
+  })
+
   test.beforeEach(async ({ appPage }) => {
     await waitForSessionReady(appPage)
     await waitForActiveWorktree(appPage)

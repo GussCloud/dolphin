@@ -4,7 +4,7 @@
  */
 
 import { existsSync, mkdirSync, mkdtempSync, realpathSync, writeFileSync } from 'node:fs'
-import { execSync } from 'node:child_process'
+import { execFileSync, execSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import os from 'node:os'
 import path from 'node:path'
@@ -67,4 +67,19 @@ export function createSeededTestRepo(options: { publishPath?: boolean } = {}): s
     writeFileSync(TEST_REPO_PATH_FILE, testRepoDir)
   }
   return testRepoDir
+}
+
+/**
+ * Drops every remote a spec added to the shared seeded repo. Why: the repo is
+ * reused by every later spec in the worker, and a leftover origin makes a pasted
+ * URL for another repository open the composer's "Switch project?" prompt.
+ */
+export function removeSeededRepoRemotes(repoPath: string): void {
+  const remotes = execFileSync('git', ['remote'], { cwd: repoPath, encoding: 'utf8' })
+    .split(/\r?\n/)
+    .map((name) => name.trim())
+    .filter(Boolean)
+  for (const remote of remotes) {
+    execFileSync('git', ['remote', 'remove', remote], { cwd: repoPath, stdio: 'pipe' })
+  }
 }

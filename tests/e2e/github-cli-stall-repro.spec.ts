@@ -3,6 +3,7 @@ import { chmodSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { test as base, expect } from './helpers/dolphin-app'
+import { removeSeededRepoRemotes } from './helpers/seeded-test-repo'
 import { waitForSessionReady } from './helpers/store'
 
 const fakeGhDir = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-fake-gh-'))
@@ -60,8 +61,9 @@ const test = base.extend({
   ]
 })
 
-test.afterAll(() => {
+test.afterAll(({ testRepoPath }) => {
   rmSync(fakeGhDir, { recursive: true, force: true })
+  removeSeededRepoRemotes(testRepoPath)
 })
 
 function configureGitHubRemote(repoPath: string): void {
