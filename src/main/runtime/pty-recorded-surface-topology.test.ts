@@ -44,6 +44,10 @@ describe('ptyHoldsRecordedSurface', () => {
     )
   })
 
+  it('holds the surface when the graph keeps the recorded pane but binds no PTY to it', () => {
+    expect(ptyHoldsRecordedSurface(pty(), topology({ ptyIdHoldingPane: () => null }))).toBe(true)
+  })
+
   it('keeps every pane attached when a lost graph empties the leaf map', () => {
     // Losing the graph clears every leaf without advancing the sequence, so the panes it held
     // keep a current stamp. Reading that emptiness as absence would orphan them all at once.

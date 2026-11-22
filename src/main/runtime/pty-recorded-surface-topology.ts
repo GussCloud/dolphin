@@ -62,7 +62,7 @@ export function recordPtySurface(
 export type PtySurfaceTopology = {
   /** Monotonic count of authoritative graph statements applied so far. */
   graphSequence: number
-  /** The ptyId the graph currently binds to this pane, or undefined when it holds no such pane. */
+  /** The ptyId the graph binds to this pane: null when the pane is unbound, undefined when absent. */
   ptyIdHoldingPane: (tabId: string, leafId: string) => string | null | undefined
 }
 
@@ -81,5 +81,8 @@ export function ptyHoldsRecordedSurface(
   if (pty.surfaceRecordedAtGraphSequence >= topology.graphSequence) {
     return true
   }
-  return topology.ptyIdHoldingPane(pane.tabId, pane.leafId) === pty.ptyId
+  const holder = topology.ptyIdHoldingPane(pane.tabId, pane.leafId)
+  // Why: a pane the graph keeps but has not bound yet (hydration, a lost renderer
+  // binding) still owns its PTY; calling it unowned mints a second tab for it.
+  return holder === null || holder === pty.ptyId
 }
