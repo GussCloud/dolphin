@@ -1,6 +1,6 @@
 import type { ComposerModel } from './composer-model'
 
-type MultipleCreateResetInput = Pick<
+type MultipleCreateResetInput = { onReset?: () => void } & Pick<
   ComposerModel,
   | 'handleClearSmartNameSelection'
   | 'lastAutoNameRef'
@@ -19,6 +19,7 @@ export function useMultipleCreateReset(input: MultipleCreateResetInput) {
     handleClearSmartNameSelection,
     lastAutoNameRef,
     nameInputRef,
+    onReset,
     setAgentPrompt,
     setAttachmentPaths,
     setCreateError,
@@ -34,11 +35,14 @@ export function useMultipleCreateReset(input: MultipleCreateResetInput) {
     setNote('')
     setAttachmentPaths([])
     setCreateError(null)
+    // Why: the name field lives on the wizard's first step; return there before focusing it.
+    onReset?.()
     requestAnimationFrame(() => nameInputRef.current?.focus())
   }, [
     handleClearSmartNameSelection,
     lastAutoNameRef,
     nameInputRef,
+    onReset,
     setAgentPrompt,
     setAttachmentPaths,
     setCreateError,

@@ -139,6 +139,8 @@ function QuickTabBody({
   active: boolean
 }): React.JSX.Element {
   const settings = useAppStore((s) => s.settings)
+  // Why a ref: the wizard step state is created below, after the composer state it depends on.
+  const returnToFirstStepRef = useRef<() => void>(() => undefined)
   const {
     cardProps,
     composerRef,
@@ -162,6 +164,7 @@ function QuickTabBody({
     ...(modalData.initialBaseBranch ? { initialBaseBranch: modalData.initialBaseBranch } : {}),
     persistDraft: false,
     onCreated: onClose,
+    onResetForNextCreate: () => returnToFirstStepRef.current(),
     isSubmissionCancelled,
     ...(modalData.telemetrySource ? { telemetrySource: modalData.telemetrySource } : {}),
     enableIssueAutomation: modalData.enableIssueAutomation === true,
@@ -253,6 +256,9 @@ function QuickTabBody({
   const [autonomousGoalDraft, setAutonomousGoalDraft] = useState<AutonomousGoalDraft>(() =>
     createAutonomousGoalDraft(quickAgent)
   )
+  useEffect(() => {
+    returnToFirstStepRef.current = () => setAutonomousGoalDraft((draft) => ({ ...draft, step: 1 }))
+  }, [])
   // Why: a coordinator binds one worktree's terminal; folder and multi-project targets have none.
   const effectiveAutonomousGoalDraft = useMemo(
     () =>

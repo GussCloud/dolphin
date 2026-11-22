@@ -27,6 +27,7 @@ export type ComposerStateInput = {
   initialBaseBranch?: string
   persistDraft: boolean
   onCreated?: () => void
+  onResetForNextCreate?: () => void
   isSubmissionCancelled?: () => boolean
   repoIdOverride?: string
   onRepoIdOverrideChange?: (value: string) => void
@@ -50,6 +51,7 @@ export function useComposerTargetStore(options: ComposerStateInput, decisions: C
     initialBaseBranch,
     persistDraft,
     onCreated,
+    onResetForNextCreate,
     isSubmissionCancelled = NEVER_CANCEL_COMPOSER_SUBMIT,
     repoIdOverride,
     onRepoIdOverrideChange,
@@ -173,6 +175,7 @@ export function useComposerTargetStore(options: ComposerStateInput, decisions: C
     initialBaseBranch,
     persistDraft,
     onCreated,
+    onResetForNextCreate,
     isSubmissionCancelled,
     repoIdOverride,
     onRepoIdOverrideChange,

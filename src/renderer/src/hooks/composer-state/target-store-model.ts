@@ -34,6 +34,7 @@ export type ComposerTargetStoreModel = {
   initialBaseBranch: string | undefined
   persistDraft: boolean
   onCreated: (() => void) | undefined
+  onResetForNextCreate: (() => void) | undefined
   isSubmissionCancelled: () => boolean
   repoIdOverride: string | undefined
   onRepoIdOverrideChange: ((value: string) => void) | undefined
