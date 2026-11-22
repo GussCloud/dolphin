@@ -6,6 +6,7 @@ import { test as base, expect } from './helpers/dolphin-app'
 import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 import { getTerminalContent } from './helpers/terminal'
 import { advanceComposerToCreateStep } from './helpers/composer-wizard'
+import { removeSeededRepoRemotes } from './helpers/seeded-test-repo'
 
 const ISSUE_NUMBER = 6613
 const ISSUE_TITLE = 'Start a newly created issue without losing its context'
@@ -126,6 +127,10 @@ function configureGitHubRemote(repoPath: string): void {
 // minutes — so adding origin inside the test body can never recover.
 test.beforeAll(({ testRepoPath }) => {
   configureGitHubRemote(testRepoPath)
+})
+
+test.afterAll(({ testRepoPath }) => {
+  removeSeededRepoRemotes(testRepoPath)
 })
 
 test('starting a just-created GitHub issue launches Claude with its URL prefilled', async ({

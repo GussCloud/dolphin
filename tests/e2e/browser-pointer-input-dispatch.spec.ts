@@ -224,10 +224,52 @@ test('dispatches coordinate pointer input fast enough for real gestures', async 
         return (performance.now() - started) / REPEATS
       }
 
+      // Why: the guest's longest recent frame gap, which a move's ack can wait on; the max,
+      // since a never-shown window mixes 16ms and 1s gaps.
+      const frameMs = async (): Promise<number> => {
+        const response: unknown = await window.api.runtime.call({
+          method: 'browser.eval',
+          params: {
+            page: targetPage,
+            expression: `new Promise((resolve) => {
+              const stamps = []
+              const tick = (now) => {
+                stamps.push(now)
+                if (stamps.length < 6) requestAnimationFrame(tick)
+                else resolve(Math.max(...stamps.slice(2).map((stamp, i) => stamp - stamps[i + 1])))
+              }
+              requestAnimationFrame(tick)
+            })`
+          }
+        })
+        const result =
+          response !== null && typeof response === 'object' && 'result' in response
+            ? response.result
+            : null
+        const value = Number(
+          result !== null && typeof result === 'object' && 'result' in result
+            ? result.result
+            : Number.NaN
+        )
+        if (!Number.isFinite(value)) {
+          throw new Error(`frame probe failed: ${JSON.stringify(response)}`)
+        }
+        return value
+      }
+
+      const evalControl = await meanMs(() => call('browser.eval', { expression: '1' }))
+      await call('browser.mouseMove', { x: 400, y: 400 })
       return {
         // Why: the control — same socket, same queue, no pointer dispatch. Anything a
         // pointer event costs above this is the dispatch itself.
-        evalControl: await meanMs(() => call('browser.eval', { expression: '1' })),
+        evalControl,
+        // Why: a press and a release with no move between are acked without waiting for a
+        // frame, so this pair is the dispatch cost alone on any host and any frame clock.
+        press: await meanMs(async () => {
+          await call('browser.mouseDown', { button: 'left' })
+          await call('browser.mouseUp', { button: 'left' })
+        }),
+        frame: await frameMs(),
         mouseMove: await meanMs((i) => call('browser.mouseMove', { x: 60 + (i % 20), y: 300 })),
         mouseWheel: await meanMs(() => call('browser.mouseWheel', { dy: 1 })),
         click: await meanMs(async (i) => {
@@ -246,11 +288,15 @@ test('dispatches coordinate pointer input fast enough for real gestures', async 
 
     // Why: absolute milliseconds vary by host, so compare against browser.eval on the same
     // socket and queue — a pointer event that spawns the helper costs that plus a process
-    // launch. Measured multiples of the control: in process 1.5x/1.5x/4x, via the helper
-    // 5.7x/5.5x/20.5x. These thresholds sit between the two, not near either.
-    expect(latency.mouseMove, latencyReport).toBeLessThan(latency.evalControl * 3)
-    expect(latency.mouseWheel, latencyReport).toBeLessThan(latency.evalControl * 3)
-    expect(latency.click, latencyReport).toBeLessThan(latency.evalControl * 10)
+    // launch, on every event. The press pair measures that directly (in process ~2x the
+    // control). A move is acked on the guest's next frame, so its bound adds the measured
+    // frame period. Wheel and held-button moves are only reported: in a window that was never
+    // shown (every headless run) Chromium acks them about once a second whatever the dispatch
+    // costs (~16ms in a visible window), and all four share the dispatch the press gates.
+    expect(latency.press, latencyReport).toBeLessThan(latency.evalControl * 6)
+    expect(latency.mouseMove, latencyReport).toBeLessThan(
+      latency.frame * 2 + latency.evalControl * 3
+    )
 
     // ── Gesture fidelity ──
 
