@@ -31,6 +31,25 @@ async function pauseForVisualProof(page: Page): Promise<void> {
   }
 }
 
+// Delete focus only hands off to an awake sibling, so the successor is the primary with a live PTY.
+async function waitForAwakePrimaryWorktree(page: Page): Promise<void> {
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const state = window.__store?.getState()
+        const repo = state?.repos[0]
+        if (!state || !repo) {
+          return false
+        }
+        const primary = state.worktreesByRepo[repo.id]?.find((worktree) => worktree.isMainWorktree)
+        return (primary ? (state.tabsByWorktree[primary.id] ?? []) : []).some(
+          (tab) => (state.ptyIdsByTabId[tab.id]?.length ?? 0) > 0
+        )
+      })
+    )
+    .toBe(true)
+}
+
 async function seedActiveDeletionRows(page: Page): Promise<{
   belowId: string
   successorId: string
@@ -74,13 +93,12 @@ async function seedActiveDeletionRows(page: Page): Promise<{
       })
       const target = worktrees[targetIndex]
       const below = worktrees[targetIndex + 1]
-      const successor = worktrees[0]
-      if (!target || !below || !successor) {
+      if (!target || !below) {
         throw new Error('Synthetic worktree fixture is too small')
       }
       const targetId = target.id
       const belowId = below.id
-      const successorId = successor.id
+      const successorId = source.id
 
       store.setState({
         activeRepoId: repo.id,
@@ -114,7 +132,10 @@ async function seedActiveDeletionRows(page: Page): Promise<{
         showSleepingWorkspaces: true,
         sidebarOpen: true,
         sortBy: 'manual',
-        worktreesByRepo: { ...state.worktreesByRepo, [repo.id]: worktrees },
+        worktreesByRepo: {
+          ...state.worktreesByRepo,
+          [repo.id]: [{ ...source, manualOrder: count + 1, sortOrder: count + 1 }, ...worktrees]
+        },
         removeWorktree: async (target) => {
           const id = typeof target === 'string' ? target : target.id
           store.setState((current) => ({
@@ -236,6 +257,7 @@ test('deleting the active scrolled worktree preserves position and closes the ro
 }) => {
   await waitForSessionReady(appPage)
   await appPage.setViewportSize({ width: 1_200, height: 800 })
+  await waitForAwakePrimaryWorktree(appPage)
   const { belowId, successorId, targetId } = await seedActiveDeletionRows(appPage)
   await prepareScrolledActiveRow(appPage, targetId)
   const target = appPage.locator(
