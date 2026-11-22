@@ -33,6 +33,7 @@ import type {
   PtyTransportRecoveryState
 } from './pty-transport-types'
 import { createPtyOutputProcessor } from './pty-transport'
+import { PTY_PRECONNECT_INPUT_MAX_CODE_UNITS } from './pty-preconnect-input-buffer'
 import { isSshSessionGoneError } from './pty-connection/pty-connect-limits'
 import { RuntimeRpcCallError, unwrapRuntimeRpcResult } from '../../runtime/runtime-rpc-client'
 import {
@@ -1497,6 +1498,30 @@ export function createRemoteRuntimePtyTransport(
     REMOTE_TERMINAL_INPUT_FLUSH_MS,
     sendUnacknowledgedInput
   )
+  // Why: a revealed parked pane paints its cached snapshot before connect binds a handle;
+  // keystrokes typed in that gap were dropped. null once the first bind has drained it.
+  let unboundInput: string[] | null = []
+  let unboundInputCodeUnits = 0
+  const sendLiveInput = (data: string): boolean => {
+    if (!connected || !handle || recoveryBlocksIo()) {
+      return false
+    }
+    // Why: literal LF bytes from paste/programmatic input must survive; callers use \r or the enter flag for semantic Enter.
+    return data ? inputBatcher.push(data) : true
+  }
+  function drainUnboundInput(): void {
+    if (!unboundInput || destroyed || !connected || !handle || recoveryBlocksIo()) {
+      return
+    }
+    const queued = unboundInput.join('')
+    unboundInput = null
+    if (queued) {
+      sendLiveInput(queued)
+    }
+  }
+  function dropUnboundInput(): void {
+    unboundInput = null
+  }
 
   function sendViewportUpdate(cols: number, rows: number, claim = false): void {
     const targetHandle = handle
@@ -1568,6 +1593,7 @@ export function createRemoteRuntimePtyTransport(
     terminalEnded = true
     clearPublishedHandleWait()
     clearPendingViewportClaim()
+    dropUnboundInput()
     const stalePtyId = remotePtyId
     unregisterShutdownHandlers(stalePtyId)
     handle = null
@@ -2171,6 +2197,7 @@ export function createRemoteRuntimePtyTransport(
     }
     // Why: a live claim may already have cleared the flag, so drain on every install.
     flushPendingClaimInput(nextStream)
+    drainUnboundInput()
   }
 
   const transport: PtyTransport = {
@@ -2534,6 +2561,7 @@ export function createRemoteRuntimePtyTransport(
       clearPublishedHandleWait()
       inputBatcher.flush()
       inputBatcher.clear()
+      dropUnboundInput()
       viewportBatcher.flush()
       outputProcessor.clearAccumulatedState()
       if (!connected && !handle) {
@@ -2571,6 +2599,7 @@ export function createRemoteRuntimePtyTransport(
       clearPublishedHandleWait()
       inputBatcher.flush()
       inputBatcher.clear()
+      dropUnboundInput()
       viewportBatcher.flush()
       outputProcessor.clearAccumulatedState()
       unregisterShutdownHandlers(remotePtyId)
@@ -2584,14 +2613,16 @@ export function createRemoteRuntimePtyTransport(
     },
 
     sendInput(data: string): boolean {
-      if (!connected || !handle || recoveryBlocksIo()) {
-        return false
-      }
-      if (!data) {
+      if (unboundInput && !destroyed && !terminalEnded && (!connected || !handle)) {
+        if (data.length > PTY_PRECONNECT_INPUT_MAX_CODE_UNITS - unboundInputCodeUnits) {
+          return false
+        }
+        unboundInput.push(data)
+        unboundInputCodeUnits += data.length
         return true
       }
-      // Why: literal LF bytes from paste/programmatic input must survive; callers use \r or the enter flag for semantic Enter.
-      return inputBatcher.push(data)
+      drainUnboundInput()
+      return sendLiveInput(data)
     },
 
     // Why: query replies (CPR/DSR/DA/OSC) are read in raw mode with a short timeout; the 8ms debounce would miss it and echo the reply onto the prompt (#7329).
