@@ -40,7 +40,7 @@ test.describe('Reveal active workspace button', () => {
   // (not a scenario real users hit). Reveal-into-view is covered robustly by
   // the "outside the virtualized window" test below.
 
-  test('clears sidebar filters before revealing a hidden current workspace', async ({
+  test('adjusts sidebar filters before revealing a hidden current workspace', async ({
     appPage,
     testRepoPath
   }, testInfo) => {
@@ -82,18 +82,20 @@ test.describe('Reveal active workspace button', () => {
     await prepareSidebarForScrollTest(appPage)
 
     // Other specs can add worktrees to the shared repository before this test runs.
-    const targetId = await appPage.evaluate((repoPath) => {
+    const seededTarget = await appPage.evaluate((repoPath) => {
       const state = window.__store!.getState()
       const repo = state.repos.find((candidate) => candidate.path === repoPath)
-      return repo
+      const worktree = repo
         ? state.worktreesByRepo[repo.id]?.find(
-            (worktree) => worktree.branch === 'refs/heads/e2e-secondary'
-          )?.id
+            (candidate) => candidate.branch === 'refs/heads/e2e-secondary'
+          )
         : undefined
+      return worktree ? { id: worktree.id, repoId: worktree.repoId } : undefined
     }, testRepoPath)
-    if (!targetId) {
+    if (!seededTarget) {
       throw new Error('Seeded secondary worktree is missing')
     }
+    const { id: targetId, repoId: targetRepoId } = seededTarget
 
     const targetRows = appPage.locator(
       `[data-worktree-sidebar] [data-worktree-id=${JSON.stringify(targetId)}]`
@@ -132,7 +134,7 @@ test.describe('Reveal active workspace button', () => {
     await revealButton.click()
     await appPage
       .getByRole('dialog', { name: 'Reveal hidden workspace?' })
-      .getByRole('button', { name: 'Clear filters and reveal' })
+      .getByRole('button', { name: 'Adjust filters and reveal' })
       .click()
 
     await expect(targetRow).toBeVisible()
@@ -149,10 +151,10 @@ test.describe('Reveal active workspace button', () => {
           }),
         {
           timeout: 10_000,
-          message: 'Reveal button should clear repo filters that hide the current workspace'
+          message: 'Reveal button should add the hidden workspace repo to the repo filter'
         }
       )
-      .toEqual([])
+      .toEqual([filterRepoId, targetRepoId])
   })
 
   test('reveals the current workspace when it starts outside the virtualized window', async ({
