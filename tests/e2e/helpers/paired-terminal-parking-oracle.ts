@@ -164,7 +164,10 @@ export async function runPairedTerminalParkingOracle(
                     (id) =>
                       verdicts.find((verdict) => verdict.worktreeId === id)?.ordinaryParkingCovers
                   ),
-                  parked: window.__terminalParkingDebug?.parkedTabIds().length,
+                  // Why scoped: a headed host's own seeded terminal is mirrored too and parks with them.
+                  parked: window.__terminalParkingDebug
+                    ?.parkedTabIds()
+                    .filter((id) => tabIds.includes(id)).length,
                   retentionBudgetEnabled:
                     window.__store?.getState().settings?.terminalHiddenWorktreeRetentionBudget
                 }
