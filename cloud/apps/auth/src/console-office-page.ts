@@ -17,30 +17,42 @@ import type { OrganizationRow } from './organization-store.js'
 export const OFFICE_PATH = `${CONSOLE_PATH}/office`
 export const TV_PATH = `${CONSOLE_PATH}/tv`
 export const OFFICE_ASSETS_PATH = `${CONSOLE_PATH}/assets/office`
-export const OFFICE_SCRIPTS = ['office-tiles.js', 'office-scene.js', 'office-fit.js', 'office-engine.js', 'office-client.js'] as const
-
-const FONT_HEAD = `<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;600;700&display=swap" rel="stylesheet">`
+export const OFFICE_SCRIPTS = ['office-model.js', 'office-view.js', 'office-client.js'] as const
 
 const SCRIPTS = OFFICE_SCRIPTS.map((name) => `<script src="${OFFICE_ASSETS_PATH}/${name}"></script>`).join('')
 
-const LEGEND = `<div class="office-legend"><span><i class="office-dot" style="background:#3fc9a8"></i>Trabalhando</span>
-<span><i class="office-dot" style="background:#f2a93b"></i>Aguardando aprovação</span>
-<span><i class="office-dot" style="background:#9aa6b0"></i>Ocioso</span>
-<span><i class="office-dot" style="background:#45d16b;border-radius:50%"></i>Dev conectado</span>
-<span><i class="office-dot" style="background:#9aa6b0;border-radius:50%"></i>Sem sinal</span>
-<span>Luz da porta: âmbar (aprovação pendente) tem prioridade sobre verde (trabalhando) e cinza</span></div>`
+const LEGEND = `<div class="office-legend"><span><i class="office-dot is-working"></i>Trabalhando</span>
+<span><i class="office-dot is-permission"></i>Aguardando aprovação</span><span><i class="office-dot is-idle"></i>Ocioso</span>
+<span>Toque num dev ou agente para ver detalhes</span></div>`
+
+const DRAWER = `<div class="office-backdrop" data-office-backdrop hidden></div>
+<aside class="office-drawer" data-office-drawer aria-label="Detalhes" hidden><div class="office-drawer-head"><div>
+<span class="office-tag" data-office-drawer-kicker></span><h2 data-office-drawer-title></h2></div>
+<button type="button" class="ghost" data-office-drawer-close aria-label="Fechar">${icon('x')}</button></div>
+<div class="office-drawer-body" data-office-drawer-body></div></aside>`
 
 function stage(params: { streamUrl: string; title?: string; tv?: boolean }): string {
-  const title = params.title ? `<strong>${escapeHtml(params.title)}</strong>` : ''
-  return `<section class="office-stage${params.tv ? ' tv' : ''}" id="office-stage" data-autofit="${params.tv ? 'on' : 'off'}" aria-label="Escritório virtual com os devs conectados e seus agentes">
-<div class="office-bar">${title}<button type="button" class="ghost office-back" data-office-back hidden title="Voltar às portas (Esc)">← Salas</button><span class="office-stats"><b data-stat="devs">0</b> devs · <b data-stat="projects">0</b> projetos · <b data-stat="agents">0</b> agentes</span>
+  const title = params.title ? `<strong class="office-title">${escapeHtml(params.title)}</strong>` : ''
+  // Why off by default, TV included: rotation starts only once this browser turns it on (remembered locally).
+  return `<section class="office-stage${params.tv ? ' tv' : ''}" id="office-stage" data-mode="macro" aria-label="Escritório com os devs conectados e seus agentes">
+<div class="office-bar">${title}<div class="office-seg" role="group" aria-label="Modo de visão">
+<button type="button" data-office-mode="macro" aria-pressed="true">Visão macro</button>
+<button type="button" data-office-mode="detail" aria-pressed="false">Detalhada</button></div>
+<span class="office-stats"><b data-stat="devs">0</b> devs online · <b data-stat="projects">0</b> projetos · <b data-stat="agents">0</b> agentes</span>
 <span class="office-conn" data-conn="connecting" role="status">Conectando…</span>
-<span class="office-tools"><button type="button" class="ghost" data-office-zoom="-1" aria-label="Diminuir zoom">−</button>
-<button type="button" class="ghost" data-office-zoom="1" aria-label="Aumentar zoom">+</button>
-<button type="button" class="ghost" data-office-fit aria-pressed="false" title="Ajustar o zoom para mostrar todas as salas">Ajustar</button>
+<span class="office-tools"><label class="office-rotation"><span>Rotação automática</span>
+<button type="button" class="office-switch" role="switch" aria-checked="false" data-office-rotation title="Alterna sozinho entre a visão macro e cada dev"></button></label>
 <button type="button" class="ghost" data-office-fullscreen title="Tela cheia">${icon('maximize')}<span>Tela cheia</span></button></span></div>
-<div class="office-host" id="office" data-stream="${escapeHtml(params.streamUrl)}"></div>${LEGEND}</section>`
+<div class="office-body" id="office" data-stream="${escapeHtml(params.streamUrl)}">
+<div class="office-macro" data-office-macro><div class="office-grid" data-office-grid></div></div>
+<div class="office-detail" data-office-detail hidden><div class="office-crumbs"><div class="office-path">
+<button type="button" class="ghost" data-office-back title="Voltar à visão macro (Esc)">← Visão macro</button><span class="muted">/</span><strong data-office-crumb></strong></div>
+<div class="office-tabs" data-office-tabs role="group" aria-label="Trocar de dev"></div></div>
+<div class="office-scroll" data-office-scroll><div class="office-tree-stage" data-office-tree-stage>
+<svg class="office-cables" data-office-cables aria-hidden="true"></svg><svg class="office-ports" data-office-ports aria-hidden="true"></svg>
+<div class="office-tree" data-office-tree><div class="office-root-wrap"><button type="button" class="office-node office-root" data-office-root data-node="dev"></button></div>
+<div class="office-branches" data-office-branches></div></div></div></div></div></div>
+${LEGEND}${DRAWER}</section>`
 }
 
 function displayLinksCard(csrf: string, links: OfficeDisplayLinkRow[], createdPath?: string): string {
@@ -90,7 +102,6 @@ export function renderOfficePage(
     hasOrganization: params.isOwner,
     hasMembership: true,
     wide: true,
-    head: FONT_HEAD,
     tail: `${SCRIPTS}${COPY_SCRIPT}`,
     body: `${message(params.message)}${stage({ streamUrl: `${OFFICE_PATH}/stream` })}${links}`
   })
@@ -105,6 +116,6 @@ export function renderTvPage(params: { organization: OrganizationRow; token: str
       title: params.organization.name,
       tv: true
     }),
-    { head: FONT_HEAD, tail: SCRIPTS }
+    { tail: SCRIPTS }
   )
 }
