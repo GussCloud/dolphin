@@ -33,6 +33,7 @@
     drawer: q('[data-office-drawer]'),
     backdrop: q('[data-office-backdrop]')
   }
+  V.configure({ avatarBase: host.dataset.avatars })
   const narrow = window.matchMedia('(max-width: 767px)')
   const namer = M.createAgentNamer()
 

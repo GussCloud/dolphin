@@ -164,6 +164,15 @@ describe('WorkPresenceSnapshot', () => {
     expect(WorkPresenceSnapshot.safeParse(withParent('x'.repeat(201))).success).toBe(false)
   })
 
+  it('carries a member picture version into the view only when there is a picture', () => {
+    const registry = new WorkPresenceRegistry()
+    registry.put('usr_a', snapshot('m1'))
+    registry.put('usr_b', snapshot('m2'))
+    const devs = registry.view([{ userId: 'usr_a', name: 'Ana', avatarVersion: 42 }, { userId: 'usr_b', name: 'Bruno' }]).devs
+    expect(devs.map((d) => [d.name, d.avatarVersion])).toEqual([['Ana', 42], ['Bruno', undefined]])
+    expect(devs[1]).not.toHaveProperty('avatarVersion')
+  })
+
   it('accepts forward schema versions and rejects invalid ones', () => {
     expect(stateOf(raw('working', 3))).toBe('working')
     expect(WorkPresenceSnapshot.safeParse(raw('working', 0)).success).toBe(false)

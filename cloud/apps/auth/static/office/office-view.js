@@ -39,13 +39,23 @@
     return svg
   }
 
+  let avatarBase = ''
+  /** Where the page serves member pictures (console or TV link); set once by the client. */
+  function configure(options) {
+    avatarBase = options.avatarBase || ''
+  }
+
   const dot = (state) => h('i', { class: `office-dot is-${state}`, 'aria-hidden': 'true' })
 
   function avatar(dev, size) {
+    const face = h('span', { class: 'office-avatar-face' }, M.initials(dev.name))
+    if (avatarBase && typeof dev.avatarVersion === 'number') {
+      // Why initials stay underneath: a picture that fails to load (GitHub down, login renamed) just disappears.
+      face.append(h('img', { src: `${avatarBase}/${encodeURIComponent(dev.id)}?v=${dev.avatarVersion}`, alt: '', loading: 'lazy',
+        referrerpolicy: 'no-referrer', onerror: (e) => e.currentTarget.remove() }))
+    }
     return h('span', { class: `office-avatar${dev.status === 'offline' ? ' is-offline' : ''}${size ? ' is-' + size : ''}`, 'aria-hidden': 'true' },
-      h('span', { class: 'office-avatar-ring' }),
-      h('span', { class: 'office-avatar-face' }, M.initials(dev.name)),
-      h('span', { class: 'office-avatar-status' }))
+      h('span', { class: 'office-avatar-ring' }), face, h('span', { class: 'office-avatar-status' }))
   }
 
   function statePill(state) {
@@ -236,5 +246,5 @@
     }
   }
 
-  globalThis.DolphinOfficeView = { h, renderMacro, renderDetail, drawCables, agentDetails, devDetails, STATE_LABEL }
+  globalThis.DolphinOfficeView = { configure, h, renderMacro, renderDetail, drawCables, agentDetails, devDetails, STATE_LABEL }
 })()

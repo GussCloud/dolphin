@@ -5,6 +5,7 @@ import {
   rejectionResponse,
   verifyRegisteredMember
 } from './azure-devops-org-membership.js'
+import type { AvatarCapture } from './azure-devops-avatar.js'
 import { parseAzureDevOpsOrganizationUrl, type AzureDevOpsVerifier } from './azure-devops-verifier.js'
 import type { AzureDevOpsLinkRow, OrganizationRow } from './organization-store.js'
 import type { AuthStore, UserRow } from './store.js'
@@ -24,7 +25,12 @@ function connected(organization: OrganizationRow, link: AzureDevOpsLinkRow) {
 }
 
 /** Desktop proves AzDO membership with the user's own token; the server re-verifies it every time. */
-export function azureDevOpsLinkRoutes(deps: { store: AuthStore; verifier: AzureDevOpsVerifier; authed: AuthedHandler }) {
+export function azureDevOpsLinkRoutes(deps: {
+  store: AuthStore
+  verifier: AzureDevOpsVerifier
+  authed: AuthedHandler
+  captureAvatar?: AvatarCapture
+}) {
   const { store, verifier, authed } = deps
   const orgs = store.organizations
   const app = new Hono()
@@ -47,6 +53,14 @@ export function azureDevOpsLinkRoutes(deps: { store: AuthStore; verifier: AzureD
         return rejectionResponse(c, member)
       }
       store.transaction(() => joinOrganization(store, member, user.id, Date.now()))
+      // Why not awaited: see the sign-in route; the picture never delays or fails the link.
+      void deps.captureAvatar?.({
+        userId: user.id,
+        organizationName: member.target.organizationName,
+        identityId: member.proof.azureDevOpsUserId,
+        token: body.data.azureDevOpsToken,
+        tokenKind: body.data.tokenKind
+      })
       const { organization, link, target } = member
       return c.json(connected(organization, { ...link, organization_name: target.organizationName }))
     })

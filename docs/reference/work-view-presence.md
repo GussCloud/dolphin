@@ -124,4 +124,14 @@ Clicking a card, or **Detalhada**, opens that dev's **tree**: the dev on top, th
 
 **Rotation** (macro for 10 s, then each dev for 12 s; devs with an approval waiting first, offline devs with no agents skipped, queue rebuilt each cycle) is **off by default on both the console and the TV page**. The *Rotação automática* switch turns it on, and that choice is kept in the browser's `localStorage` (`dolphin.office.rotation`), so a wall display is set up once. The TV page is clickable like the console.
 
+### Profile pictures
+
+Each dev's avatar is a picture or their initials, stored per user in `user_avatars` (`user-avatar-store.ts`):
+
+- **Azure DevOps**: captured on every Azure DevOps sign-in or org link from the desktop (`azure-devops-sign-in-routes.ts`, `azure-devops-link-routes.ts`) with the token the desktop just sent, which is never stored. Graph identity id → subject descriptor → avatar (`vssps.dev.azure.com/{org}/_apis/graph/descriptors/{id}`, then `…/graph/Subjects/{descriptor}/avatars`, scope `vso.graph`; `azure-devops-avatar.ts`). The capture runs after the response is sent and only logs `[avatar] … reason=` on failure, so sign-in never waits on or fails for it. Only PNG, JPEG, GIF or WebP up to 256 KB, recognised by their first bytes, are kept: an SVG served from the console's origin could run script. A PAT without the Graph (Read) scope gets no picture.
+- **GitHub**: the member types their login (GitHub's own login rule); the picture route redirects to `https://github.com/<login>.png?size=160`, so viewers' browsers, TV displays included, load it from GitHub.
+- **Initials**: the default.
+
+A member never chosen gets the Azure DevOps picture once one is captured, else initials; a choice made in the *Sua foto no escritório* card on the work view page always wins. Pictures are served by `GET /console/office/avatars/:userId` (signed-in members) and `GET /console/tv/:token/avatars/:userId` (display links), only for members of that organization. The view carries `avatarVersion` per dev when there is a picture, and the browser keeps the initials underneath so a picture that fails to load just disappears.
+
 Agent names use the optional `name` field when the stream sends it, otherwise "Claude 1", "Claude 2"... Two agents of the same dev with the same visible name get " 2", " 3" suffixes, stable while the agent lives.

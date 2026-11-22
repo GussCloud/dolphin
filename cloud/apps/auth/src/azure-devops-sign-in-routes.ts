@@ -9,6 +9,7 @@ import {
   verifyRegisteredMember,
   type RegisteredMember
 } from './azure-devops-org-membership.js'
+import type { AvatarCapture } from './azure-devops-avatar.js'
 import type { AzureDevOpsVerifier } from './azure-devops-verifier.js'
 import type { AuthConfig } from './config.js'
 import { issueSession } from './session-service.js'
@@ -71,7 +72,12 @@ function resolveUser(store: AuthStore, member: RegisteredMember, now: number): R
 class IdentityRace extends Error {}
 
 /** Unauthenticated: the Azure DevOps token alone signs a member of a registered org into Dolphin. */
-export function azureDevOpsSignInRoutes(deps: { store: AuthStore; config: AuthConfig; verifier: AzureDevOpsVerifier }) {
+export function azureDevOpsSignInRoutes(deps: {
+  store: AuthStore
+  config: AuthConfig
+  verifier: AzureDevOpsVerifier
+  captureAvatar?: AvatarCapture
+}) {
   const { store, config, verifier } = deps
   const app = new Hono()
 
@@ -113,6 +119,14 @@ export function azureDevOpsSignInRoutes(deps: { store: AuthStore; config: AuthCo
     if (resolution.status !== 'signed-in') {
       return c.json({ status: resolution.status })
     }
+    // Why not awaited: the picture is cosmetic and Azure DevOps may be slow; sign-in must not wait for it.
+    void deps.captureAvatar?.({
+      userId: resolution.user.id,
+      organizationName: member.target.organizationName,
+      identityId: member.proof.azureDevOpsUserId,
+      token: body.data.azureDevOpsToken,
+      tokenKind: body.data.tokenKind
+    })
     return c.json({
       status: 'signed-in',
       session: issueSession(store, config, resolution.user),

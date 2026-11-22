@@ -183,6 +183,8 @@ background:conic-gradient(from 210deg,var(--brand-2),var(--brand-3),var(--brand-
 .office-avatar.is-sm .office-avatar-ring{display:none}
 .office-avatar-face{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;border:2px solid var(--card);
 background:linear-gradient(140deg,var(--brand-2),var(--brand-3));color:#fff;font-weight:600;font-size:15px}
+.office-avatar-face{position:relative;overflow:hidden}
+.office-avatar-face img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:var(--card)}
 .office-avatar.is-sm .office-avatar-face{font-size:9px;border-width:1px}.office-avatar.is-lg .office-avatar-face{font-size:19px}
 .office-avatar-status{position:absolute;right:0;bottom:0;width:12px;height:12px;border-radius:50%;border:2px solid var(--card);background:var(--office-online)}
 .office-avatar.is-sm .office-avatar-status{width:8px;height:8px;border-width:1.5px}
@@ -306,6 +308,15 @@ background:var(--card);border-left:1px solid var(--border);box-shadow:var(--shad
 .office-list{display:grid;gap:8px;margin:0;padding:0;list-style:none;font-size:13px}
 .office-list li{display:flex;align-items:center;gap:8px;overflow-wrap:anywhere}
 
+.office-avatar-form{gap:14px}
+.office-avatar-options{display:grid;gap:8px;margin:0;padding:0;border:0;min-width:0}
+.office-avatar-options legend{padding:0;margin-bottom:6px;font-size:13px}
+.office-avatar-option{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:calc(var(--radius) - 2px);
+font-weight:400;cursor:pointer;transition:border-color .15s,background .15s}
+.office-avatar-option:has(input:checked){border-color:var(--primary);background:var(--accent)}
+.office-avatar-option.is-disabled{opacity:.6;cursor:default}
+.office-avatar-option input{width:auto;padding:0;margin-top:3px}
+.office-avatar-option>span{display:grid;gap:2px;min-width:0}.office-avatar-option .muted{font-size:13px}
 .office-links{display:grid;margin:0;padding:0;list-style:none}
 .office-links li{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:10px 0;border-top:1px solid var(--border)}
 .office-links li:first-child{border-top:0}.office-links form{display:block}

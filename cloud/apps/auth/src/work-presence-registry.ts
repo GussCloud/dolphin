@@ -85,9 +85,11 @@ export type WorkViewDev = {
   machines: string[]
   status: 'online' | 'offline'
   projects: WorkViewProject[]
+  /** Present when the dev has a picture; changes whenever it does, so browsers refetch it. */
+  avatarVersion?: number
 }
 export type WorkView = { devs: WorkViewDev[] }
-export type WorkViewMember = { userId: string; name: string }
+export type WorkViewMember = { userId: string; name: string; avatarVersion?: number }
 
 type MachinePresence = { snapshot: WorkPresenceSnapshot; lastSeenAt: number; offline: boolean }
 
@@ -176,6 +178,7 @@ export class WorkPresenceRegistry {
         name: member.name,
         machines: all.map((m) => m.snapshot.machineLabel).filter(Boolean),
         status: all.some((m) => !m.offline) ? 'online' : 'offline',
+        ...(member.avatarVersion !== undefined ? { avatarVersion: member.avatarVersion } : {}),
         projects: all.flatMap(({ snapshot }) =>
           snapshot.projects.map((p) => ({
             // Why prefix: project and agent ids are hashes of machine-local ids, unique only per machine.
@@ -193,6 +196,11 @@ export class WorkPresenceRegistry {
     }
     devs.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
     return { devs }
+  }
+
+  /** Re-sends views whose inputs changed outside presence, such as a member's picture. */
+  touch(): void {
+    this.emit()
   }
 
   subscribe(listener: () => void): () => void {

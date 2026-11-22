@@ -4,6 +4,7 @@ import { DatabaseSync } from 'node:sqlite'
 import { AzureDevOpsIdentityStore } from './azure-devops-identity-store.js'
 import { ConsoleSessionStore } from './console-session.js'
 import { OfficeDisplayLinkStore } from './office-display-link-store.js'
+import { UserAvatarStore } from './user-avatar-store.js'
 import { OrganizationStore } from './organization-store.js'
 import { hashToken } from './secrets.js'
 
@@ -79,6 +80,7 @@ export class AuthStore {
   readonly consoleSessions: ConsoleSessionStore
   readonly azureDevOpsIdentities: AzureDevOpsIdentityStore
   readonly officeDisplayLinks: OfficeDisplayLinkStore
+  readonly avatars: UserAvatarStore
 
   constructor(dataDir: string) {
     mkdirSync(dataDir, { recursive: true })
@@ -89,6 +91,7 @@ export class AuthStore {
     this.consoleSessions = new ConsoleSessionStore(this.db)
     this.azureDevOpsIdentities = new AzureDevOpsIdentityStore(this.db)
     this.officeDisplayLinks = new OfficeDisplayLinkStore(this.db)
+    this.avatars = new UserAvatarStore(this.db)
     this.azureDevOpsIdentities.backfillFromMemberships(Date.now())
   }
 
