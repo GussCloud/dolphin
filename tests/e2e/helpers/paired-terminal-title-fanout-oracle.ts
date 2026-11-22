@@ -291,15 +291,27 @@ async function expectTitles(page: Page, targets: TitleTarget[], expected: string
     .toEqual(Array(targets.length).fill(true))
 }
 
+// Why a bound, not an exact count: a headed host's renderer graph restates each title main
+// already published, at a newer version with identical client content (one echo per
+// transition). Spinner frames fanned out would still blow well past it.
+const MAX_PUBLICATIONS_PER_TITLE_TRANSITION = 2
+
 function expectTitleFanoutSample(sample: TitleProbeSample, targets: TitleTarget[]): void {
-  expect(sample.transportEvents).toHaveLength(targets.length * 2)
+  expect(sample.transportEvents.length).toBeLessThanOrEqual(
+    targets.length * 2 * MAX_PUBLICATIONS_PER_TITLE_TRANSITION
+  )
   expect(sample.storeChanges).toHaveLength(targets.length * 2)
   for (const target of targets) {
     const transport = sample.transportEvents.filter(
       (event) => event.worktreeId === target.worktreeId
     )
-    expect(transport.map((event) => event.title)).toEqual([INITIAL_TITLE, FINAL_TITLE])
-    expect(transport[1]?.snapshotVersion).toBeGreaterThan(transport[0]?.snapshotVersion ?? 0)
+    const transitions = transport.filter(
+      (event, index) => index === 0 || event.title !== transport[index - 1]?.title
+    )
+    expect(transitions.map((event) => event.title)).toEqual([INITIAL_TITLE, FINAL_TITLE])
+    expect(transport.length).toBeLessThanOrEqual(2 * MAX_PUBLICATIONS_PER_TITLE_TRANSITION)
+    const versions = transport.map((event) => event.snapshotVersion)
+    expect(versions).toEqual([...versions].sort((left, right) => left - right))
     expect(transport.every((event) => event.decodedEnvelopeBytes > 0)).toBe(true)
     expect(
       sample.storeChanges
