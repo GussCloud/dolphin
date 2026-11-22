@@ -88,15 +88,26 @@
 
   // --- Detail: one dev's tree ---------------------------------------------------------------
 
-  function agentCard(dev, project, color, agent, nameFor, onAgent) {
+  function agentCard(dev, color, agent, parentId, childCount, nameFor, onAgent) {
     const name = nameFor(dev.id, agent)
-    return h('button', { type: 'button', class: `office-node office-agent is-${agent.state}`, style: `--c:var(--office-project-${color})`,
-      'data-node': agent.id, 'data-parent': project.id, 'data-state': agent.state, onclick: () => onAgent(agent.id) },
+    return h('button', { type: 'button', class: `office-node office-agent is-${agent.state}${parentId.startsWith('agent:') ? ' is-child' : ''}`,
+      style: `--c:var(--office-project-${color})`, 'data-node': agent.id, 'data-parent': parentId.replace(/^agent:/, ''),
+      'data-state': agent.state, onclick: () => onAgent(agent.id) },
       h('span', { class: 'office-agent-top' }, h('span', { class: 'office-agent-icon' }, icon('terminal')), h('span', { class: 'office-agent-name' }, name)),
-      h('span', { class: 'office-agent-meta' }, h('span', { class: 'office-cli' }, M.cliName(agent.cli))),
+      h('span', { class: 'office-agent-meta' }, h('span', { class: 'office-cli' }, M.cliName(agent.cli)),
+        childCount ? h('span', { class: 'office-team' }, `${childCount} ${childCount === 1 ? 'subagente' : 'subagentes'}`) : null),
       h('span', { class: 'office-agent-branch' }, icon('branch'), h('span', {}, agent.branch || 'sem branch (pasta)')),
       h('span', { class: 'office-agent-foot' }, h('span', { class: `office-state is-${agent.state}` }, STATE_SHORT[agent.state]),
         h('span', { class: 'office-eq', 'aria-hidden': 'true' }, Array.from({ length: 7 }, () => h('i')))))
+  }
+
+  // `parentKey` is the project id, or `agent:<id>` under a lead, so leads and projects never collide.
+  function agentBranch(dev, color, node, parentKey, nameFor, onAgent) {
+    return h('div', { class: 'office-sub' },
+      agentCard(dev, color, node.agent, parentKey, node.children.length, nameFor, onAgent),
+      node.children.length
+        ? h('div', { class: 'office-kids' }, node.children.map((child) => agentBranch(dev, color, child, `agent:${node.agent.id}`, nameFor, onAgent)))
+        : null)
   }
 
   function projectBranch(dev, project, index, nameFor, onAgent) {
@@ -108,7 +119,9 @@
         h('span', { class: 'office-project-icon' }, icon('folder')),
         h('span', { class: 'office-project-text' }, h('span', { class: 'office-tag' }, `Projeto ${String(index + 1).padStart(2, '0')}`),
           h('strong', {}, project.name), h('small', {}, summary))),
-      project.agents.length ? h('div', { class: 'office-kids' }, project.agents.map((a) => agentCard(dev, project, color, a, nameFor, onAgent))) : null)
+      project.agents.length
+        ? h('div', { class: 'office-kids' }, M.nestAgents(project.agents).map((node) => agentBranch(dev, color, node, project.id, nameFor, onAgent)))
+        : null)
   }
 
   function renderDetail(parts, view, devId, nameFor, handlers) {
@@ -178,7 +191,17 @@
     return h('div', { class: wide ? 'is-wide' : undefined }, h('dt', {}, label), h('dd', {}, value))
   }
 
-  function agentDetails(dev, project, agent, name) {
+  function teamList(lead, members, nameFor, dev) {
+    if (!lead && members.length === 0) return null
+    return h('div', {}, h('p', { class: 'office-label' }, 'Equipe'),
+      h('ul', { class: 'office-list' },
+        lead ? h('li', {}, h('span', { class: 'muted' }, 'Líder'), nameFor(dev.id, lead)) : null,
+        members.map((m) => h('li', {}, dot(m.state), nameFor(dev.id, m)))))
+  }
+
+  function agentDetails(dev, project, agent, name, nameFor) {
+    const lead = agent.parentId ? project.agents.find((a) => a.id === agent.parentId && a.id !== agent.id) : undefined
+    const members = project.agents.filter((a) => a.parentId === agent.id && a.id !== agent.id)
     return {
       kicker: `Agente · ${M.cliName(agent.cli)}`,
       title: name,
@@ -191,7 +214,8 @@
         agent.state === 'permission'
           ? h('div', { class: 'office-box is-warn' }, h('strong', {}, 'Parado esperando aprovação'),
               h('span', { class: 'muted' }, `${dev.name} precisa aprovar no Dolphin, no computador ou no celular, para o agente continuar.`))
-          : null
+          : null,
+        teamList(lead, members, nameFor, dev)
       ]
     }
   }

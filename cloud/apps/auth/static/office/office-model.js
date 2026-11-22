@@ -65,6 +65,38 @@
     return { nameFor, retain }
   }
 
+  /** Agents as a forest by `parentId`; an unknown, self or cyclic parent leaves the agent at the top. */
+  function nestAgents(agents) {
+    const nodes = new Map(agents.map((agent) => [agent.id, { agent, children: [] }]))
+    const childIds = new Set()
+    for (const agent of agents) {
+      const parent = agent.parentId && agent.parentId !== agent.id ? nodes.get(agent.parentId) : undefined
+      if (parent) {
+        parent.children.push(nodes.get(agent.id))
+        childIds.add(agent.id)
+      }
+    }
+    const roots = agents.filter((a) => !childIds.has(a.id)).map((a) => nodes.get(a.id))
+    // Why: a closed cycle has no root, so its members would vanish; reachable-from-roots decides who stays nested.
+    const reached = new Set()
+    const walk = (node) => {
+      if (reached.has(node.agent.id)) return
+      reached.add(node.agent.id)
+      node.children.forEach(walk)
+    }
+    roots.forEach(walk)
+    for (const agent of agents) {
+      if (reached.has(agent.id)) continue
+      // Promote it and cut the link back to its parent, which breaks the cycle.
+      const parent = nodes.get(agent.parentId)
+      parent.children = parent.children.filter((child) => child.agent.id !== agent.id)
+      const node = nodes.get(agent.id)
+      roots.push(node)
+      walk(node)
+    }
+    return roots
+  }
+
   /** TV order: devs with an approval waiting first; offline devs with nothing left are skipped. */
   function rotationQueue(devs) {
     const shown = devs.filter((d) => d.status !== 'offline' || devAgents(d).length > 0)
@@ -105,7 +137,7 @@
 
   globalThis.DolphinOfficeModel = {
     STATES, MIN_FIT_SCALE, ROTATION_KEY,
-    cliName, tally, devAgents, groupState, createAgentNamer, rotationQueue,
+    cliName, tally, devAgents, groupState, createAgentNamer, nestAgents, rotationQueue,
     readRotation, writeRotation, fitScale, initials, projectColor
   }
 })()

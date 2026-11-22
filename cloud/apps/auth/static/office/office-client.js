@@ -108,7 +108,7 @@
     let details = null
     if (drawerFor.kind === 'agent') {
       const found = findAgent(drawerFor.id)
-      if (found) details = V.agentDetails(found.dev, found.project, found.agent, namer.nameFor(found.dev.id, found.agent))
+      if (found) details = V.agentDetails(found.dev, found.project, found.agent, namer.nameFor(found.dev.id, found.agent), namer.nameFor)
     } else {
       const dev = view.devs.find((d) => d.id === drawerFor.id)
       if (dev) details = V.devDetails(dev)

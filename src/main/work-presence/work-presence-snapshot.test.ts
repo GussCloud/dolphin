@@ -200,7 +200,8 @@ describe('work presence privacy boundary', () => {
       'agents',
       'cli',
       'state',
-      'branch'
+      'branch',
+      'parentId'
     ])
     const keys = new Set<string>()
     JSON.parse(json, (key: string, value: unknown) => {
@@ -285,5 +286,76 @@ describe('agent names', () => {
     expect(clean).toBe('rev [31miew')
     const [bidi] = namesOf([teammateKey], { teammates: [[teammateKey, '\u202eimpl\u2066x\u2069']] })
     expect(bidi).toBe('impl x')
+  })
+})
+
+describe('agent lineage', () => {
+  const key = (leaf: string) => `tab-1:${leaf}`
+  const LEAD = key('11111111-1111-4111-8111-111111111111')
+  const MATE = key('22222222-2222-4222-8222-222222222222')
+  const WORKER = key('33333333-3333-4333-8333-333333333333')
+  const id = (paneKey: string) => hashWorkPresenceId('machine-1', paneKey)
+
+  function parentsOf(
+    summaries: RuntimeWorktreePsSummary[],
+    teamLeaders: [string, string][] = []
+  ): Record<string, string | undefined> {
+    const snapshot = buildWorkPresenceSnapshot({
+      machineId: 'machine-1',
+      machineLabel: 'host',
+      summaries,
+      now: NOW,
+      nameSources: {
+        teammateNamesByPaneKey: new Map(),
+        tabsById: new Map(),
+        teamLeaderPaneKeyByPaneKey: new Map(teamLeaders)
+      }
+    })
+    return Object.fromEntries(
+      snapshot.projects.flatMap((p) => p.agents).map((a) => [a.id, a.parentId])
+    )
+  }
+
+  it('links a teammate to its team leader and a worker to its orchestration coordinator', () => {
+    const parents = parentsOf(
+      [
+        summary({
+          agents: [agentRow(LEAD), agentRow(MATE), agentRow(WORKER, { parentPaneKey: LEAD })]
+        })
+      ],
+      [[MATE, LEAD]]
+    )
+    expect(parents).toEqual({ [id(LEAD)]: undefined, [id(MATE)]: id(LEAD), [id(WORKER)]: id(LEAD) })
+  })
+
+  it('prefers the orchestration parent over the team leader, like the app sidebar', () => {
+    const parents = parentsOf(
+      [
+        summary({
+          agents: [agentRow(LEAD), agentRow(WORKER), agentRow(MATE, { parentPaneKey: WORKER })]
+        })
+      ],
+      [[MATE, LEAD]]
+    )
+    expect(parents[id(MATE)]).toBe(id(WORKER))
+  })
+
+  it('omits the parent when the leader is missing, in another project or the pane itself', () => {
+    const parents = parentsOf(
+      [
+        summary({ agents: [agentRow(LEAD)] }),
+        summary({
+          repoId: 'repo-2',
+          repo: 'other',
+          agents: [agentRow(MATE), agentRow(WORKER, { parentPaneKey: WORKER })]
+        })
+      ],
+      [[MATE, LEAD]]
+    )
+    expect(parents[id(MATE)]).toBeUndefined()
+    expect(parents[id(WORKER)]).toBeUndefined()
+    expect(
+      parentsOf([summary({ agents: [agentRow(MATE)] })], [[MATE, 'tab-9:gone']])[id(MATE)]
+    ).toBeUndefined()
   })
 })
