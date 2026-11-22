@@ -128,8 +128,14 @@ describe('release workflows', () => {
     expect(nightly.on.schedule).toEqual([{ cron: '13 6,16 * * *' }])
     expect(nightly.jobs.suite.uses).toBe('./.github/workflows/e2e.yml')
     // Why no test_files: an empty list is what makes e2e.yml run every shard and lane.
-    expect(nightly.jobs.suite.with).toEqual({ ref: '${{ github.sha }}' })
+    // Why decide's sha: schedules fire from main, where github.sha is main, not develop.
+    expect(nightly.jobs.suite.with).toEqual({ ref: '${{ needs.decide.outputs.sha }}' })
     expect(nightly.jobs.wsl.uses).toBe('./.github/workflows/windows-wsl-e2e.yml')
+    expect(nightly.jobs.wsl.with).toEqual({ ref: '${{ needs.decide.outputs.sha }}' })
+    const decideRun = nightly.jobs.decide.steps.map((step) => step.run ?? '').join('\n')
+    expect(decideRun).toContain('commits/develop')
+    expect(JSON.stringify(nightly)).not.toContain('github.sha')
+    expect(nightly.jobs.record.needs).toEqual(['decide', 'suite', 'wsl'])
     expect(nightly.jobs.report.permissions).toEqual({ contents: 'read', issues: 'write' })
     expect(nightly.concurrency).toEqual({ group: 'e2e-develop', 'cancel-in-progress': false })
   })
