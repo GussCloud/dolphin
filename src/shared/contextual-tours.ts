@@ -219,8 +219,10 @@ export const CONTEXTUAL_TOURS = [
       },
       {
         title: 'Choose what agent starts the work',
-        body: 'Pick the agent that should be opened when this worktree is created.',
-        targetSelector: '[data-contextual-tour-target="workspace-creation-agent"]'
+        // Why the Next button: the agent picker lives on the composer's Mode step, which the tour
+        // never shows; pointing at it left this step with no target on Basics.
+        body: 'Next, pick the mode and the agent that should be opened when this worktree is created.',
+        targetSelector: '[data-contextual-tour-target="workspace-creation-next-step"]'
       }
     ]
   }

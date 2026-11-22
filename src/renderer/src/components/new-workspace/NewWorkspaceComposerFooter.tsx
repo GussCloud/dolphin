@@ -89,6 +89,7 @@ export function NewWorkspaceComposerFooter({
             disabled={nextDisabled}
             size="sm"
             data-composer-wizard-next
+            data-contextual-tour-target="workspace-creation-next-step"
           >
             {translate('auto.components.ComposerWizard.next', 'Next')}
           </Button>
