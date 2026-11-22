@@ -390,7 +390,8 @@ async function completeWorkspaceCreationTour(page: Page, workspaceName: string):
     'aria-checked',
     checkedBefore === 'true' ? 'false' : 'true'
   )
-  await page.getByRole('button', { name: /^Next$/ }).click()
+  // Why scoped: the composer's own wizard Next button is on screen too.
+  await nameStep.getByRole('button', { name: /^Next$/ }).click()
   await expect(
     page.getByRole('dialog', { name: /Choose what agent starts the work/i })
   ).toBeVisible()
