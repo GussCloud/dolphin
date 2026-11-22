@@ -47,6 +47,25 @@ export async function readPairedRetentionSample(
   }, tabIds)
 }
 
+/** Resamples until heap is within the limit or the deadline passes, returning the last sample.
+ *  Why: the sample taken as a park count settles reads an eviction peak that drops ~20 MB
+ *  within 250 ms; retention is what stays above the limit. */
+export async function readSettledHeapBytes(
+  page: Page,
+  tabIds: string[],
+  limitBytes: number,
+  timeoutMs = 30_000
+): Promise<number | null> {
+  const deadline = Date.now() + timeoutMs
+  for (;;) {
+    const { heapBytes } = await readPairedRetentionSample(page, tabIds)
+    if (heapBytes === null || heapBytes <= limitBytes || Date.now() >= deadline) {
+      return heapBytes
+    }
+    await new Promise((resolve) => setTimeout(resolve, 250))
+  }
+}
+
 export async function startRendererLagProbe(page: Page): Promise<JSHandle<{ stop: () => number }>> {
   return page.evaluateHandle(() => {
     const sampleMs = 16

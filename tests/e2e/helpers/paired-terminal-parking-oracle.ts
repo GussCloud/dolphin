@@ -7,6 +7,7 @@ import {
 } from '../../../src/shared/terminal-surface-id'
 import {
   readPairedRetentionSample,
+  readSettledHeapBytes,
   startRendererLagProbe
 } from '../paired-runtime-retention-metrics'
 import { expect } from './dolphin-app'
@@ -137,10 +138,8 @@ export async function runPairedTerminalParkingOracle(
 
     const hiddenFloodTokens = await verifyHiddenPairedTerminalOutputSuppression(page, remoteTabs)
     await verifyPairedTerminalTitleFanout(page, remoteTabs)
-    const baseline = await readPairedRetentionSample(
-      page,
-      remoteTabs.map((tab) => tab.tabId)
-    )
+    const tabIds = remoteTabs.map((tab) => tab.tabId)
+    const baseline = await readPairedRetentionSample(page, tabIds)
     expect(baseline.bufferCells).toBeGreaterThan(MIN_STAGED_BUFFER_CELLS)
 
     const lagProbe = await startRendererLagProbe(page)
@@ -192,15 +191,13 @@ export async function runPairedTerminalParkingOracle(
       }
       await lagProbe.dispose()
     }
-    const after = await readPairedRetentionSample(
-      page,
-      remoteTabs.map((tab) => tab.tabId)
-    )
+    const after = await readPairedRetentionSample(page, tabIds)
     expect(after.bufferCells).toBeLessThanOrEqual(baseline.bufferCells * MAX_RETAINED_CELL_FRACTION)
     expect(after.mountedTargetManagers).toBe(1)
     expect(maxLagMs).toBeLessThan(MAX_EVICTION_LAG_MS)
     if (baseline.heapBytes !== null && after.heapBytes !== null) {
-      expect(after.heapBytes).toBeLessThanOrEqual(baseline.heapBytes + MAX_HEAP_GROWTH_BYTES)
+      const limit = baseline.heapBytes + MAX_HEAP_GROWTH_BYTES
+      expect(await readSettledHeapBytes(page, tabIds, limit)).toBeLessThanOrEqual(limit)
     }
 
     const evicted = await page.evaluate(
