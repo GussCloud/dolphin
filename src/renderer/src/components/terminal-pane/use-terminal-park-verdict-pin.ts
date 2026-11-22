@@ -20,6 +20,7 @@ import {
   selectParkVerdictPinnedTabIds,
   type ParkVerdictFlipRecord
 } from './terminal-park-verdict-flip-telemetry'
+import { getTerminalParkFlipNoticeLimitOverride } from './terminal-parking-e2e-overrides'
 
 const EMPTY_TAB_IDS: ReadonlySet<string> = new Set()
 
@@ -83,7 +84,8 @@ export function useTerminalParkVerdictPin(args: {
       liveTabIds,
       nextParkedTabIds: parkedTabIds,
       nowMs,
-      allowSustainedPin
+      allowSustainedPin,
+      noticeLimit: getTerminalParkFlipNoticeLimitOverride()
     })
     const { pinnedTabIds: nextPinnedTabIds, earliestPinExpiryMs } = selectParkVerdictPinnedTabIds({
       records: flipRecords,
