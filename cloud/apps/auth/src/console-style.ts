@@ -255,7 +255,9 @@ background:color-mix(in srgb,var(--office-permission) 8%,var(--card))}
 .office-agent-icon svg.icon{width:14px;height:14px}
 .office-agent-name{min-width:0;font-size:13px;font-weight:600;line-height:1.25;overflow-wrap:anywhere;
 display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.office-agent-meta{display:flex}
+.office-agent-meta{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.office-team{font-size:11px;color:var(--c)}
+.office-agent.is-child{width:164px;border-style:dashed}
 .office-cli{font-size:11px;padding:0 6px;border-radius:6px;background:var(--muted);border:1px solid var(--border);color:var(--muted-foreground)}
 .office-agent-branch{display:flex;align-items:center;gap:4px;min-width:0;font-size:11px;color:var(--muted-foreground)}
 .office-agent-branch svg.icon{width:12px;height:12px}
@@ -314,7 +316,7 @@ background:var(--card);border-left:1px solid var(--border);box-shadow:var(--shad
 .office-tree-stage{width:100%!important;height:auto!important;padding:0}.office-tree{width:auto;transform:none!important}
 .office-root-wrap{margin-bottom:36px}.office-branches{flex-direction:column;gap:22px}
 .office-sub{align-items:stretch}.office-kids{flex-direction:column;gap:10px;margin:12px 0 0 22px}
-.office-project,.office-agent{width:auto}}`
+.office-project,.office-agent,.office-agent.is-child{width:auto}}`
 
 
 export const CONSOLE_STYLE = [TOKENS, BASE, AUTH, SHELL, MEMBERS, OFFICE].join('\n')

@@ -146,6 +146,24 @@ describe('WorkPresenceSnapshot', () => {
     ])
   })
 
+  it('scopes the lead link to the machine and drops a malformed one instead of rejecting the snapshot', () => {
+    const registry = new WorkPresenceRegistry()
+    const withParent = (parentId: unknown) => ({
+      ...snapshot('m1'),
+      projects: [{ ...dolphin(), agents: [dolphin().agents[0], { id: 'a2', cli: 'claude', state: 'working', branch: null, parentId }] }]
+    })
+    registry.put('usr_a', WorkPresenceSnapshot.parse(withParent('a1')))
+    const view = JSON.parse(JSON.stringify(registry.view(MEMBERS)))
+    expect(view.devs[0].projects[0].agents.map((a: { id: string; parentId?: string }) => [a.id, a.parentId])).toEqual([
+      ['m1:a1', undefined],
+      ['m1:a2', 'm1:a1']
+    ])
+    for (const bad of ['../a1', 'x'.repeat(65), '']) {
+      expect(WorkPresenceSnapshot.parse(withParent(bad)).projects[0]?.agents[1]?.parentId).toBeUndefined()
+    }
+    expect(WorkPresenceSnapshot.safeParse(withParent('x'.repeat(201))).success).toBe(false)
+  })
+
   it('accepts forward schema versions and rejects invalid ones', () => {
     expect(stateOf(raw('working', 3))).toBe('working')
     expect(WorkPresenceSnapshot.safeParse(raw('working', 0)).success).toBe(false)

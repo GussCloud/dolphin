@@ -19,12 +19,16 @@ export type WorkPresenceAgent = {
   branch: string | null
   /** Omitted when no allowed name source names the pane; the console then numbers it. */
   name?: string
+  /** Id of the agent that leads this one (orchestration coordinator or Agent Teams leader), when it is in the same project. */
+  parentId?: string
 }
 
 /** Names set by the user, agents or automation; never generated, AI-vault or live terminal titles. */
 export type WorkPresenceAgentNameSources = {
   teammateNamesByPaneKey: ReadonlyMap<string, string>
   tabsById: ReadonlyMap<string, Pick<TerminalTab, 'customTitle' | 'quickCommandLabel'>>
+  /** Agent Teams teammate pane → leader pane, as the runtime publishes it. */
+  teamLeaderPaneKeyByPaneKey?: ReadonlyMap<string, string>
 }
 
 export type WorkPresenceProject = {
@@ -127,6 +131,14 @@ function byId<T extends { id: string }>(a: T, b: T): number {
   return a.id < b.id ? -1 : a.id > b.id ? 1 : 0
 }
 
+// Same precedence as the renderer's resolveAgentRowParentPaneKey: explicit orchestration parent, then team leader.
+function leaderPaneKey(
+  row: RuntimeWorktreeAgentRow,
+  sources: WorkPresenceAgentNameSources | undefined
+): string | undefined {
+  return row.parentPaneKey ?? sources?.teamLeaderPaneKeyByPaneKey?.get(row.paneKey)
+}
+
 /** Groups the `worktree ps` roster by repository; sorted by id so an unchanged roster serializes identically. */
 export function buildWorkPresenceProjects(
   machineId: string,
@@ -135,6 +147,7 @@ export function buildWorkPresenceProjects(
   nameSources?: WorkPresenceAgentNameSources
 ): WorkPresenceProject[] {
   const projectsByRepoId = new Map<string, WorkPresenceProject>()
+  const leaderIdByAgentId = new Map<string, string>()
   for (const summary of summaries) {
     const branch = presenceBranch(summary)
     for (const row of summary.agents) {
@@ -151,8 +164,13 @@ export function buildWorkPresenceProjects(
         projectsByRepoId.set(summary.repoId, project)
       }
       const name = resolveWorkPresenceAgentName(row.paneKey, nameSources)
+      const id = hashWorkPresenceId(machineId, row.paneKey)
+      const leader = leaderPaneKey(row, nameSources)
+      if (leader && leader !== row.paneKey) {
+        leaderIdByAgentId.set(id, hashWorkPresenceId(machineId, leader))
+      }
       project.agents.push({
-        id: hashWorkPresenceId(machineId, row.paneKey),
+        id,
         cli: (row.displayAgentType || row.agentType || 'unknown').slice(0, MAX_CLI),
         state: mapAgentStatusToWorkPresenceState(row.state),
         branch,
@@ -168,6 +186,14 @@ export function buildWorkPresenceProjects(
     }
     const agents = project.agents.sort(byId).slice(0, agentBudget)
     agentBudget -= agents.length
+    // Why only same-project leaders that survived the cap: the console nests by id and has nothing else to attach to.
+    const kept = new Set(agents.map((agent) => agent.id))
+    for (const agent of agents) {
+      const parentId = leaderIdByAgentId.get(agent.id)
+      if (parentId && kept.has(parentId)) {
+        agent.parentId = parentId
+      }
+    }
     projects.push({ id: project.id, name: project.name, agents })
   }
   return projects

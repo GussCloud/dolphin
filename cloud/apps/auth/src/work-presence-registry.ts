@@ -37,6 +37,13 @@ function boundedAgentName(raw: string | undefined): string | undefined {
   return name || undefined
 }
 
+// Why drop instead of reject: a malformed lead link from a newer desktop must not grey the whole dev.
+const ParentAgentId = z
+  .string()
+  .max(200)
+  .optional()
+  .transform((id) => (id !== undefined && OpaqueId.safeParse(id).success ? id : undefined))
+
 export const WorkPresenceSnapshot = z.object({
   // Why any version >= 1: later versions only add fields, which are stripped here.
   schemaVersion: z.number().int().min(1),
@@ -55,7 +62,9 @@ export const WorkPresenceSnapshot = z.object({
               state: WorkViewAgentStateSchema,
               branch: z.string().max(120).nullable(),
               // Why optional: older desktops never send it, and the browser then numbers the agent.
-              name: z.string().max(200).optional().transform(boundedAgentName)
+              name: z.string().max(200).optional().transform(boundedAgentName),
+              // Why optional: older desktops never send it, and the console then shows the agents on one level.
+              parentId: ParentAgentId
             })
           )
           .max(100)
@@ -172,7 +181,12 @@ export class WorkPresenceRegistry {
             // Why prefix: project and agent ids are hashes of machine-local ids, unique only per machine.
             id: `${snapshot.machineId}:${p.id}`,
             name: p.name,
-            agents: p.agents.map((a) => ({ ...a, id: `${snapshot.machineId}:${a.id}` }))
+            agents: p.agents.map(({ parentId, name, ...a }) => ({
+              ...a,
+              id: `${snapshot.machineId}:${a.id}`,
+              ...(name ? { name } : {}),
+              ...(parentId ? { parentId: `${snapshot.machineId}:${parentId}` } : {})
+            }))
           }))
         )
       })

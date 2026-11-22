@@ -1,12 +1,14 @@
 import { beforeAll, describe, expect, it } from 'vitest'
 
-type Agent = { id: string; cli: string; state: string; branch: string | null; name?: string }
+type Agent = { id: string; cli: string; state: string; branch: string | null; name?: string; parentId?: string }
+type AgentNode = { agent: Agent; children: AgentNode[] }
 type Dev = { id: string; name: string; machines: string[]; status: 'online' | 'offline'; projects: { id: string; name: string; agents: Agent[] }[] }
 type Storage = { getItem(k: string): string | null; setItem(k: string, v: string): void; removeItem(k: string): void }
 type OfficeModel = {
   tally(agents: Agent[]): { working: number; permission: number; idle: number; total: number }
   groupState(agents: Agent[]): string
   createAgentNamer(): { nameFor(devId: string, agent: Agent): string; retain(live: Set<string>): void }
+  nestAgents(agents: Agent[]): AgentNode[]
   rotationQueue(devs: Dev[]): string[]
   readRotation(storage: Storage | null): boolean
   writeRotation(storage: Storage | null, on: boolean): void
@@ -61,6 +63,25 @@ describe('office model', () => {
     expect(namer.nameFor('u1', agent('a1', 'idle'))).toBe('Claude 1')
     namer.retain(new Set(['a2']))
     expect(namer.nameFor('u1', agent('a5', 'working'))).toBe('Claude 1')
+  })
+
+  it('nests agents under their lead and keeps every agent visible when a link is broken or cyclic', () => {
+    const shape = (nodes: AgentNode[]): unknown => nodes.map((n) => (n.children.length ? { [n.agent.id]: shape(n.children) } : n.agent.id))
+    const lead = agent('lead', 'working')
+    expect(shape(M.nestAgents([
+      lead,
+      agent('impl', 'working', { parentId: 'lead' }),
+      agent('review', 'idle', { parentId: 'lead' }),
+      agent('helper', 'working', { parentId: 'impl' }),
+      agent('solo', 'idle')
+    ]))).toEqual([{ lead: [{ impl: ['helper'] }, 'review'] }, 'solo'])
+    expect(shape(M.nestAgents([agent('orphan', 'working', { parentId: 'gone' }), agent('self', 'idle', { parentId: 'self' })])))
+      .toEqual(['orphan', 'self'])
+    const cycle = M.nestAgents([agent('a', 'working', { parentId: 'b' }), agent('b', 'working', { parentId: 'a' })])
+    const seen: string[] = []
+    const walk = (nodes: AgentNode[]): void => nodes.forEach((n) => { seen.push(n.agent.id); walk(n.children) })
+    walk(cycle)
+    expect(seen.sort()).toEqual(['a', 'b'])
   })
 
   it('rotates through devs with an approval waiting first and skips offline devs with nothing left', () => {

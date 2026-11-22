@@ -45,6 +45,12 @@ export function startWorkPresencePublishing(): void {
       getWorktreePs: (limit) => runtime.getWorktreePs(limit),
       getAgentNameSources: () => ({
         teammateNamesByPaneKey: runtime.getClaudeAgentTeammateNamesByPaneKey(),
+        teamLeaderPaneKeyByPaneKey: new Map(
+          Object.entries(runtime.getClaudeAgentTeamLineageByPaneKey()).map(([paneKey, entry]) => [
+            paneKey,
+            entry.leaderPaneKey
+          ])
+        ),
         tabsById: collectTerminalTabsById(state.store)
       }),
       subscribeStatusChanges: (listener) => agentHookServer.subscribeStatusChanges(listener)
