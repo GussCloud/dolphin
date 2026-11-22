@@ -26,6 +26,7 @@ import { createRendererRecoveryReloadWatchdog } from './renderer-recovery-reload
 
 export type MainWindowFocusLifecycle = {
   dispose: () => void
+  isBrowserChromeFocused: () => boolean
   isFloatingPanelFocused: () => boolean
   isFloatingTerminalInputFocused: () => boolean
   isMarkdownEditorFocused: () => boolean
@@ -53,6 +54,8 @@ export function installMainWindowFocusLifecycle(args: {
   }
   // Why: mirror markdown-editor focus so before-input-event skips Cmd/Ctrl+B while TipTap owns focus (docs/markdown-cmd-b-bold-design.md).
   let markdownEditorFocused = false
+  // Why: browser-scoped chords (Mod+L address bar) must reach the pane's chrome before window-level shortcuts claim them.
+  let browserChromeFocused = false
   let terminalInputFocused = false
   // floatingTerminalInputFocused: textarea-only (terminal keybinding context). floatingPanelFocused: superset for routing ownership.
   let floatingTerminalInputFocused = false
@@ -68,6 +71,14 @@ export function installMainWindowFocusLifecycle(args: {
     markdownEditorFocused = focused === true
   }
   ipcMain.on(markdownFocusChannel, onMarkdownEditorFocused)
+  const browserChromeFocusChannel = 'ui:setBrowserChromeFocused'
+  const onBrowserChromeFocused = (event: Electron.IpcMainEvent, focused: unknown): void => {
+    if (!isSenderMainWindow(event.sender)) {
+      return
+    }
+    browserChromeFocused = focused === true
+  }
+  ipcMain.on(browserChromeFocusChannel, onBrowserChromeFocused)
   const terminalInputFocusChannel = 'ui:setTerminalInputFocused'
   // Why: before-input-event resolves shortcuts before renderer keydown; mirror xterm focus so Terminal-first lets shells own app chords.
   const onTerminalInputFocused = (event: Electron.IpcMainEvent, focused: unknown): void => {
@@ -134,6 +145,9 @@ export function installMainWindowFocusLifecycle(args: {
     markdownEditorFocused = false
     pendingRichMarkdownContextMenuTableTarget = null
   }
+  const resetBrowserChromeFocus = (): void => {
+    browserChromeFocused = false
+  }
   const resetTerminalInputFocus = (): void => {
     terminalInputFocused = false
   }
@@ -149,6 +163,7 @@ export function installMainWindowFocusLifecycle(args: {
     const frame = rendererWebContents.mainFrame
     retireBrowserClientPageRenderer(rendererWebContents)
     resetMarkdownEditorFocus()
+    resetBrowserChromeFocus()
     resetTerminalInputFocus()
     resetFloatingTerminalInputFocus()
     resetShortcutRecorderFocus()
@@ -244,6 +259,7 @@ export function installMainWindowFocusLifecycle(args: {
     retireBrowserClientPageRenderer(rendererWebContents)
     browserRouteWebContentsRegistry.retireRenderer(rendererWebContentsId)
     resetMarkdownEditorFocus()
+    resetBrowserChromeFocus()
     resetTerminalInputFocus()
     resetFloatingTerminalInputFocus()
     resetShortcutRecorderFocus()
@@ -260,6 +276,7 @@ export function installMainWindowFocusLifecycle(args: {
   rendererWebContents.on('destroyed', () => {
     retireBrowserClientPageRenderer(rendererWebContents)
     resetMarkdownEditorFocus()
+    resetBrowserChromeFocus()
     resetTerminalInputFocus()
     resetFloatingTerminalInputFocus()
     resetShortcutRecorderFocus()
@@ -273,12 +290,14 @@ export function installMainWindowFocusLifecycle(args: {
 
   const dispose = (): void => {
     resetMarkdownEditorFocus()
+    resetBrowserChromeFocus()
     resetTerminalInputFocus()
     resetFloatingTerminalInputFocus()
     resetShortcutRecorderFocus()
     clearRendererRecoveryTimer()
     recoveryReloadWatchdog.clear()
     ipcMain.removeListener(markdownFocusChannel, onMarkdownEditorFocused)
+    ipcMain.removeListener(browserChromeFocusChannel, onBrowserChromeFocused)
     ipcMain.removeListener(terminalInputFocusChannel, onTerminalInputFocused)
     ipcMain.removeListener(floatingFocusChannel, onFloatingFocus)
     ipcMain.removeListener(shortcutRecorderFocusChannel, onShortcutRecorderFocused)
@@ -286,6 +305,7 @@ export function installMainWindowFocusLifecycle(args: {
   }
   return {
     dispose,
+    isBrowserChromeFocused: () => browserChromeFocused,
     isFloatingPanelFocused: () => floatingPanelFocused,
     isFloatingTerminalInputFocused: () => floatingTerminalInputFocused,
     isMarkdownEditorFocused: () => markdownEditorFocused,

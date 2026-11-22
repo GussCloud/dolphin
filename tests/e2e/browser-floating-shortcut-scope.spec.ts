@@ -84,6 +84,10 @@ async function focusChrome(page: Page, browserTabId: string): Promise<void> {
   await expect(target).toBeFocused()
 }
 
+function rightSidebarOpen(page: Page): Promise<boolean | undefined> {
+  return page.evaluate(() => window.__store?.getState().rightSidebarOpen)
+}
+
 test.describe('floating browser shortcut scope', () => {
   test.beforeEach(async ({ appPage }) => {
     await waitForSessionReady(appPage)
@@ -101,6 +105,9 @@ test.describe('floating browser shortcut scope', () => {
       await waitForGuestUrl(appPage, floating.browserTabId, server.pageUrl('float', 1))
       await navigateGuest(appPage, split.browserTabId, server.pageUrl('split', 2))
       await navigateGuest(appPage, floating.browserTabId, server.pageUrl('float', 2))
+      // Why: a closed right sidebar keeps the split wide enough to show its Grab button.
+      await appPage.evaluate(() => window.__store?.getState().setRightSidebarOpen(false))
+      await expect.poll(() => rightSidebarOpen(appPage)).toBe(false)
 
       const cases = [
         {
@@ -145,6 +152,8 @@ test.describe('floating browser shortcut scope', () => {
           await focusChrome(appPage, owner)
           await appPage.keyboard.press(`${shortcutModifier}+l`)
           await expect(browserAddressBar(appPage, owner)).toBeFocused()
+          // Why: Mod+L is also the global right-sidebar chord; in browser chrome the address bar wins.
+          expect(await rightSidebarOpen(appPage)).toBe(false)
 
           await focusChrome(appPage, owner)
           await appPage.keyboard.press(`${shortcutModifier}+c`)
@@ -154,6 +163,16 @@ test.describe('floating browser shortcut scope', () => {
           await expect(grabButton(appPage, owner)).toHaveAttribute('data-variant', 'ghost')
         })
       }
+
+      await test.step('Mod+L outside browser chrome still toggles the right sidebar', async () => {
+        await appPage.evaluate(() => {
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur()
+          }
+        })
+        await appPage.keyboard.press(`${shortcutModifier}+l`)
+        await expect.poll(() => rightSidebarOpen(appPage)).toBe(true)
+      })
 
       await test.step('back pressed inside the floating page', async () => {
         await pressKeyInBrowserGuest(
