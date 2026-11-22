@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { renderAuthorizePage, type AuthorizeParams } from './authorize-page.js'
 import { azureDevOpsLinkRoutes, type AuthedHandler } from './azure-devops-link-routes.js'
 import { azureDevOpsSignInRoutes } from './azure-devops-sign-in-routes.js'
+import { createAvatarCapture } from './azure-devops-avatar.js'
 import { createAzureDevOpsVerifier, type AzureDevOpsFetch } from './azure-devops-verifier.js'
 import type { AuthConfig } from './config.js'
 import { relayHostIdForPublicKey, signRelayToken } from './relay-token.js'
@@ -80,6 +81,10 @@ export function createAuthApp(deps: {
   const { store, config, key } = deps
   const workPresence = deps.workPresence ?? new WorkPresenceRegistry()
   const verifier = createAzureDevOpsVerifier(deps.azureDevOpsFetch)
+  const captureAvatar = createAvatarCapture({
+    save: (userId, image, type) => store.avatars.saveAzureDevOpsImage(userId, image, type, Date.now()),
+    ...(deps.azureDevOpsFetch ? { fetchImpl: deps.azureDevOpsFetch } : {})
+  })
   const app = new Hono()
   const now = (): number => Date.now()
 
@@ -237,8 +242,8 @@ export function createAuthApp(deps: {
   )
 
   app.route('/', feedbackRoutes(store))
-  app.route('/', azureDevOpsLinkRoutes({ store, verifier, authed }))
-  app.route('/', azureDevOpsSignInRoutes({ store, config, verifier }))
+  app.route('/', azureDevOpsLinkRoutes({ store, verifier, authed, captureAvatar }))
+  app.route('/', azureDevOpsSignInRoutes({ store, config, verifier, captureAvatar }))
   app.route('/', workPresenceRoutes({ store, registry: workPresence, authed }))
   app.route('/', consoleRoutes({ store, config, verifier, workPresence, streamTiming: deps.streamTiming }))
   return app

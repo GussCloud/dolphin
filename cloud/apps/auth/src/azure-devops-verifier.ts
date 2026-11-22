@@ -100,7 +100,7 @@ export function parseAzureDevOpsOrganizationUrl(raw: string): AzureDevOpsOrganiz
   }
 }
 
-function authorizationHeader(token: string, kind: AzureDevOpsTokenKind): string {
+export function authorizationHeader(token: string, kind: AzureDevOpsTokenKind): string {
   return kind === 'bearer' ? `Bearer ${token}` : `Basic ${Buffer.from(`:${token}`).toString('base64')}`
 }
 

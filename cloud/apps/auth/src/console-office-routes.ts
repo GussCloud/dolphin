@@ -14,12 +14,22 @@ import type { ConsoleEnv } from './console-routes.js'
 import { CONSOLE_PATH } from './console-session.js'
 import type { OrganizationRow } from './organization-store.js'
 import type { AuthStore } from './store.js'
+import { GITHUB_LOGIN } from './user-avatar-store.js'
 import type { WorkPresenceRegistry, WorkViewMember } from './work-presence-registry.js'
 import { workViewStream, type WorkViewStreamTiming } from './work-view-stream.js'
 
 const LinkLabel = z.string().trim().min(1).max(60)
 
-const NOTICES = new Map([['link-revoked', 'Link de exibição revogado.']])
+const NOTICES = new Map([
+  ['link-revoked', 'Link de exibição revogado.'],
+  ['avatar-saved', 'Foto do escritório atualizada.']
+])
+
+const AvatarChoice = z.discriminatedUnion('source', [
+  z.object({ source: z.literal('initials') }),
+  z.object({ source: z.literal('azure-devops') }),
+  z.object({ source: z.literal('github'), githubLogin: z.string().trim().regex(GITHUB_LOGIN) })
+])
 
 // Same relative path from src/ (tsx, vitest) and dist/ (production); the Dockerfile ships static/.
 const OFFICE_ASSETS = new Map<string, string>(
@@ -49,11 +59,34 @@ export function registerOfficeRoutes(
     orgs.listMemberships(userId).some((org) => org.id === orgId)
 
   const members = (orgId: string): WorkViewMember[] =>
-    orgs.listMembers(orgId).map((m) => ({
-      userId: m.user_id,
-      // Why no full e-mail: the view may sit on a shared wall display.
-      name: m.nickname ?? m.display_name ?? m.email.split('@')[0] ?? m.email
-    }))
+    orgs.listMembers(orgId).map((m) => {
+      const avatar = store.avatars.resolve(m.user_id)
+      return {
+        userId: m.user_id,
+        // Why no full e-mail: the view may sit on a shared wall display.
+        name: m.nickname ?? m.display_name ?? m.email.split('@')[0] ?? m.email,
+        ...(avatar.kind === 'initials' ? {} : { avatarVersion: avatar.version })
+      }
+    })
+
+  /** A member's picture for a viewer already allowed into `orgId`; anyone else gets 404, never another org's picture. */
+  const avatarResponse = (c: Context, orgId: string, userId: string): Response => {
+    if (!orgs.listMembers(orgId).some((m) => m.user_id === userId)) {
+      return c.text('not found', 404)
+    }
+    const avatar = store.avatars.resolve(userId)
+    c.header('cache-control', 'private, max-age=300')
+    if (avatar.kind === 'github') {
+      return c.redirect(`https://github.com/${encodeURIComponent(avatar.login)}.png?size=160`, 302)
+    }
+    if (avatar.kind === 'azure-devops') {
+      c.header('content-type', avatar.type)
+      c.header('x-content-type-options', 'nosniff')
+      c.header('content-security-policy', "default-src 'none'")
+      return c.body(new Uint8Array(avatar.image))
+    }
+    return c.text('not found', 404)
+  }
 
   const stream = (c: Context, orgId: string, stillAllowed: () => boolean) =>
     workViewStream(c, {
@@ -77,6 +110,7 @@ export function registerOfficeRoutes(
         organization,
         isOwner,
         links: isOwner ? links.listActive(organization.id) : [],
+        avatar: store.avatars.settings(auth.user.id),
         ...extra
       }),
       status
@@ -105,6 +139,36 @@ export function registerOfficeRoutes(
       const session = token ? store.consoleSessions.findByHash(token, Date.now()) : undefined
       return Boolean(session) && isMember(organization.id, userId)
     })
+  })
+
+  app.get(`${OFFICE_PATH}/avatars/:userId`, (c) => {
+    const auth = signedIn(c)
+    const organization = auth ? viewerOrganization(auth.user.id) : undefined
+    if (!auth || !organization) {
+      return c.text('unauthorized', 401)
+    }
+    return avatarResponse(c, organization.id, c.req.param('userId'))
+  })
+
+  app.post(`${OFFICE_PATH}/avatar`, (c) => {
+    const auth = signedIn(c)
+    const organization = auth ? viewerOrganization(auth.user.id) : undefined
+    if (!auth || !organization) {
+      return auth ? c.redirect(CONSOLE_PATH, 303) : toLogin(c)
+    }
+    const choice = AvatarChoice.safeParse(c.var.form)
+    if (!choice.success) {
+      const text = c.var.form.source === 'github' ? 'Informe um usuário do GitHub válido (letras, números e hífens).' : 'Escolha uma opção de foto.'
+      return render(c, auth, organization, { message: { kind: 'error', text } }, 400)
+    }
+    if (choice.data.source === 'azure-devops' && !store.avatars.settings(auth.user.id).hasAzureDevOpsImage) {
+      return render(c, auth, organization, { message: { kind: 'error', text: 'Ainda não há foto do Azure DevOps. Entre de novo no Dolphin com o Azure DevOps para buscá-la.' } }, 400)
+    }
+    const data = choice.data
+    store.avatars.choose(auth.user.id, data.source === 'github' ? { source: 'github', login: data.githubLogin } : data, Date.now())
+    // Why: the view only changes on a presence update, so nudge open streams to resend the new picture version.
+    registry.touch()
+    return c.redirect(`${OFFICE_PATH}?notice=avatar-saved`, 303)
   })
 
   app.post(`${OFFICE_PATH}/display-links`, (c) => {
@@ -145,6 +209,14 @@ export function registerOfficeRoutes(
     }
     c.header('referrer-policy', 'no-referrer')
     return c.html(renderTvPage({ organization, token }))
+  })
+
+  app.get(`${TV_PATH}/:token/avatars/:userId`, (c) => {
+    const organization = tvOrganization(c.req.param('token'))
+    if (!organization) {
+      return c.text('not found', 404)
+    }
+    return avatarResponse(c, organization.id, c.req.param('userId'))
   })
 
   app.get(`${TV_PATH}/:token/stream`, (c) => {
