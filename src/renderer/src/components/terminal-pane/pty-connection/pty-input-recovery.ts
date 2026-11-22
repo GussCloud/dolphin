@@ -5,6 +5,7 @@ import { toAgentLaunchPreferences } from '../../../../../shared/agent-launch-pre
 import { createUnresolvedOwnerPtyTransport } from '../unresolved-owner-pty-transport'
 import { recordTerminalTabParkedOnUnresolvedHost } from '@/lib/parked-terminal-host-hydration'
 import { getFitOverrideForPty, onOverrideChange } from '@/lib/pane-manager/mobile-fit-overrides'
+import { safeFit } from '@/lib/pane-manager/pane-tree-ops'
 import { isPtyLocked } from '@/lib/pane-manager/mobile-driver-state'
 import { isPaneReplaying } from '../replay-guard'
 import { registerUndeliverableWriteHandler } from '@/lib/pane-manager/terminal-write-pipeline-health'
@@ -273,6 +274,12 @@ export function installPtyInputRecovery(session: ConnectPanePtySession): void {
     if (event.mode === 'desktop-fit') {
       session.visibleRemoteViewportClaimPtyId = event.ptyId
       session.pendingVisibleRemoteViewportClaim = false
+      // Why: reattach/replay fits skip while another desktop holds the grid, leaving xterm
+      // parked at it; the overlay tick's refit is frame-scheduled and never runs in a hidden
+      // window. The fit's onResize forwards this owner's grid to the PTY.
+      if (session.terminalGridDriftedFromFit()) {
+        safeFit(session.pane)
+      }
       return
     }
     if (event.mode === 'remote-desktop-fit') {
