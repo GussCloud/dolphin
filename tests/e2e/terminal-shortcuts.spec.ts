@@ -481,14 +481,14 @@ test.describe('Terminal Shortcuts', () => {
 
     // Why: exercise the production PTY-output tracker, not xterm's renderer-
     // local flag state, so the test covers the bytes the shortcut policy sees.
-    await execInTerminal(appPage, ptyId, "printf '\\033[>1u'")
+    // The flags must come from a command that is still running: one that exits
+    // with them armed is an unclean exit, and the daemon grounds them at 133;D.
+    await execInTerminal(appPage, ptyId, "printf '\\033[>1u'; read -r _; printf '\\033[<u'")
     await expect.poll(() => getKittyKeyboardFlags(appPage)).toBe(1)
     await pressAndExpectWrite(appPage, electronApp, 'Shift+Enter', '\x1b[13;2u')
 
-    // Clear the shell's unconsumed CSI-u line before resetting flags in a settled
-    // command; otherwise its line editor can swallow the reset bytes.
-    await sendToTerminal(appPage, ptyId, '\x15\x03')
-    await execInTerminal(appPage, ptyId, "printf '\\033[=0u'")
+    // Ends `read`; the command pops its own flags before the prompt returns.
+    await sendToTerminal(appPage, ptyId, '\r')
     await expect.poll(() => getKittyKeyboardFlags(appPage)).toBe(0)
     await pressAndExpectWrite(appPage, electronApp, 'Shift+Enter', '\x1b\r')
   })
