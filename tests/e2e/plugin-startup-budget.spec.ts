@@ -12,7 +12,8 @@ import { pluginManifestSchema } from '../../src/shared/plugins/plugin-manifest'
 import { createRestartSession } from './helpers/dolphin-restart'
 
 const PLUGIN_COUNT = 20
-const SAMPLE_COUNT = 3
+// Why 7: one launch's ready-to-show varies by ~250 ms on CI, so a median of 3 cannot resolve +50 ms.
+const SAMPLE_COUNT = 7
 
 type StartupSample = {
   readyToShowMs: number
