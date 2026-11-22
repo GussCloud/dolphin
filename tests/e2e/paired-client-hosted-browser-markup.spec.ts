@@ -50,6 +50,9 @@ test('draws and copies a screenshot from a client-hosted browser without replaci
     const overlay = client.page.locator('[data-dolphin-markup-overlay]')
     await expect(overlay).toBeVisible()
     await expect(overlay.locator('img')).toHaveAttribute('src', /^data:image\/png;base64,/)
+    // Why: a hidden test window composites only on demand, so input keeps hit-testing the frame
+    // drawn before the overlay, where the guest sits; a capture draws the overlay first.
+    await client.page.screenshot()
     const canvas = overlay.locator('canvas')
     const bounds = await canvas.boundingBox()
     if (!bounds) {
