@@ -83,6 +83,16 @@ export class DolphinRuntimeWithPersistTerminalSurfaceRetirements extends Dolphin
     }
   }
 
+  /**
+   * Refuses to materialize a surface whose PTY's exit is still being retired. Spawning under that
+   * session id would re-add the retired leaf to the published layout, bound to a fresh shell.
+   */
+  protected assertPtySurfaceNotRetiring(ptyId: string | undefined): void {
+    if (ptyId && this.pendingPtySurfaceRetirementsByPtyId.has(ptyId)) {
+      throw new Error('tab_not_found')
+    }
+  }
+
   protected async retireMobileSessionSurfacesForPty(
     ptyId: string,
     incarnationId: string,
