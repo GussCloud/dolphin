@@ -6,7 +6,7 @@
   "version": "1.0.0",
   "description": "A reviewed starter lifecycle for disposable Multipass workspaces.",
   "repository": "https://github.com/gusscloud/dolphin-multipass-recipes",
-  "engines": { "dolphin": ">=1.4.0" },
+  "engines": { "dolphin": ">=0.2.32" },
   "pluginApi": 1,
   "contributes": {
     "vmRecipes": [{ "path": "recipes/ubuntu-lts.json" }]

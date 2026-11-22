@@ -5,7 +5,7 @@
   "name": "Hello Dolphin",
   "version": "1.0.0",
   "description": "Sample plugin combining a sandboxed panel, a worker command, and event subscriptions.",
-  "engines": { "dolphin": ">=1.4.0" },
+  "engines": { "dolphin": ">=0.2.32" },
   "pluginApi": 1,
   "main": "main.mjs",
   "contributes": {
