@@ -239,6 +239,8 @@ export class DolphinRuntimeWithPerformMobileSessionPtyRecordsRefresh extends Dol
             // untappable; fall back to the plain-shell materialize.
           }
         }
+        // Why after the awaits above: the exit may have landed while they ran.
+        this.assertPtySurfaceNotRetiring(sessionId)
         try {
           await this.createRuntimeOwnedMobileSessionTerminal(worktreeId, targetsHost, undefined, {
             identity: {
