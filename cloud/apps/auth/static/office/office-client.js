@@ -1,111 +1,172 @@
-/* Feeds the office engine from the work view stream: each `snapshot` event is the whole org view,
- * diffed here into upsert/remove calls so the scene animates only what changed.
+/* Work view controller: SSE snapshots in, macro grid or one dev's tree out.
+ * Navigation is manual; the TV rotation runs only after this browser turns it on.
  */
 ;(function () {
   'use strict'
 
-  const host = document.getElementById('office')
+  const M = globalThis.DolphinOfficeModel
+  const V = globalThis.DolphinOfficeView
   const stage = document.getElementById('office-stage')
-  if (!host || !stage || !window.createOffice) return
-  // The TV page always fits the screen; the console page fits only while fullscreen.
-  const tv = stage.dataset.autofit === 'on'
-  // The TV page rotates by itself (doors, then each room); the console page is click-through.
-  const office = window.createOffice(host, { fps: 15, autoFit: tv, clickable: !tv, onView: (v) => syncView(v) })
-  const conn = stage.querySelector('.office-conn')
-  const back = stage.querySelector('[data-office-back]')
-  const tools = stage.querySelectorAll('[data-office-zoom], [data-office-fit]')
+  const host = document.getElementById('office')
+  if (!stage || !host || !M || !V) return
 
-  // Rotation timing (TV).
-  const DOORS_MS = 10000
-  const DOORS_GAP_MS = 2500
-  const ROOM_MS = 12000
+  const MACRO_MS = 10000
+  const DEV_MS = 12000
 
-  function syncView(v) {
-    if (back) back.hidden = tv || v.mode !== 'room'
-    // Zoom only applies to a room; the doors always fit the screen.
-    tools.forEach((b) => { b.disabled = v.mode !== 'room' })
+  const q = (sel) => stage.querySelector(sel)
+  const parts = {
+    macro: q('[data-office-macro]'),
+    grid: q('[data-office-grid]'),
+    detail: q('[data-office-detail]'),
+    tabs: q('[data-office-tabs]'),
+    crumb: q('[data-office-crumb]'),
+    scroll: q('[data-office-scroll]'),
+    tree: q('[data-office-tree]'),
+    tstage: q('[data-office-tree-stage]'),
+    root: q('[data-office-root]'),
+    branches: q('[data-office-branches]'),
+    cables: q('[data-office-cables]'),
+    ports: q('[data-office-ports]'),
+    conn: q('.office-conn'),
+    rotation: q('[data-office-rotation]'),
+    modeButtons: stage.querySelectorAll('[data-office-mode]'),
+    drawer: q('[data-office-drawer]'),
+    backdrop: q('[data-office-backdrop]')
   }
-  syncView(office.view())
-  if (back) back.addEventListener('click', () => office.showDoors())
+  const narrow = window.matchMedia('(max-width: 767px)')
+  const namer = M.createAgentNamer()
+
+  let view = { devs: [] }
+  let mode = 'macro'
+  let activeDev = null
+  let drawerFor = null // { kind: 'agent' | 'dev', id }
+
+  // --- Navigation ----------------------------------------------------------------------------
+
+  function show(next, devId) {
+    if (next === 'detail') {
+      activeDev = devId ?? (view.devs.some((d) => d.id === activeDev) ? activeDev : view.devs[0]?.id ?? null)
+      if (!activeDev) next = 'macro'
+    }
+    mode = next
+    parts.macro.hidden = mode !== 'macro'
+    parts.detail.hidden = mode !== 'detail'
+    stage.dataset.mode = mode
+    parts.modeButtons.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.officeMode === mode)))
+    render()
+  }
+
+  const openDev = (id) => show('detail', id)
+
+  function render() {
+    if (mode === 'macro') {
+      V.renderMacro(parts.grid, view, openDev)
+      return
+    }
+    V.renderDetail(parts, view, activeDev, namer.nameFor, { onOpen: openDev, onAgent: (id) => openDrawer({ kind: 'agent', id }) })
+    requestAnimationFrame(layoutTree)
+  }
+
+  // Scales the tree to fit one row (never under MIN_FIT_SCALE); phones get the stacked list instead.
+  function layoutTree() {
+    if (mode !== 'detail') return
+    const { scroll, tstage, tree } = parts
+    if (narrow.matches) {
+      tree.style.transform = ''
+      tstage.style.width = ''
+      tstage.style.height = ''
+    } else {
+      const natural = tree.offsetWidth
+      const avail = scroll.clientWidth
+      const s = M.fitScale(natural, avail)
+      const w = Math.max(avail, natural * s)
+      tstage.style.width = w + 'px'
+      tstage.style.height = tree.offsetHeight * s + 12 + 'px'
+      tree.style.transform = `translateX(${(w - natural * s) / 2}px) scale(${s})`
+    }
+    V.drawCables(tstage, parts.cables, parts.ports, narrow.matches)
+  }
+  new ResizeObserver(() => layoutTree()).observe(parts.scroll)
+  narrow.addEventListener('change', layoutTree)
+
+  parts.modeButtons.forEach((b) => b.addEventListener('click', () => show(b.dataset.officeMode)))
+  q('[data-office-back]').addEventListener('click', () => show('macro'))
+  parts.root.addEventListener('click', () => activeDev && openDrawer({ kind: 'dev', id: activeDev }))
+
+  // --- Drawer --------------------------------------------------------------------------------
+
+  function findAgent(id) {
+    for (const dev of view.devs) for (const project of dev.projects) {
+      const agent = project.agents.find((a) => a.id === id)
+      if (agent) return { dev, project, agent }
+    }
+    return null
+  }
+
+  function fillDrawer() {
+    if (!drawerFor) return false
+    let details = null
+    if (drawerFor.kind === 'agent') {
+      const found = findAgent(drawerFor.id)
+      if (found) details = V.agentDetails(found.dev, found.project, found.agent, namer.nameFor(found.dev.id, found.agent))
+    } else {
+      const dev = view.devs.find((d) => d.id === drawerFor.id)
+      if (dev) details = V.devDetails(dev)
+    }
+    if (!details) return false
+    parts.drawer.querySelector('[data-office-drawer-kicker]').textContent = details.kicker
+    parts.drawer.querySelector('[data-office-drawer-title]').textContent = details.title
+    parts.drawer.querySelector('[data-office-drawer-body]').replaceChildren(...details.body.filter(Boolean))
+    return true
+  }
+
+  function openDrawer(target) {
+    drawerFor = target
+    if (!fillDrawer()) return
+    parts.drawer.hidden = false
+    parts.backdrop.hidden = false
+    requestAnimationFrame(() => stage.classList.add('drawer-open'))
+    parts.drawer.querySelector('[data-office-drawer-close]').focus()
+  }
+
+  function closeDrawer() {
+    drawerFor = null
+    stage.classList.remove('drawer-open')
+    parts.drawer.hidden = true
+    parts.backdrop.hidden = true
+  }
+  parts.backdrop.addEventListener('click', closeDrawer)
+  parts.drawer.querySelector('[data-office-drawer-close]').addEventListener('click', closeDrawer)
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && !tv && office.view().mode === 'room') office.showDoors()
+    if (e.key !== 'Escape') return
+    if (drawerFor) closeDrawer()
+    else if (mode === 'detail') show('macro')
   })
 
-  const CLI_NAMES = {
-    claude: 'Claude', codex: 'Codex', opencode: 'OpenCode', gemini: 'Gemini', pi: 'Pi', cursor: 'Cursor',
-    copilot: 'Copilot', droid: 'Droid', amp: 'Amp', qwen: 'Qwen', antigravity: 'Antigravity'
-  }
-  const cliName = (cli) => CLI_NAMES[cli.toLowerCase()] || cli.charAt(0).toUpperCase() + cli.slice(1)
+  // --- Snapshots -----------------------------------------------------------------------------
 
-  // agentId -> { devId, given, name }: the visible name stays put while the agent lives. `given` is the
-  // agent's own name from the stream ('' when absent); same-dev duplicates get " 2", " 3"; with no name
-  // we fall back to "Claude 1", "Claude 2"...
-  const agentNames = new Map()
-  // Cuts at 28 UTF-16 units without leaving half of a surrogate pair.
-  function clipName(s) {
-    const cut = s.slice(0, 28)
-    return /[\ud800-\udbff]$/.test(cut) ? cut.slice(0, -1).trimEnd() : cut.trimEnd()
-  }
-  function nameFor(devId, agent) {
-    const given = typeof agent.name === 'string' ? clipName(agent.name.trim()) : ''
-    const known = agentNames.get(agent.id)
-    if (known && known.given === given) return known.name
-    const used = new Set()
-    for (const [id, info] of agentNames) if (info.devId === devId && id !== agent.id) used.add(info.name)
-    let name = given
-    if (given) {
-      for (let n = 2; used.has(name); n++) name = given + ' ' + n
-    } else {
-      const base = cliName(agent.cli)
-      let n = 1
-      while (used.has(base + ' ' + n)) n++
-      name = base + ' ' + n
-    }
-    agentNames.set(agent.id, { devId, given, name })
-    return name
-  }
-
-  let seen = { devs: new Set(), projects: new Set(), agents: new Set() }
-  let first = true
-
-  function apply(view) {
-    // The first snapshot shows everyone already at work instead of a crowd walking in.
-    const instant = first
-    first = false
-    const next = { devs: new Set(), projects: new Set(), agents: new Set() }
-    for (const dev of view.devs) {
-      next.devs.add(dev.id)
-      office.upsertDev({ id: dev.id, name: dev.name, machine: dev.machines.join(', '), offline: dev.status === 'offline' }, { instant })
-      for (const p of dev.projects) {
-        next.projects.add(p.id)
-        office.upsertProject({ id: p.id, devId: dev.id, name: p.name })
-        for (const a of p.agents) {
-          next.agents.add(a.id)
-          office.upsertAgent(
-            { id: a.id, devId: dev.id, projectId: p.id, name: nameFor(dev.id, a), cli: cliName(a.cli), status: a.state, title: a.branch || undefined },
-            { instant }
-          )
-        }
-      }
-    }
-    for (const id of seen.agents) if (!next.agents.has(id)) { office.removeAgent(id); agentNames.delete(id) }
-    for (const id of seen.projects) if (!next.projects.has(id)) office.removeProject(id)
-    for (const id of seen.devs) if (!next.devs.has(id)) office.removeDev(id)
-    seen = next
-    setStat('devs', next.devs.size)
-    setStat('projects', next.projects.size)
-    setStat('agents', next.agents.size)
+  function apply(next) {
+    view = next
+    const live = new Set()
+    for (const d of view.devs) for (const p of d.projects) for (const a of p.agents) live.add(a.id)
+    namer.retain(live)
+    if (mode === 'detail' && !view.devs.some((d) => d.id === activeDev)) show('macro')
+    else render()
+    if (drawerFor && !fillDrawer()) closeDrawer()
+    const agents = view.devs.reduce((n, d) => n + M.devAgents(d).length, 0)
+    setStat('devs', view.devs.filter((d) => d.status === 'online').length)
+    setStat('projects', view.devs.reduce((n, d) => n + d.projects.length, 0))
+    setStat('agents', agents)
   }
 
   function setStat(name, value) {
-    const el = stage.querySelector('[data-stat="' + name + '"]')
+    const el = q(`[data-stat="${name}"]`)
     if (el) el.textContent = String(value)
   }
 
   function setConn(state, text) {
-    if (!conn) return
-    conn.dataset.conn = state
-    conn.textContent = text
+    parts.conn.dataset.conn = state
+    parts.conn.textContent = text
   }
 
   let retryMs = 1000
@@ -129,40 +190,40 @@
   }
   connect()
 
-  // TV: doors for DOORS_MS, then each room for ROOM_MS with a short doors break in between. Rooms with an
-  // approval waiting go first; offline devs with no agents are skipped. The queue is rebuilt every cycle.
-  function rotationQueue() {
-    const rooms = office.devSummaries().filter((d) => d.agents > 0 || !d.offline)
-    return [...rooms.filter((d) => d.permission > 0 && !d.offline), ...rooms.filter((d) => !(d.permission > 0 && !d.offline))].map((d) => d.id)
-  }
-  function startRotation() {
-    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-    ;(async function loop() {
-      for (;;) {
-        office.showDoors()
-        await wait(DOORS_MS)
-        const queue = rotationQueue()
-        for (let i = 0; i < queue.length; i++) {
-          office.openRoom(queue[i])
-          await wait(ROOM_MS)
-          office.showDoors()
-          if (i < queue.length - 1) await wait(DOORS_GAP_MS)
-        }
+  // --- Rotation (TV) -------------------------------------------------------------------------
+
+  let rotationRun = 0
+  const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+  // Macro for MACRO_MS, then each dev for DEV_MS; the queue is rebuilt every cycle.
+  async function rotate(run) {
+    while (run === rotationRun) {
+      show('macro')
+      await wait(MACRO_MS)
+      for (const id of M.rotationQueue(view.devs)) {
+        if (run !== rotationRun) return
+        if (!view.devs.some((d) => d.id === id)) continue
+        show('detail', id)
+        await wait(DEV_MS)
       }
-    })()
+    }
   }
-  if (tv) startRotation()
 
-  const fit = stage.querySelector('[data-office-fit]')
-  const syncFit = () => { if (fit) fit.setAttribute('aria-pressed', String(office.autoFit())) }
-  stage.querySelectorAll('[data-office-zoom]').forEach((b) => b.addEventListener('click', () => {
-    office.zoom(Number(b.dataset.officeZoom))
-    syncFit()
-  }))
-  if (fit) fit.addEventListener('click', () => { office.setAutoFit(true); syncFit() })
-  syncFit()
+  function setRotation(on, persist) {
+    rotationRun++
+    parts.rotation.setAttribute('aria-checked', String(on))
+    if (persist) M.writeRotation(storage(), on)
+    if (on) void rotate(rotationRun)
+  }
+  function storage() {
+    try { return window.localStorage } catch { return null }
+  }
+  parts.rotation.addEventListener('click', () => setRotation(parts.rotation.getAttribute('aria-checked') !== 'true', true))
+  setRotation(M.readRotation(storage()), false)
 
-  const fullscreen = stage.querySelector('[data-office-fullscreen]')
+  // --- Fullscreen ----------------------------------------------------------------------------
+
+  const fullscreen = q('[data-office-fullscreen]')
   let wakeLock = null
   if (fullscreen) {
     if (!stage.requestFullscreen) fullscreen.hidden = true
@@ -172,16 +233,10 @@
       // Keeps a wall display from sleeping while it shows the office.
       if (navigator.wakeLock) navigator.wakeLock.request('screen').then((lock) => { wakeLock = lock }).catch(() => {})
     })
-    let scaleBeforeFullscreen = 0
     document.addEventListener('fullscreenchange', () => {
-      if (document.fullscreenElement === stage) {
-        if (!tv) scaleBeforeFullscreen = office.scale()
-        office.setAutoFit(true)
-      } else if (!document.fullscreenElement) {
-        if (!tv && scaleBeforeFullscreen) office.setScale(scaleBeforeFullscreen)
-        if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null }
-      }
-      syncFit()
+      if (!document.fullscreenElement && wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null }
     })
   }
+
+  show('macro')
 })()

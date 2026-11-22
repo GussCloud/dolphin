@@ -1,4 +1,3 @@
-import { z } from 'zod'
 import { afterEach, describe, expect, it } from 'vitest'
 import { issueSession } from './session-service.js'
 import { ConsoleBrowser } from './test-fixtures/console-browser.js'
@@ -207,32 +206,29 @@ describe('console work view', () => {
     expect(forged.res.status).toBe(403)
   })
 
-  it('serves the office scripts', async () => {
+  it('serves the office scripts, and nothing else from the assets path', async () => {
     await setup()
-    for (const name of ['office-tiles.js', 'office-scene.js', 'office-fit.js', 'office-engine.js', 'office-client.js']) {
+    for (const name of ['office-model.js', 'office-view.js', 'office-client.js']) {
       const res = await ctx.app.request(`/console/assets/office/${name}`)
       expect(res.status).toBe(200)
       expect(res.headers.get('content-type')).toContain('javascript')
+      expect(res.headers.get('x-content-type-options')).toBe('nosniff')
     }
-    expect((await ctx.app.request('/console/assets/office/..%2Fapp.js')).status).toBe(404)
+    for (const name of ['..%2Fapp.js', 'office-engine.js', 'office-tiles.png', 'office-client.js%00']) {
+      expect((await ctx.app.request(`/console/assets/office/${name}`)).status).toBe(404)
+    }
   })
 
-  it('serves the tileset atlas as an image plus its map, and nothing else', async () => {
-    await setup()
-    const png = await ctx.app.request('/console/assets/office/office-tiles.png')
-    expect(png.status).toBe(200)
-    expect(png.headers.get('content-type')).toBe('image/png')
-    expect(png.headers.get('cache-control')).toContain('max-age')
-    expect(png.headers.get('x-content-type-options')).toBe('nosniff')
-    const bytes = new Uint8Array(await png.arrayBuffer())
-    expect([...bytes.subarray(1, 4)]).toEqual([80, 78, 71])
-    const json = await ctx.app.request('/console/assets/office/office-tiles.json')
-    expect(json.status).toBe(200)
-    expect(json.headers.get('content-type')).toContain('application/json')
-    const atlas = z.object({ sprites: z.record(z.unknown()) }).parse(await json.json())
-    expect(Object.keys(atlas.sprites)).toContain('door_frame')
-    for (const name of ['tiles%2Foffice-tiles.png', '..%2Foffice-tiles.png', 'office-tiles.gif', 'office-tiles.png%00']) {
-      expect((await ctx.app.request(`/console/assets/office/${name}`)).status).toBe(404)
+  it('opens the console and the TV on the macro view with the rotation switched off', async () => {
+    const { owner } = await setup()
+    await owner.get('/console/office')
+    const created = await owner.post('/console/office/display-links', { label: 'TV' })
+    const path = /data-absolute-path="([^"]+)"/.exec(created.html)?.[1] ?? expect.unreachable()
+    const pages = [(await owner.get('/console/office')).html, await (await ctx.app.request(path)).text()]
+    for (const html of pages) {
+      expect(html).toContain('data-mode="macro"')
+      expect(html).toMatch(/role="switch" aria-checked="false" data-office-rotation/)
+      expect(html).not.toContain('aria-checked="true"')
     }
   })
 })

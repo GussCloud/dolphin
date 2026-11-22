@@ -6,12 +6,12 @@ The console's work view ("Escritório dos agentes") shows, in real time, every m
 
 ```
 Organization (corg_*)
-  Dev        = organization member (user account), one room
-    Project  = repository, one block of desks; ids are scoped per machine
-      Agent  = one agent pane (CLI + worktree), one desk
+  Dev        = organization member (user account), one card / one tree
+    Project  = repository, one branch of the tree; ids are scoped per machine
+      Agent  = one agent pane (CLI + worktree), one leaf
 ```
 
-There is no "you" room: the viewer's own account is just another dev.
+There is no "you" card: the viewer's own account is just another dev.
 
 Membership comes from the existing Azure DevOps auto-link (`dolphin-org-link.ts` → `joinOrganization`). Presence never creates membership; a desktop whose account belongs to no corporate organization is told so and backs off.
 
@@ -75,7 +75,7 @@ Limits: ≤ 50 projects, ≤ 100 agents per machine; `branch` nullable (folder w
 
 Forward compatibility (desktops and the auth server update independently, see [remote-wire-compatibility.md](./remote-wire-compatibility.md)):
 - `schemaVersion` is any integer ≥ 1. A later version may only add fields; the server strips fields it does not know and reads the v1 ones. A change that alters or removes a v1 field needs a new route, not a version bump.
-- An agent `state` the server does not know (any string up to 40 chars) is shown as `idle` rather than rejecting the snapshot, so a newer desktop never greys its room. Adding a state therefore means updating the server first and the desktop mapping second.
+- An agent `state` the server does not know (any string up to 40 chars) is shown as `idle` rather than rejecting the snapshot, so a newer desktop never greys its dev. Adding a state therefore means updating the server first and the desktop mapping second.
 - A `name` longer than 60 chars (any string up to 200) is truncated to 60 rather than rejecting the snapshot; over 200 is invalid.
 - Anything else outside the limits above still rejects the whole snapshot with `400 { "error": "invalid_request" }`.
 
@@ -86,13 +86,13 @@ Responses:
 
 ### `DELETE /v1/desktop/work-presence?machineId=…`
 
-Sent on graceful quit or sign-out. The room leaves immediately with the goodbye animation.
+Sent on graceful quit or sign-out. The dev leaves the view with the next snapshot.
 
 ## Liveness (auth server)
 
 Presence is held in memory (one auth instance). For each machine:
 - No snapshot for 60 s (three missed heartbeats): the machine is `offline`. Every online / offline / back online / dropped / goodbye transition is logged as `[work-presence]`. A dev whose machines are all offline is drawn greyed with "sem sinal".
-- 120 s more without a snapshot: the machine is dropped, and the room plays the goodbye and closes once no machine is left.
+- 120 s more without a snapshot: the machine is dropped, and the dev leaves the view once no machine is left.
 - A new snapshot at any time revives it.
 
 ## Console → browser
@@ -109,14 +109,16 @@ The stream sends `event: snapshot` with the whole org view, at most every 500 ms
     "agents": [ { "id": "<machineId>:<agentId>", "cli": "claude", "state": "working", "branch": "feat/pix", "name": "impl" } ] } ] } ] }
 ```
 
-The browser diffs consecutive snapshots into the office engine (`upsert*` / `remove*`). Speech bubbles show only real transitions, never invented phrases.
+The browser redraws the view from each snapshot; agent names stay stable between snapshots (`createAgentNamer` in `office-model.js`).
 
-### Views: doors, room, TV rotation
+### Views: macro, detail, TV rotation
 
-The page opens on **doors**: a hallway with one door per dev, fitted to the viewport (`pickDoorGrid` in `office-fit.js`). Each nameplate shows the dev's name and agent count, and the lamp above the door is amber if any agent is waiting for approval (highest priority, so an approval is never hidden behind a closed door), else green if any agent is working, else grey (idle or no signal; offline doors are greyed).
+Scripts: `office-model.js` (rules with no DOM, unit-tested in `office-model.test.ts`), `office-view.js` (DOM, built with `textContent` so stream strings never become markup) and `office-client.js` (stream, navigation, rotation).
 
-Clicking a door opens that dev's **room** with the usual scene. `← Salas` or `Esc` goes back; if the open dev leaves the snapshot, the view returns to the doors. Every room keeps simulating while the doors are shown, so agents are already seated when a room opens. The zoom buttons only apply to a room.
+The page opens on the **macro view**: one card per dev with the online / no-signal status, machines, counts of working / awaiting approval / idle agents, and each project with one dot per agent. The awaiting-approval count turns amber when it is above zero.
 
-The **TV page** rotates on its own: doors for 10 s, then each room for 12 s with a 2.5 s doors break in between. Rooms with an agent awaiting approval go first, and offline devs with no agents are skipped. The queue is rebuilt each cycle, and the timings are constants at the top of `office-client.js`. Clicks are disabled on the TV; the console page, including fullscreen, stays manual.
+Clicking a card, or **Detalhada**, opens that dev's **tree**: the dev on top, the projects side by side below, and each project's agents side by side below it, joined by SVG cables. A cable runs fast and amber toward an agent awaiting approval, flows in the project's color toward a working one, and is still and grey toward an idle one; a project's cable takes its most urgent agent's state. The tree stays on one row and scales down to fit (never under 70%, `fitScale`), then scrolls sideways inside its own area; under 768 px it becomes an indented list. Tabs switch devs; `← Visão macro` or `Esc` goes back, and if the open dev leaves the snapshot the view returns to the macro view. Clicking a dev or an agent opens a side panel with its details.
+
+**Rotation** (macro for 10 s, then each dev for 12 s; devs with an approval waiting first, offline devs with no agents skipped, queue rebuilt each cycle) is **off by default on both the console and the TV page**. The *Rotação automática* switch turns it on, and that choice is kept in the browser's `localStorage` (`dolphin.office.rotation`), so a wall display is set up once. The TV page is clickable like the console.
 
 Agent names use the optional `name` field when the stream sends it, otherwise "Claude 1", "Claude 2"... Two agents of the same dev with the same visible name get " 2", " 3" suffixes, stable while the agent lives.
