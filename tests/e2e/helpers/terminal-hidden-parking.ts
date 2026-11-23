@@ -25,7 +25,18 @@ export async function waitForTabParked(
   return Date.now() - parkWaitStartedAt
 }
 
-async function createActiveTerminalTab(page: Page, worktreeId: string): Promise<string> {
+async function waitForActiveTerminalTabRendered(page: Page, tabId: string): Promise<void> {
+  await expect
+    .poll(() => getActiveTabId(page), {
+      timeout: 5_000,
+      message: `terminal tab ${tabId} did not become active`
+    })
+    .toBe(tabId)
+  await waitForActiveTerminalManager(page, 30_000)
+  await waitForPaneIdentitySnapshot(page, 1)
+}
+
+export async function createActiveTerminalTab(page: Page, worktreeId: string): Promise<string> {
   const tabId = await page.evaluate((worktreeId) => {
     const store = window.__store
     if (!store) {
@@ -37,16 +48,22 @@ async function createActiveTerminalTab(page: Page, worktreeId: string): Promise<
     state.setActiveTabType('terminal', store.getState().activeWorktreeId)
     return tab.id
   }, worktreeId)
-
-  await expect
-    .poll(() => getActiveTabId(page), {
-      timeout: 5_000,
-      message: 'newly created terminal tab did not become active'
-    })
-    .toBe(tabId)
-  await waitForActiveTerminalManager(page, 30_000)
-  await waitForPaneIdentitySnapshot(page, 1)
+  await waitForActiveTerminalTabRendered(page, tabId)
   return tabId
+}
+
+// Why wait for the render: a tab activated and hidden again before any commit
+// observed it active cannot take the last-active park exemption.
+export async function activateTerminalTab(page: Page, tabId: string): Promise<void> {
+  await page.evaluate((tabId) => {
+    const store = window.__store
+    if (!store) {
+      throw new Error('activateTerminalTab: window.__store is unavailable')
+    }
+    store.getState().setActiveTab(tabId)
+    store.getState().setActiveTabType('terminal', store.getState().activeWorktreeId)
+  }, tabId)
+  await waitForActiveTerminalTabRendered(page, tabId)
 }
 
 // Why: #8262 exempts the single most-recently-hidden tab from cold-park. An

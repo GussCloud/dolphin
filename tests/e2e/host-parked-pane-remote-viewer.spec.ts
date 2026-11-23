@@ -45,7 +45,11 @@ import {
   launchPairedElectronClient
 } from './helpers/paired-electron-client'
 import { focusActiveTerminalInput } from './helpers/terminal'
-import { waitForTabParked } from './helpers/terminal-hidden-parking'
+import {
+  activateTerminalTab,
+  createActiveTerminalTab,
+  waitForTabParked
+} from './helpers/terminal-hidden-parking'
 
 const PARK_DELAY_MS = 30_000
 const PAINT_BUDGET_MS = 20_000
@@ -150,6 +154,21 @@ test('a cold-parked host pane keeps serving its paired remote viewer', async ({
   appPage
 }, testInfo) => {
   test.setTimeout(600_000)
+  const worktreeId = await appPage.evaluate(() => {
+    const id = window.__store?.getState().activeWorktreeId
+    if (!id) {
+      throw new Error('headed host has no active worktree')
+    }
+    return id
+  })
+  // Two host decoys, made before pairing: one to age the target, one to take
+  // the most-recently-hidden exemption. Why before: a viewer attached while a
+  // new host tab is still spawning can bind it to a runtime-owned PTY the host
+  // never parks, leaving the target as the only exemption candidate.
+  const decoyTabIds = [
+    await createActiveTerminalTab(appPage, worktreeId),
+    await createActiveTerminalTab(appPage, worktreeId)
+  ]
   const offer = await createRuntimeDesktopPairingOffer(appPage)
   const previousParkDelay = process.env.DOLPHIN_E2E_TERMINAL_PARKING_DELAY_MS
   process.env.DOLPHIN_E2E_TERMINAL_PARKING_DELAY_MS = String(PARK_DELAY_MS)
@@ -157,13 +176,6 @@ test('a cold-parked host pane keeps serving its paired remote viewer', async ({
   const createdTerminals: string[] = []
   const sinkPath = path.join(scratch, `sink-${randomUUID()}.log`)
   try {
-    const worktreeId = await appPage.evaluate(() => {
-      const id = window.__store?.getState().activeWorktreeId
-      if (!id) {
-        throw new Error('headed host has no active worktree')
-      }
-      return id
-    })
     await expect
       .poll(
         () =>
@@ -269,18 +281,11 @@ test('a cold-parked host pane keeps serving its paired remote viewer', async ({
 
     // 3. The host cold-parks the pane the client is watching. Nobody touches
     //    it on the host again.
-    // Two decoy tabs on the host: one to age the target, one to take the
-    // most-recently-hidden exemption. Sampled before and after the park lands
-    // so decoy churn cannot be mistaken for the park itself.
-    for (let i = 0; i < 2; i += 1) {
-      await appPage.evaluate((id) => {
-        const state = window.__store?.getState()
-        const tab = state?.createTab(id, undefined, undefined, { activate: true })
-        if (tab) {
-          state?.setActiveTab(tab.id)
-          state?.setActiveTabType('terminal', window.__store?.getState().activeWorktreeId ?? null)
-        }
-      }, worktreeId)
+    // Each decoy must render active before the next, or the target keeps the
+    // exemption. Sampled before and after the park lands so decoy churn cannot
+    // be mistaken for the park itself.
+    for (const decoyTabId of decoyTabIds) {
+      await activateTerminalTab(appPage, decoyTabId)
     }
     const readClientState = async (): Promise<unknown> =>
       client.page.evaluate((id) => {
