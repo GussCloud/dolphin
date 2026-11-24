@@ -175,7 +175,9 @@ describe('PR E2E gate contract', () => {
     expect(changedRun.run).toContain(
       'pnpm run test:e2e "${TEST_FILES[@]}" --workers=1 "${E2E_PROJECT_ARGS[@]}"'
     )
-    expect(playwrightConfig).toContain('retries: 0')
+    // Why: PR runs pass no retries input, so a changed spec must pass on its first attempt.
+    expect(playwrightConfig).toContain("process.env.DOLPHIN_E2E_RETRIES ?? '0'")
+    expect(e2eWorkflow.env.DOLPHIN_E2E_RETRIES).toBe("${{ inputs.retries || '0' }}")
     const steps = e2eWorkflow.jobs.e2e.steps.filter((step) =>
       step.run?.includes('tests/e2e/worktree-switch-first-paint.spec.ts')
     )

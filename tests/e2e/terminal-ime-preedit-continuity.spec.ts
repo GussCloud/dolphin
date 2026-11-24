@@ -60,8 +60,10 @@ test('keeps the CJK prefix in place across mixed text and the layout budget', as
       })
       initial ??= sample.starts
       expect(sample.starts).toHaveLength(32)
+      // Why 0.25px: Chromium lays text out in 1/64px units, so a reflow can move a glyph by a
+      // sub-pixel step (0.0625px seen on CI); a visible jump is a whole cell.
       for (const [index, start] of sample.starts.entries()) {
-        expect(start).toBeCloseTo(initial[index], 1)
+        expect(Math.abs(start - initial[index])).toBeLessThanOrEqual(0.25)
       }
       expect(sample.caretRight).toBeCloseTo(sample.width, 1)
     }

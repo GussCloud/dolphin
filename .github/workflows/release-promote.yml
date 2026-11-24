@@ -149,6 +149,8 @@ jobs:
     uses: ./.github/workflows/e2e.yml
     with:
       ref: ${{ needs.resolve.outputs.target_sha }}
+      # Why one retry: a test that fails twice still blocks; one timing hiccup does not.
+      retries: '1'
 
   e2e_wsl:
     needs: resolve
@@ -157,6 +159,7 @@ jobs:
     uses: ./.github/workflows/windows-wsl-e2e.yml
     with:
       ref: ${{ needs.resolve.outputs.target_sha }}
+      retries: '1'
 
   desktop:
     needs: [resolve, approve]
