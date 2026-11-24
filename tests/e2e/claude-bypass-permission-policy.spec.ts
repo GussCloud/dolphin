@@ -41,6 +41,10 @@ writeFileSync(
 if [ "$1" = "--version" ]; then echo "2.1.323 (Claude Code)"; exit 0; fi
 out="$DOLPHIN_E2E_OUT"
 hook="$DOLPHIN_E2E_HOOK"
+# Why wait: Dolphin binds the pane's launch token right after the spawn returns, and a hook posted
+# before that is (correctly) left to the user. Real Claude never prompts within milliseconds.
+i=0
+while [ ! -f "$out.go" ] && [ $i -lt 300 ]; do sleep 0.1; i=$((i + 1)); done
 {
   echo "NO_TIMEOUT=\${CLAUDE_CODE_DISABLE_DANGEROUS_RM_TIMEOUT-unset}"
   echo "LAUNCH_TOKEN=\${DOLPHIN_AGENT_LAUNCH_TOKEN:+set}"
@@ -188,6 +192,8 @@ async function createBypassHarness(
       launchConfig: { agentCommand: launch.command, agentArgs: '', agentEnv: {} },
       env: { ...launch.env, DOLPHIN_E2E_OUT: out, DOLPHIN_E2E_HOOK: hookPath }
     })
+    // terminal.create resolves after the spawn record holds the launch token.
+    writeFileSync(`${out}.go`, '')
     // The tmux shim's stderr is the only trace of a failed teammate split, so surface it.
     const splitErr = (): string =>
       existsSync(`${out}.split-err`) ? readText(`${out}.split-err`) : '(no split attempted)'
