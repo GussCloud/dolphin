@@ -109,7 +109,9 @@ describe('dolphin cli worktree awareness', () => {
     expect(callMock).toHaveBeenCalledWith('diagnostics.memory')
     const output = logSpy.mock.calls.flat().join('\n')
     expect(output).toContain('totalMemory: 2.0 MB')
-    expect(output).toContain('processMemoryMetric: summed RSS; shared or aliased pages may repeat')
+    expect(output).toContain(
+      'processMemoryMetric: summed RSS; shared or aliased pages may repeat; compressed or swapped memory not counted'
+    )
     expect(output).toContain('hostAvailable: 2.0 MB (free-memory)')
     expect(output).toContain('app: 1.0 MB')
     expect(output).toContain('- feature  1.0 MB  2.5%  1 session')

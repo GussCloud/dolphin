@@ -8,8 +8,10 @@
 //         [--cpu-window-ms 60000] [--heavy-url https://github.com] [--no-heavy] [--out file.json]
 // The app runs hidden (DOLPHIN_E2E_HEADLESS + DOLPHIN_BACKGROUND_LAUNCH) in a throwaway
 // profile; only the process tree this script spawns is killed. "private" is commit
-// (PrivatePageCount) on Windows and RSS elsewhere; use it for "what would we free" — a
-// browser guest's working set is ~4x its private bytes because it counts shared pages.
+// (PrivatePageCount) on Windows, physical footprint on macOS when
+// `pnpm build:process-footprint-macos` has run, and RSS otherwise; the output's
+// `privateMetric` names which. Use it for "what would we free" — a browser guest's
+// working set is ~4x its private bytes because it counts shared pages.
 
 import { _electron as electron } from '@playwright/test'
 import { execFileSync } from 'node:child_process'
@@ -18,6 +20,7 @@ import http from 'node:http'
 import os from 'node:os'
 import path from 'node:path'
 import process from 'node:process'
+import { privateMetric, sweepProcesses } from './measure-process-memory-sweep.mjs'
 import { createCompletedOnboardingProfile } from './windows-apphang-repro/wsl-workspace-fixture.mjs'
 
 const rootDir = path.resolve(import.meta.dirname, '..', '..')
@@ -92,55 +95,6 @@ function startLocalPageServer(titleChurn) {
 }
 
 // ─── OS process sweep ────────────────────────────────────────────────
-
-function sweepProcesses() {
-  if (process.platform !== 'win32') {
-    const out = execFileSync('ps', ['-eo', 'pid=,ppid=,rss=,time=,comm='], { encoding: 'utf8' })
-    return out
-      .trim()
-      .split('\n')
-      .map((line) => {
-        const [pid, ppid, rss, time, ...name] = line.trim().split(/\s+/)
-        const [h, m, s] = time.split(':').map(Number)
-        return {
-          pid: Number(pid),
-          ppid: Number(ppid),
-          name: name.join(' '),
-          workingSet: Number(rss) * 1024,
-          privateBytes: Number(rss) * 1024,
-          cpuSeconds: (h || 0) * 3600 + (m || 0) * 60 + (s || 0)
-        }
-      })
-  }
-  const script =
-    'Get-CimInstance Win32_Process | ForEach-Object { "{0}|{1}|{2}|{3}|{4}|{5}|{6}" -f ' +
-    '$_.ProcessId,$_.ParentProcessId,$_.Name,$_.WorkingSetSize,$_.PrivatePageCount,' +
-    '($_.UserModeTime + $_.KernelModeTime),($_.CommandLine -replace "[|\r\n]"," ") }'
-  const out = execFileSync(
-    'powershell.exe',
-    ['-NoProfile', '-NonInteractive', '-Command', script],
-    {
-      encoding: 'utf8',
-      windowsHide: true,
-      maxBuffer: 32 * 1024 * 1024
-    }
-  )
-  return out
-    .split(/\r?\n/)
-    .filter(Boolean)
-    .map((line) => {
-      const [pid, ppid, name, ws, priv, ticks, commandLine = ''] = line.split('|')
-      return {
-        commandLine,
-        pid: Number(pid),
-        ppid: Number(ppid),
-        name,
-        workingSet: Number(ws),
-        privateBytes: Number(priv),
-        cpuSeconds: Number(ticks) / 1e7
-      }
-    })
-}
 
 function descendants(rows, rootPid) {
   const childrenOf = new Map()
@@ -372,7 +326,7 @@ async function measure(label, ctx, { cpuWindowMs = 0, hiddenWorktreeTags = [] } 
 function printSummary(result) {
   console.log(`\n=== ${result.label} ===`)
   console.log(
-    `processes=${result.processCount} private=${result.totalPrivateMB}MB ws=${result.totalWorkingSetMB}MB mainHeap=${result.mainHeapUsedMB}MB`
+    `processes=${result.processCount} private(${privateMetric})=${result.totalPrivateMB}MB ws=${result.totalWorkingSetMB}MB mainHeap=${result.mainHeapUsedMB}MB`
   )
   const rows = Object.entries(result.byCategory).sort((a, b) => b[1].privateMB - a[1].privateMB)
   for (const [category, bucket] of rows) {
@@ -651,7 +605,7 @@ async function main() {
     path.join(shortRoot, `process-memory-${new Date().toISOString().replace(/[:.]/g, '-')}.json`)
   writeFileSync(
     out,
-    `${JSON.stringify({ platform: process.platform, options, results }, null, 2)}\n`
+    `${JSON.stringify({ platform: process.platform, privateMetric, options, results }, null, 2)}\n`
   )
   console.log(`\nWrote ${out}`)
 }

@@ -1,6 +1,6 @@
 import { basename } from 'node:path'
 import { splitWorktreeIdForFilesystem } from '../../shared/worktree/id'
-import type { SessionMemory } from '../../shared/process-stats-types'
+import type { ProcessMemoryMetric, SessionMemory } from '../../shared/process-stats-types'
 import type { Store } from '../persistence'
 import { parseWorkspaceKey } from '../../shared/workspace-scope'
 import { folderWorkspaceToWorktree } from '../../shared/folder-workspace-worktree'
@@ -20,6 +20,18 @@ type HistoryRing = {
 }
 
 const historyByKey = new Map<string, HistoryRing>()
+let historyMetric: ProcessMemoryMetric | null = null
+
+/**
+ * Clears every ring when the sweep's metric changes. Why: footprint and RSS differ by ~2.7x,
+ * so one curve holding both would draw a jump nothing caused.
+ */
+export function alignMemoryHistoryMetric(metric: ProcessMemoryMetric): void {
+  if (historyMetric !== null && historyMetric !== metric) {
+    historyByKey.clear()
+  }
+  historyMetric = metric
+}
 
 export function pushMemoryHistorySample(key: string, memoryBytes: number, now: number): void {
   let ring = historyByKey.get(key)

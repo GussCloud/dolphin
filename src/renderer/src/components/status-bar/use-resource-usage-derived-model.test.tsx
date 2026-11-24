@@ -194,3 +194,67 @@ describe('Resource Manager folder ownership', () => {
     expect(groups.some((project) => project.repoId === foreign.repoId)).toBe(false)
   })
 })
+
+describe('Resource Manager after a failed host process scan', () => {
+  it('shows unavailable totals and session metrics instead of placeholder zeros', () => {
+    const snapshot: MemorySnapshot = {
+      app: {
+        cpu: 0,
+        memory: 0,
+        main: { cpu: 0, memory: 0 },
+        renderer: { cpu: 0, memory: 0 },
+        other: { cpu: 0, memory: 0 },
+        history: []
+      },
+      worktrees: [
+        { ...sampled, cpu: 0, memory: 0, sessions: [{ ...sampled.sessions[0], cpu: 0, memory: 0 }] }
+      ],
+      host: {
+        totalMemory: 16384,
+        freeMemory: 0,
+        availableMemory: 0,
+        availableMemorySource: 'free-memory',
+        usedMemory: 0,
+        memoryUsagePercent: 0,
+        cpuCoreCount: 1,
+        loadAverage1m: 0
+      },
+      processMemoryMetric: 'rss',
+      totalCpu: 0,
+      totalMemory: 0,
+      processScanFailed: true,
+      collectedAt: 0
+    }
+    const { result } = renderHook(() =>
+      useResourceUsageDerivedModel({
+        open: true,
+        resourceSnapshot: snapshot,
+        sessions: [],
+        resourceSessionBindings: {
+          tabsByWorktree: {},
+          ptyIdsByTabId: {},
+          workspaceSessionReady: true
+        },
+        runtimePaneTitlesByTabId: {},
+        repos: [],
+        allWorktrees: [local],
+        projectGroups: [group],
+        browserTabsByWorktree: {},
+        workspaceSessionReady: true,
+        sessionCount: 0,
+        sessionsError: false,
+        memorySnapshotError: null,
+        snapshot,
+        spaceScanReady: false
+      })
+    )
+
+    expect(result.current.memBadgeLabel).toBe('—')
+    expect(result.current.totalMemory).toBeNull()
+    expect(result.current.totalCpu).toBeNull()
+    const worktree = result.current.unifiedRepos[0]?.worktrees[0]
+    expect(worktree?.memory).toBeNull()
+    expect(worktree?.sessions[0]?.memory).toBeNull()
+    expect(worktree?.sessions[0]?.cpu).toBeNull()
+  })
+})

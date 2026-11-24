@@ -295,6 +295,21 @@ describe('electron-builder config', () => {
     )
   })
 
+  // Why Contents/MacOS: the memory collector resolves it next to process.execPath, in dev and packaged.
+  it('ships the mac process-footprint helper in Contents/MacOS, not Resources', () => {
+    expect(electronBuilderConfig.mac.extraFiles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          from: 'native/process-footprint-macos/.build/release/dolphin-process-footprint',
+          to: 'MacOS/dolphin-process-footprint'
+        })
+      ])
+    )
+    expect(electronBuilderConfig.mac.extraResources).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ to: 'dolphin-process-footprint' })])
+    )
+  })
+
   it('unpacks the compiled CommonJS boundary with CLI runtime files', () => {
     expect(electronBuilderConfig.asarUnpack).toEqual(
       expect.arrayContaining([

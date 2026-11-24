@@ -44,6 +44,7 @@ export function emptyMemorySnapshot(): MemorySnapshot {
     processMemoryMetric: getProcessMemoryMetric(),
     totalCpu: 0,
     totalMemory: 0,
+    processScanFailed: true,
     collectedAt: Date.now()
   }
 }

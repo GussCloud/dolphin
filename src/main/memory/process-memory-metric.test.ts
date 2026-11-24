@@ -11,3 +11,10 @@ describe('process memory metric', () => {
     expect(getProcessMemoryMetric('win32')).toBe('working-set')
   })
 })
+
+describe('process memory metric with a footprint sweep', () => {
+  it('declares footprint only when the sweep carried footprint bytes', () => {
+    expect(getProcessMemoryMetric('darwin', true)).toBe('footprint')
+    expect(getProcessMemoryMetric('darwin', false)).toBe('rss')
+  })
+})

@@ -137,8 +137,9 @@ export function renderResourceUsageSummary({
   commitToneClass,
   orphanCount
 }: {
-  totalCpu: number
-  totalMemory: number
+  /** Null when the host process scan failed. */
+  totalCpu: number | null
+  totalMemory: number | null
   memoryMetricCopy: ReturnType<typeof getResourceMemoryMetricCopy>
   commitBadgeLabel: string | null
   commitMetricCopy: ReturnType<typeof getResourceCommitMetricCopy> | null
@@ -154,7 +155,7 @@ export function renderResourceUsageSummary({
               tabIndex={0}
               className="font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:rounded"
             >
-              {formatCpu(totalCpu)}
+              {totalCpu === null ? '—' : formatCpu(totalCpu)}
             </span>
           </TooltipTrigger>
           <TooltipContent side="top" sideOffset={6} className="z-[70] max-w-xs">
@@ -171,7 +172,7 @@ export function renderResourceUsageSummary({
               tabIndex={0}
               className="font-medium text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:rounded"
             >
-              {formatMemory(totalMemory)}{' '}
+              {totalMemory === null ? '—' : formatMemory(totalMemory)}{' '}
               <span className="font-normal text-muted-foreground">
                 {memoryMetricCopy.summaryLabel}
               </span>

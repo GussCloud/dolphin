@@ -19,12 +19,23 @@ export function getResourceMemoryMetricCopy(metric: ProcessMemoryMetric): Resour
       )
     }
   }
+  if (metric === 'footprint') {
+    return {
+      columnLabel: 'Mem',
+      summaryLabel: 'Σ Mem',
+      description: translate(
+        'auto.components.status.bar.resource.memory.metric.footprintDescription',
+        'Summed physical footprint, the figure Activity Monitor shows as Memory: resident pages plus compressed, swapped and GPU memory each process owns.'
+      )
+    }
+  }
+  // Why the default branch: RSS is also what an unknown metric from a newer host falls back to.
   return {
     columnLabel: 'RSS',
     summaryLabel: 'Σ RSS',
     description: translate(
       'auto.components.status.bar.resource.memory.metric.rssDescription',
-      'Summed resident set size (RSS). Shared or aliased pages can appear in more than one process.'
+      'Summed resident set size (RSS): pages resident in RAM right now. Shared or aliased pages can appear in more than one process, and compressed or swapped memory is not counted here.'
     )
   }
 }

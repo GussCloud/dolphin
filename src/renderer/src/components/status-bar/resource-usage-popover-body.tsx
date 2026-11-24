@@ -138,6 +138,7 @@ export function renderResourceUsagePopoverBody({
         {resourceSnapshot && (
           <AppSection
             app={resourceSnapshot.app}
+            memoryUnavailable={resourceSnapshot.processScanFailed === true}
             isCollapsed={appCollapsed}
             onToggle={() => setAppCollapsed((v) => !v)}
           />

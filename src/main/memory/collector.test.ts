@@ -10,21 +10,15 @@ type AppMetricFixture = {
   memory: { workingSetSize: number }
 }
 
-const { appMetricsMock, runProcessMock, execMock, listRegisteredPtysMock } = vi.hoisted(() => ({
+const { appMetricsMock, runProcessMock, listRegisteredPtysMock } = vi.hoisted(() => ({
   appMetricsMock: vi.fn<() => AppMetricFixture[]>(() => []),
   runProcessMock: vi.fn(),
-  execMock: vi.fn(),
   listRegisteredPtysMock: vi.fn()
 }))
 
-vi.mock('child_process', () => ({
-  exec: (cmd: string, opts: unknown, cb: (err: Error | null, out: { stdout: string }) => void) =>
-    execMock(cmd, opts, cb)
-}))
-
-// Why mock the chokepoint for the Windows sweep: maxBuffer, timeout and the
-// hidden console are its contract now, so the assertions below are about which
-// query runs, not how a process is started.
+// Why mock the chokepoint for every sweep: maxBuffer, timeout and the hidden
+// console are its contract now, so the assertions below are about which query
+// runs, not how a process is started.
 vi.mock('../../shared/child-process/run-process', () => ({
   runProcess: (spec: { program: string; args?: string[] }) => runProcessMock(spec)
 }))
@@ -35,6 +29,11 @@ vi.mock('../windows/windows-process-table', () => ({
   isWindowsProcessResourceUsageAvailable: () => false,
   isWindowsProcessTableAvailable: () => false,
   readWindowsProcessResourceTable: () => Promise.reject(new Error('not under test'))
+}))
+
+// Why: these cases pin the RSS path; collector-darwin-footprint.test.ts covers footprint.
+vi.mock('./darwin-process-footprint', () => ({
+  readDarwinProcessFootprints: () => Promise.resolve(null)
 }))
 
 vi.mock('./pty-registry', () => ({
@@ -224,19 +223,22 @@ describe('collectMemorySnapshot', () => {
     appMetricsMock.mockReset()
     appMetricsMock.mockReturnValue([])
     runProcessMock.mockReset()
-    execMock.mockReset()
     listRegisteredPtysMock.mockReset()
     listRegisteredPtysMock.mockReturnValue([])
   })
 
+  function isPsProgram(program: string): boolean {
+    return program === '/bin/ps' || program === 'ps'
+  }
+
   function mockPsResponse(stdout: string) {
-    execMock.mockImplementation((_cmd, _opts, cb) => cb(null, { stdout, stderr: '' }))
     runProcessMock.mockImplementation((spec: { program: string }) =>
       Promise.resolve({
         code: 0,
         signal: null,
-        stdout:
-          spec.program === 'typeperf.exe'
+        stdout: isPsProgram(spec.program)
+          ? stdout
+          : spec.program === 'typeperf.exe'
             ? psFixtureToTypeperfOutput(stdout)
             : psFixtureToWindowsProcessOutput(stdout),
         stderr: '',
@@ -303,7 +305,10 @@ describe('collectMemorySnapshot', () => {
       expect(runProcessMock).toHaveBeenCalledTimes(count)
       return
     }
-    expect(execMock).toHaveBeenCalledTimes(count)
+    // Why filter: on macOS the host-availability probe also goes through runProcess.
+    expect(runProcessMock.mock.calls.filter(([spec]) => isPsProgram(spec.program))).toHaveLength(
+      count
+    )
   }
 
   it('coalesces concurrent callers onto a single in-flight sweep', async () => {
@@ -454,10 +459,7 @@ describe('collectMemorySnapshot', () => {
     expect(snap.worktrees[0].memory).toBe(2048 * 1024)
   })
 
-  it('returns an empty snapshot when process enumeration fails', async () => {
-    execMock.mockImplementation((_cmd, _opts, cb) =>
-      cb(new Error('process enumeration failed'), { stdout: '' })
-    )
+  it('flags a failed process enumeration instead of reporting it as empty', async () => {
     runProcessMock.mockImplementation(() =>
       Promise.resolve({
         code: 1,
@@ -473,8 +475,9 @@ describe('collectMemorySnapshot', () => {
     const snap = await collectMemorySnapshot(emptyStore)
 
     // Enumeration failure should not surface as a rejected promise or crash the
-    // renderer; the collector swallows and returns zeros so the UI can
-    // render an empty state.
+    // renderer; the zeros are placeholders and the flag tells readers so.
+    expect(snap.processScanFailed).toBe(true)
+    expect(snap.trackedProcessCount).toBeUndefined()
     expect(snap.worktrees).toEqual([])
     expect(snap.totalMemory).toBe(0)
   })

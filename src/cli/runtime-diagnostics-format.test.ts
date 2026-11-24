@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { RuntimeDiagnostics } from '../shared/runtime-diagnostics-types'
 import { formatDuration, formatRuntimeDiagnostics } from './runtime-diagnostics-format'
+import { formatMemorySnapshot } from './workspace-format'
 
 const usage = { cpu: 0, memory: 0 }
 
@@ -90,9 +91,34 @@ describe('formatRuntimeDiagnostics', () => {
     expect(text).toContain('Untracked under daemon: 1')
     expect(text).toContain('Terminal daemon:      50 MB')
     expect(text).toContain('Session trees:        200 MB')
-    expect(text).toContain('Total Dolphin tree:      550 MB')
+    expect(text).toContain('App + sessions (UI):  500 MB')
+    expect(text).toContain('Total incl. daemon:   550 MB')
     expect(text).toContain('terminal-history:     2.0 MB  (4 files, 2 entries)')
     expect(text).toContain('logs:                 absent')
+  })
+
+  it('says a failed process scan is unknown rather than printing its placeholder counts', () => {
+    const base = diagnostics()
+    const { trackedProcessCount: _omitted, ...memory } = base.memory
+    const text = formatRuntimeDiagnostics({
+      ...base,
+      memory: { ...memory, processScanFailed: true }
+    })
+
+    expect(text).toContain('In session trees:     unknown (process scan failed)')
+    expect(text).toContain('Process scan failed: per-process figures below are placeholders')
+  })
+
+  it('names a footprint snapshot and flags a failed scan in the memory listing', () => {
+    const { memory } = diagnostics()
+
+    expect(formatMemorySnapshot({ ...memory, processMemoryMetric: 'footprint' })).toContain(
+      'processMemoryMetric: summed physical footprint; includes compressed, swapped and GPU memory'
+    )
+    expect(formatMemorySnapshot(memory)).not.toContain('processScanFailed')
+    expect(formatMemorySnapshot({ ...memory, processScanFailed: true })).toContain(
+      'processScanFailed: true; per-process figures are placeholders, not measurements'
+    )
   })
 
   it('lists inconsistencies and labels a partial daemon inventory', () => {
