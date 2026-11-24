@@ -1,5 +1,9 @@
 import type { BrowserWindow } from 'electron'
-import type { AzureCliSignInMode, AzureCliSignInResult } from '../../shared/azure-devops-auth'
+import {
+  AZURE_CLI_SIGN_IN_CANCELLED,
+  type AzureCliSignInMode,
+  type AzureCliSignInResult
+} from '../../shared/azure-devops-auth'
 import { runProcess, type ProcessResult } from '../../shared/child-process/run-process'
 import {
   DEVICE_CODE_LOGIN_TIMEOUT_MS,
@@ -34,7 +38,7 @@ import {
 const LOGIN_TIMEOUT_MS = 5 * 60_000
 const MAX_ERROR_LENGTH = 300
 
-export const SIGN_IN_CANCELLED = 'cancelled'
+export const SIGN_IN_CANCELLED = AZURE_CLI_SIGN_IN_CANCELLED
 
 type Attempt = {
   controller: AbortController

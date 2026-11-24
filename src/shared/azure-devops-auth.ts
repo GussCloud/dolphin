@@ -69,6 +69,9 @@ export type AzureCliSignInMode = 'in-app' | 'system-browser' | 'device-code'
 
 export type AzureCliSignInResult = { ok: true } | { ok: false; error: string }
 
+/** The `error` of a sign-in the user cancelled. */
+export const AZURE_CLI_SIGN_IN_CANCELLED = 'cancelled'
+
 export const AZURE_CLI_SIGN_IN_STATE_CHANNEL = 'azureDevOps:cliSignInStateChanged'
 
 export function isAzureCliSignInMode(value: unknown): value is AzureCliSignInMode {

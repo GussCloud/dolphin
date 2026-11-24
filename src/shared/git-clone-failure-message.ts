@@ -1,4 +1,10 @@
 import { stripCredentialsFromMessage } from './git-remote-error'
+import {
+  findAzureDevOpsCloneSignInMessage,
+  formatAzureDevOpsCloneSignInMessage,
+  isAzureDevOpsCloneSignInFailure,
+  type AzureDevOpsCloneSignInHost
+} from './git-clone-azure-sign-in-failure'
 
 // Why: clones run under nonInteractiveGitEnv (GIT_TERMINAL_PROMPT=0, empty SSH_ASKPASS,
 // `ssh -o BatchMode=yes`) so a background clone cannot hang on a prompt nobody sees. The cost is
@@ -16,12 +22,25 @@ const SSH_TRANSPORT_DIAGNOSTIC =
 
 export function getGitCloneFailureMessage(
   stderr: string,
-  options: { clonePath?: string | null } = {}
+  options: {
+    clonePath?: string | null
+    azureDevOps?: { cloneUrl: string; signInHost: AzureDevOpsCloneSignInHost }
+  } = {}
 ): string {
-  return appendCloneTransportGuidance(
-    getGitCloneFailureLine(stderr, options),
-    stripCredentialsFromMessage(stderr)
-  )
+  const scrubbedStderr = stripCredentialsFromMessage(stderr)
+  // Re-entrant: remote-repo-clone re-parses a message the relay already built.
+  const builtAzureMessage = findAzureDevOpsCloneSignInMessage(scrubbedStderr)
+  if (builtAzureMessage) {
+    return builtAzureMessage
+  }
+  const line = getGitCloneFailureLine(stderr, options)
+  if (
+    options.azureDevOps &&
+    isAzureDevOpsCloneSignInFailure(options.azureDevOps.cloneUrl, scrubbedStderr)
+  ) {
+    return formatAzureDevOpsCloneSignInMessage(line, options.azureDevOps.signInHost)
+  }
+  return appendCloneTransportGuidance(line, scrubbedStderr)
 }
 
 /** Guidance the raw git error omits: where the clone ran, and why nothing could prompt there. */

@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type * as ReactModule from 'react'
 import type { Repo } from '../../../../shared/repo-types'
+import type { ProjectStartAccounts } from '../project-accounts/project-start-accounts'
+
+type PreflightStub = { azureDevOps?: { authMethod?: 'token' | 'azure-cli' } } | null
+
+const noPreflight = vi.hoisted(() => (): PreflightStub => null)
 
 const mocks = vi.hoisted(() => ({
   stateValues: [] as unknown[],
@@ -10,6 +15,7 @@ const mocks = vi.hoisted(() => ({
   refIndex: 0,
   storeState: {
     settings: { activeRuntimeEnvironmentId: null as string | null },
+    preflightStatus: noPreflight(),
     repos: [] as Repo[],
     projects: [],
     projectHostSetups: []
@@ -19,6 +25,7 @@ const mocks = vi.hoisted(() => ({
   pickDirectory: vi.fn(),
   onCloneProgress: vi.fn(() => vi.fn()),
   callRuntimeRpc: vi.fn(),
+  startCliSignIn: vi.fn(),
   fetchWorktrees: vi.fn(),
   onGitRepoReady: vi.fn()
 }))
@@ -107,7 +114,8 @@ describe('useAddRepoCloneFlow', () => {
           clone: mocks.cloneLocal,
           pickDirectory: mocks.pickDirectory,
           onCloneProgress: mocks.onCloneProgress
-        }
+        },
+        azureDevOps: { startCliSignIn: mocks.startCliSignIn }
       }
     })
   })
@@ -275,5 +283,128 @@ describe('useAddRepoCloneFlow', () => {
     })
     expect(mocks.storeState.repos).toContainEqual(localRepo)
     expect(mocks.onGitRepoReady).toHaveBeenCalledWith(repo.id, 'clone_url', 'runtime:env-1')
+  })
+
+  describe('Azure DevOps sign-in after a failed clone', () => {
+    const AZURE_URL = 'https://evup@dev.azure.com/evup/P/_git/app'
+    const SIGN_IN_ERROR =
+      'Clone failed: Azure DevOps did not accept the sign-in for this clone. Sign in to Azure DevOps and try again. Git reported: fatal: unable to get password from user'
+    // Index of the sign-in error in the hook's useState order.
+    const SIGN_IN_ERROR_STATE = 6
+
+    beforeEach(() => {
+      mocks.storeState.preflightStatus = { azureDevOps: { authMethod: 'azure-cli' } }
+    })
+
+    function failedCloneProps(host: {
+      activeRuntimeEnvironmentId?: string | null
+      sshTargetId?: string | null
+      url?: string
+      startAccounts?: ProjectStartAccounts
+    }) {
+      // Why reset: each call is a fresh render of the mocked hooks.
+      mocks.stateIndex = 0
+      mocks.refIndex = 0
+      mocks.stateValues = [host.url ?? AZURE_URL, '/srv', false, SIGN_IN_ERROR, null]
+      return {
+        step: 'clone' as const,
+        activeRuntimeEnvironmentId: host.activeRuntimeEnvironmentId ?? null,
+        sshTargetId: host.sshTargetId ?? null,
+        workspaceDir: '/local/workspace',
+        fetchWorktrees: mocks.fetchWorktrees,
+        onGitRepoReady: mocks.onGitRepoReady,
+        ...(host.startAccounts ? { startAccounts: host.startAccounts } : {})
+      }
+    }
+
+    it('retries the clone once after a device-code sign-in succeeds', async () => {
+      mocks.startCliSignIn.mockResolvedValue({ ok: true })
+      mocks.cloneLocal.mockResolvedValue(makeRepo())
+      mocks.fetchWorktrees.mockResolvedValue(true)
+      const { useAddRepoCloneFlow } = await import('./useAddRepoCloneFlow')
+      const result = useAddRepoCloneFlow(failedCloneProps({}))
+
+      expect(result.azureSignIn.available).toBe(true)
+      await result.azureSignIn.signIn()
+
+      expect(mocks.startCliSignIn).toHaveBeenCalledWith('device-code')
+      expect(mocks.cloneLocal).toHaveBeenCalledTimes(1)
+      expect(mocks.cloneLocal).toHaveBeenCalledWith({ url: AZURE_URL, destination: '/srv' })
+    })
+
+    it('does not retry or report an error when the sign-in is cancelled', async () => {
+      mocks.startCliSignIn.mockResolvedValue({ ok: false, error: 'cancelled' })
+      const { useAddRepoCloneFlow } = await import('./useAddRepoCloneFlow')
+      const result = useAddRepoCloneFlow(failedCloneProps({}))
+      await result.azureSignIn.signIn()
+
+      expect(mocks.cloneLocal).not.toHaveBeenCalled()
+      expect(mocks.stateSetters[SIGN_IN_ERROR_STATE]).not.toHaveBeenCalledWith('cancelled')
+    })
+
+    it('shows a failed sign-in without retrying the clone', async () => {
+      mocks.startCliSignIn.mockResolvedValue({ ok: false, error: 'az is not installed' })
+      const { useAddRepoCloneFlow } = await import('./useAddRepoCloneFlow')
+      const result = useAddRepoCloneFlow(failedCloneProps({}))
+      await result.azureSignIn.signIn()
+
+      expect(mocks.cloneLocal).not.toHaveBeenCalled()
+      expect(mocks.stateSetters[SIGN_IN_ERROR_STATE]).toHaveBeenCalledWith('az is not installed')
+    })
+
+    it('offers no sign-in for SSH, runtime or non-Azure clones', async () => {
+      const { useAddRepoCloneFlow } = await import('./useAddRepoCloneFlow')
+      expect(useAddRepoCloneFlow(failedCloneProps({})).azureSignIn.available).toBe(true)
+      expect(
+        useAddRepoCloneFlow(failedCloneProps({ sshTargetId: 'ssh-1' })).azureSignIn.available
+      ).toBe(false)
+      expect(
+        useAddRepoCloneFlow(failedCloneProps({ activeRuntimeEnvironmentId: 'env-1' })).azureSignIn
+          .available
+      ).toBe(false)
+      expect(
+        useAddRepoCloneFlow(failedCloneProps({ url: 'https://github.com/acme/app.git' }))
+          .azureSignIn.available
+      ).toBe(false)
+    })
+
+    it('offers no sign-in unless Azure DevOps uses the Azure CLI and no managed account is chosen', async () => {
+      const { useAddRepoCloneFlow } = await import('./useAddRepoCloneFlow')
+      mocks.storeState.preflightStatus = { azureDevOps: { authMethod: 'token' } }
+      expect(useAddRepoCloneFlow(failedCloneProps({})).azureSignIn.available).toBe(false)
+      mocks.storeState.preflightStatus = null
+      expect(useAddRepoCloneFlow(failedCloneProps({})).azureSignIn.available).toBe(false)
+
+      mocks.storeState.preflightStatus = { azureDevOps: { authMethod: 'azure-cli' } }
+      expect(
+        useAddRepoCloneFlow(
+          failedCloneProps({
+            startAccounts: {
+              ghAccount: null,
+              azureDevOpsAccountId: 'ado-corp',
+              claudeAccountId: null,
+              codexAccountId: null,
+              commitIdentity: null
+            }
+          })
+        ).azureSignIn.available
+      ).toBe(false)
+    })
+
+    it('clears a pending sign-in and its error when the dialog resets', async () => {
+      const { useAddRepoCloneFlow } = await import('./useAddRepoCloneFlow')
+      const result = useAddRepoCloneFlow(failedCloneProps({}))
+      result.resetCloneFlow()
+      expect(mocks.stateSetters[5]).toHaveBeenCalledWith(false)
+      expect(mocks.stateSetters[SIGN_IN_ERROR_STATE]).toHaveBeenCalledWith(null)
+    })
+
+    it('offers no sign-in for a 403, which a new sign-in cannot fix', async () => {
+      const { useAddRepoCloneFlow } = await import('./useAddRepoCloneFlow')
+      const props = failedCloneProps({})
+      mocks.stateValues[3] =
+        "Clone failed: Azure DevOps did not accept the sign-in for this clone. Sign in to Azure DevOps and try again. Git reported: fatal: unable to access 'https://dev.azure.com/evup/P/_git/app/': The requested URL returned error: 403"
+      expect(useAddRepoCloneFlow(props).azureSignIn.available).toBe(false)
+    })
   })
 })

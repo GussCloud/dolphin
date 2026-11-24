@@ -5321,7 +5321,10 @@
           "69f5b5380d": "Clonando...",
           "cloneOnHostDescription": "Digite a URL Git e escolha onde cloná-la em {{value0}}.",
           "cloneParentFolder": "Pasta pai",
-          "remoteCloneParentPlaceholder": "/home/user/projects"
+          "remoteCloneParentPlaceholder": "/home/user/projects",
+          "azureSigningIn": "Entrando…",
+          "azureSignInWithCode": "Entrar com código",
+          "azureSignInFailed": "Falha ao entrar no Azure DevOps: {{value0}}"
         },
         "AutoRenameFailedDialog": {
           "aed1623b1e": "Fechar",

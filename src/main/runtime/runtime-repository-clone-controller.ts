@@ -112,7 +112,12 @@ export class RuntimeRepositoryCloneController {
       // Why: the row does not exist yet, so the clone authenticates as the requested account.
       const invocation = await prepareCloneGitInvocation(
         ['clone', '--progress', '--', trimmedUrl, clonePath],
-        { cwd: trimmedDestination, env: nonInteractiveGitEnv(), binding: accountBinding }
+        {
+          cwd: trimmedDestination,
+          env: nonInteractiveGitEnv(),
+          url: trimmedUrl,
+          binding: accountBinding
+        }
       )
       proc = await gitSpawnAfterWindowsEnvironmentReady(invocation.args, {
         cwd: trimmedDestination,
@@ -146,7 +151,15 @@ export class RuntimeRepositoryCloneController {
         } else if (code === 0) {
           resolve()
         } else {
-          reject(new Error(`Clone failed: ${getGitCloneFailureMessage(stderrTail, { clonePath })}`))
+          reject(
+            new Error(
+              `Clone failed: ${getGitCloneFailureMessage(stderrTail, {
+                clonePath,
+                // Why runtime-host: a runtime clone runs on the server, not on the client that asked.
+                azureDevOps: { cloneUrl: trimmedUrl, signInHost: 'runtime-host' }
+              })}`
+            )
+          )
         }
       }
       proc.on('error', (error) => void finish(null, null, error))
