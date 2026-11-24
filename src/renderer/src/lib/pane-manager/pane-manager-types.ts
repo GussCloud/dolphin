@@ -30,6 +30,8 @@ export type PaneSpawnHints = {
 export type PaneSplitOptions = PaneSpawnHints & {
   ratio?: number
   leafId?: string
+  /** Joins the new pane to this leader's Claude agent team and re-balances the team. */
+  agentTeamLeaderLeafId?: string
 }
 
 export type ClosedPaneInfo = {

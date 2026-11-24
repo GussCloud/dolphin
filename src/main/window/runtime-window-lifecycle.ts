@@ -146,6 +146,9 @@ export function registerRuntimeWindowLifecycle(
               ...(opts.splitTelemetrySource !== undefined
                 ? { splitTelemetrySource: opts.splitTelemetrySource }
                 : {}),
+              ...(opts.agentTeamLeaderLeafId !== undefined
+                ? { agentTeamLeaderLeafId: opts.agentTeamLeaderLeafId }
+                : {}),
               ...(opts.focus !== undefined ? { focus: opts.focus } : {})
             })
             if (!sent) {
@@ -170,7 +173,10 @@ export function registerRuntimeWindowLifecycle(
         worktreeId: opts.worktreeId,
         sourceLeafId: opts.sourceLeafId,
         telemetrySource: opts.telemetrySource,
-        newLeafId: opts.newLeafId
+        newLeafId: opts.newLeafId,
+        ...(opts.agentTeamLeaderLeafId !== undefined
+          ? { agentTeamLeaderLeafId: opts.agentTeamLeaderLeafId }
+          : {})
       })
     },
     renameTerminal: (tabId, title) => send('ui:renameTerminal', { tabId, title }),

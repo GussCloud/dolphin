@@ -1,4 +1,5 @@
 import type RepoCombobox from '@/components/repo/RepoCombobox'
+import type { AgentPermissionPolicy } from '../../../../shared/agent-permission-policy'
 import type { NewWorkspaceProjectOption } from '@/lib/new-workspace-project-options'
 import type {
   NeedsSetupProjectHostOption,
@@ -45,6 +46,10 @@ export type NewWorkspaceComposerCardProps = {
   agentAccountId?: string | null
   /** Omitted where the create path cannot persist a pin (folder, multi-project). */
   onAgentAccountIdChange?: (accountId: string | null) => void
+  /** Bypass-mode removal policy; null leaves every prompt to the user. */
+  agentPermissionPolicy?: AgentPermissionPolicy | null
+  /** Omitted where the create path cannot persist a policy (folder, multi-project). */
+  onAgentPermissionPolicyChange?: (policy: AgentPermissionPolicy | null) => void
   /** Present where the composer runs as steps; its Orchestration mode launches a coordinator. */
   autonomousGoalDraft?: AutonomousGoalDraft
   onAutonomousGoalDraftChange?: (next: AutonomousGoalDraft) => void

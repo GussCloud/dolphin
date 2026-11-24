@@ -3,6 +3,7 @@
  *  mirroring the same split under src/main/cursor/. */
 import { buildWindowsAgentHookCurlPostCommand } from '../agent-hooks/installer-utils'
 import { buildPosixAgentHookPostCommand } from '../agent-hooks/hook-post-command'
+// AGENT_HOOK_DECISION_REPLY_HEADER (hook-post-command.ts) gates the listener's decision.
 import {
   buildPosixGrokReplayGuardLines,
   buildWindowsGrokReplayGuardLines
@@ -27,6 +28,10 @@ export function getManagedScript(
       '@echo off',
       'setlocal',
       // Why: Claude-compatible permission hooks fail closed on empty stdout (#14818).
+      // Why not relay a permission decision here: the payload streams from stdin straight into
+      // curl.exe, so the script cannot tell the event before answering without a temp-file
+      // rewrite of the #11549 stdin contract; the listener only decides for hooks that send
+      // AGENT_HOOK_DECISION_REPLY_HEADER, so this script keeps the user's prompt.
       'echo {}',
       // Why: refresh endpoint coordinates for PTYs surviving a Dolphin restart.
       'if defined DOLPHIN_AGENT_HOOK_ENDPOINT if exist "%DOLPHIN_AGENT_HOOK_ENDPOINT%" call "%DOLPHIN_AGENT_HOOK_ENDPOINT%" 2>nul',
@@ -55,9 +60,19 @@ export function getManagedScript(
 
   return [
     '#!/bin/sh',
-    // Why: Claude-compatible permission hooks fail closed on empty stdout (#14818).
-    'printf "{}\\n"',
+    // Why: Claude-compatible permission hooks fail closed on empty stdout (#14818), so every exit
+    // path prints exactly one JSON object: `{}`, or the listener's PermissionRequest answer.
+    "dolphin_hook_reply='{}'",
+    'dolphin_hook_replied=',
+    'dolphin_hook_print_reply() {',
+    '  [ -n "$dolphin_hook_replied" ] && return 0',
+    '  dolphin_hook_replied=1',
+    '  printf \'%s\\n\' "$dolphin_hook_reply"',
+    '}',
+    'trap dolphin_hook_print_reply EXIT',
     ...buildPosixHookPayloadCapture(),
+    // Why: only a PermissionRequest waits for the listener; every other event answers at once.
+    `case "$payload" in *'"PermissionRequest"'*) ;; *) dolphin_hook_print_reply ;; esac`,
     ...(options.skipWhenGrokImportsClaude ? buildPosixGrokReplayGuardLines() : []),
     ...buildPosixHookSpoolLines('claude'),
     ...(options.skipWhenDevinImportsClaude
@@ -84,9 +99,12 @@ export function getManagedScript(
     '  exit 0',
     'fi',
     // Why: keep full hook JSON off the command line and avoid IDS-friendly URL-encoded paths.
-    ...buildPosixAgentHookPostCommand('claude').map((line, index, lines) =>
-      index === lines.length - 1 ? `${line} >/dev/null 2>&1 || spool_hook_event` : line
+    'dolphin_hook_response=$(',
+    ...buildPosixAgentHookPostCommand('claude', { relaysDecision: true }).map(
+      (line, index, lines) => (index === lines.length - 1 ? `${line} 2>/dev/null` : line)
     ),
+    ') || spool_hook_event',
+    `case "$dolphin_hook_response" in '{'*) dolphin_hook_reply=$dolphin_hook_response ;; esac`,
     'exit 0',
     ''
   ].join('\n')

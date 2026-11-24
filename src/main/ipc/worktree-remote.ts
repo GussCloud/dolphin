@@ -2223,6 +2223,8 @@ export async function createRemoteWorktree(
     ),
     ...(isTuiAgent(args.createdWithAgent) ? { createdWithAgent: args.createdWithAgent } : {}),
     // Why no agentAccountId: SSH hosts have no Dolphin-managed agent accounts.
+    // Why no agentPermissionPolicy: the hook does not answer prompts on SSH hosts yet, and a
+    // saved policy that nothing applies would claim an approval the user never gets.
     ...(args.pendingFirstAgentMessageRename === true && isTuiAgent(args.createdWithAgent)
       ? { pendingFirstAgentMessageRename: true }
       : {}),
@@ -2992,6 +2994,7 @@ async function performLocalWorktreeCreate(
       : {}),
     ...(isTuiAgent(args.createdWithAgent) ? { createdWithAgent: args.createdWithAgent } : {}),
     ...(args.agentAccountId ? { agentAccountId: args.agentAccountId } : {}),
+    ...(args.agentPermissionPolicy ? { agentPermissionPolicy: args.agentPermissionPolicy } : {}),
     ...(args.pendingFirstAgentMessageRename === true && isTuiAgent(args.createdWithAgent)
       ? { pendingFirstAgentMessageRename: true }
       : {}),

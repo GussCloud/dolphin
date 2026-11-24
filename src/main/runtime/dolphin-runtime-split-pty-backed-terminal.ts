@@ -3,6 +3,7 @@ import { DolphinRuntimeWithSplitTerminal } from './dolphin-runtime-split-termina
 import type { RuntimePtyWorktreeRecord } from './runtime-terminal-state-records'
 import type { TerminalPaneSplitSource } from '../../shared/feature-education-telemetry'
 import type { RuntimeTerminalSplit } from '../../shared/runtime-types'
+import type { TuiAgent } from '../../shared/tui-agent'
 import { makePaneKey, parsePaneKey } from '../../shared/stable-pane-id'
 import { recordPtySurface, spawnSurfaceClaimSequence } from './pty-recorded-surface-topology'
 import { randomUUID } from 'node:crypto'
@@ -24,6 +25,10 @@ export class DolphinRuntimeWithSplitPtyBackedTerminal extends DolphinRuntimeWith
       shellOverride?: string
       /** Agent-teams teammate panes only; see PtySpawnOptions.gitBashStartupCommandInArgs. */
       gitBashStartupCommandInArgs?: boolean
+      /** Agent-teams teammate panes only: the leader leaf the renderer re-balances around. */
+      agentTeamLeaderLeafId?: string
+      /** Agent-teams teammate pane: spawned main-side so its team env survives, with a minted launch token. */
+      agentTeammate?: { launchAgent: TuiAgent }
     } = {}
   ): Promise<RuntimeTerminalSplit> {
     if (!this.ptyController?.spawn) {
@@ -53,13 +58,19 @@ export class DolphinRuntimeWithSplitPtyBackedTerminal extends DolphinRuntimeWith
     const leafId = randomUUID()
     const preAllocatedHandle = this.createPreAllocatedTerminalHandle()
     const paneKey = makePaneKey(parentTabId, leafId)
+    // Why: same per-spawn token createTerminal mints, so the hook server can bind this pane's posts to it.
+    const launchToken = opts.agentTeammate ? randomUUID() : undefined
+    const spawnEnv = launchToken
+      ? { ...opts.env, DOLPHIN_AGENT_LAUNCH_TOKEN: launchToken }
+      : (opts.env ?? {})
     const result = await this.ptyController.spawn({
       cols: 120,
       rows: 40,
       cwd: workspace.path,
       command: opts.command,
       commandDelivery: 'provider',
-      env: this.buildTerminalWorkspaceEnv(workspace, opts.env ?? {}, paneKey, parentTabId),
+      env: this.buildTerminalWorkspaceEnv(workspace, spawnEnv, paneKey, parentTabId),
+      ...(opts.agentTeammate ? { launchAgent: opts.agentTeammate.launchAgent } : {}),
       envToDelete: opts.envToDelete,
       ...(opts.shellOverride ? { shellOverride: opts.shellOverride } : {}),
       ...(opts.gitBashStartupCommandInArgs ? { gitBashStartupCommandInArgs: true } : {}),
@@ -105,6 +116,11 @@ export class DolphinRuntimeWithSplitPtyBackedTerminal extends DolphinRuntimeWith
         spawnSurfaceClaimSequence(this.graphSequence)
       )
       createdPty.runtimeSessionOwned = pty.runtimeSessionOwned
+      if (launchToken && opts.agentTeammate) {
+        createdPty.launchToken = launchToken
+        createdPty.launchIncarnationId = createdPty.incarnationId
+        createdPty.launchAgent = opts.agentTeammate.launchAgent
+      }
       this.setPairedRendererSessionOwnership(
         createdPty.ptyId,
         this.pairedRendererSessionOwnedPtyIds.has(pty.ptyId)
@@ -121,7 +137,8 @@ export class DolphinRuntimeWithSplitPtyBackedTerminal extends DolphinRuntimeWith
         leafId,
         splitFromLeafId: parsedPaneKey.leafId,
         splitDirection: direction,
-        splitTelemetrySource: opts.telemetrySource
+        splitTelemetrySource: opts.telemetrySource,
+        ...(opts.agentTeamLeaderLeafId ? { agentTeamLeaderLeafId: opts.agentTeamLeaderLeafId } : {})
       })
     }
 

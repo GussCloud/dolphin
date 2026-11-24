@@ -267,7 +267,8 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
         quickTelemetry,
         suppressTerminalFocusOnCompletion: createMultiple,
         autonomousGoalWorkspace: launchPolicy.preAcceptFolderTrust,
-        agentAccountId: options?.agentAccountId
+        // Why spread: QuickSubmitOptions is the per-launch account pin and permission policy.
+        ...options
       })
 
       if (isSubmissionCancelled()) {

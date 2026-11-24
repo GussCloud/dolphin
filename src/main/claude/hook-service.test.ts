@@ -267,7 +267,7 @@ describe('ClaudeHookService.install', () => {
       expect(managedScript).toMatch(
         process.platform === 'win32'
           ? /^@echo off\r\nsetlocal\r\necho \{\}\r\n/
-          : /^#!\/bin\/sh\nprintf "\{\}\\n"\n/
+          : /^#!\/bin\/sh\ndolphin_hook_reply='\{\}'\n[^]*?\ntrap dolphin_hook_print_reply EXIT\npayload=/
       )
     } finally {
       vi.unstubAllEnvs()
@@ -614,7 +614,9 @@ describe('backgrounded-session pane guard (#9236)', () => {
     // Why: the guard is worthless if it runs after the post it is meant to prevent.
     expect(script.indexOf('CLAUDE_JOB_DIR')).toBeLessThan(script.indexOf('curl'))
     // Why: neutral JSON still has to reach a permission hook that fails closed (#14818).
-    expect(script.indexOf('printf "{}\\n"')).toBeLessThan(script.indexOf('CLAUDE_JOB_DIR'))
+    const replyTrap = script.indexOf('trap dolphin_hook_print_reply EXIT')
+    expect(replyTrap).toBeGreaterThan(-1)
+    expect(replyTrap).toBeLessThan(script.indexOf('CLAUDE_JOB_DIR'))
   })
 
   // Why not skipped as unreachable: a backgrounded session's statusline IS invoked, inside the
@@ -717,8 +719,9 @@ describe('ClaudeHookService.installRemote', () => {
     expect(script).toContain('DEVIN_PROJECT_DIR')
     expect(script).toContain('GROK_HOOK_EVENT')
     // Why: remote guard paths must still return neutral JSON (#14818).
-    expect(script!.indexOf('printf "{}\\n"')).toBe(
-      script!.indexOf('#!/bin/sh') + '#!/bin/sh\n'.length
+    expect(script!.startsWith("#!/bin/sh\ndolphin_hook_reply='{}'\n")).toBe(true)
+    expect(script!.indexOf('trap dolphin_hook_print_reply EXIT')).toBeLessThan(
+      script!.indexOf('payload=$(')
     )
     // Why: payload stays on stdin, while metadata headers avoid URL-encoded IDS signatures.
     expect(script).toContain('printf \'%s\' "$payload" | curl')

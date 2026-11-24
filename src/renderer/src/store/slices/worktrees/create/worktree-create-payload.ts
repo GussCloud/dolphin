@@ -3,6 +3,7 @@ import type { ExecutionHostId } from '../../../../../../shared/execution-host'
 import type { WorkspaceKey } from '../../../../../../shared/folder-workspace-types'
 import type { TaskSourceContext } from '../../../../../../shared/task-source-context'
 import type { WorkspaceLinkedItem } from '../../../../../../shared/worktree/types'
+import type { AgentPermissionPolicy } from '../../../../../../shared/agent-permission-policy'
 
 /** Trailing bag for `createWorktree` args that outgrew its positional list. */
 export type CreateWorktreeCallOptions = {
@@ -19,6 +20,8 @@ export type CreateWorktreeCallOptions = {
   autonomousGoalWorkspace?: boolean
   /** Managed account the created agent launches with; omitted keeps the active account. */
   agentAccountId?: string
+  /** See CreateWorktreeArgs.agentPermissionPolicy. */
+  agentPermissionPolicy?: AgentPermissionPolicy
   provisionedRoot?: {
     runtimeId: string
     executionHostId: ExecutionHostId
@@ -99,7 +102,10 @@ function sharedCreateFields(
       ? { automationProvenanceRequest: options.automationProvenanceRequest }
       : {}),
     ...(options?.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {}),
-    ...(options?.agentAccountId ? { agentAccountId: options.agentAccountId } : {})
+    ...(options?.agentAccountId ? { agentAccountId: options.agentAccountId } : {}),
+    ...(options?.agentPermissionPolicy
+      ? { agentPermissionPolicy: options.agentPermissionPolicy }
+      : {})
   }
 }
 

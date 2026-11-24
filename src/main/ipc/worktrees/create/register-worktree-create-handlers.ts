@@ -29,6 +29,7 @@ import { adoptProvisionedRootSshCheckout } from '../../../provisioned-root-ssh-a
 import { normalizeLinkedWorkItemFields } from '../ipc-context-schemas'
 import type { CreateWorktreeArgsWithSystemProvenance } from '../ipc-context-schemas'
 import { createFolderWorkspace } from './folder-workspace-creation'
+import { parseAgentPermissionPolicy } from '../../../../shared/agent-permission-policy'
 import { findExactRepoOwner, isCapturedRepoCurrent } from '../listing/worktree-host-ownership'
 import { requireWorktreeCreateRoute } from '../../../worktree-create-execution-host-route'
 import type { WorktreeIpcContext } from '../worktree-ipc-context'
@@ -56,9 +57,12 @@ export function registerWorktreeCreateHandlers(context: WorktreeIpcContext): voi
           repo,
           request: args.automationProvenanceRequest
         })
+        // Why re-parse: the renderer is untrusted, and a malformed policy must mean "no policy".
+        const agentPermissionPolicy = parseAgentPermissionPolicy(args.agentPermissionPolicy)
         const createArgs: CreateWorktreeArgsWithSystemProvenance = {
           ...args,
-          automationProvenance
+          automationProvenance,
+          agentPermissionPolicy: agentPermissionPolicy ?? undefined
         }
 
         let result: CreateWorktreeResult

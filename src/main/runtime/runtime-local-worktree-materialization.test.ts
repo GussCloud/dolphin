@@ -72,7 +72,7 @@ describe('materializeRuntimeLocalWorktree', () => {
     expect(order).toEqual(['metadata', 'filesystem'])
   })
 
-  it('persists the pinned agent account with the worktree metadata', async () => {
+  it('persists the pinned agent account and permission policy with the worktree metadata', async () => {
     const store = {
       getProjectHostSetups: () => [],
       setWorktreeMeta: vi.fn((_id, updates) => ({ ...updates, hostId: 'local' }))
@@ -80,7 +80,7 @@ describe('materializeRuntimeLocalWorktree', () => {
 
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: materialization reads only the fields supplied here.
     await materializeRuntimeLocalWorktree({
-      request: { agentAccountId: 'acct-pinned' },
+      request: { agentAccountId: 'acct-pinned', agentPermissionPolicy: { mode: 'approve-all' } },
       repo: {
         id: 'repo-1',
         path: '/repo',
@@ -111,7 +111,11 @@ describe('materializeRuntimeLocalWorktree', () => {
 
     expect(store.setWorktreeMeta).toHaveBeenCalledWith(
       'repo-1::/worktrees/app',
-      expect.objectContaining({ createdWithAgent: 'codex', agentAccountId: 'acct-pinned' })
+      expect.objectContaining({
+        createdWithAgent: 'codex',
+        agentAccountId: 'acct-pinned',
+        agentPermissionPolicy: { mode: 'approve-all' }
+      })
     )
   })
 })

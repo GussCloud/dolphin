@@ -5,6 +5,7 @@ import { workspaceSourceSchema } from '../telemetry-events'
 import { RUNTIME_NAVIGATION_TARGETS } from '../runtime-navigation'
 import { sleepingAgentLaunchConfigSchema } from '../workspace-session-sleeping-agents'
 import { isTuiAgent } from '../tui-agent-config'
+import { parseAgentPermissionPolicy } from '../agent-permission-policy'
 import {
   OptionalBoolean,
   OptionalFiniteNumber,
@@ -121,6 +122,12 @@ export const WorktreeCreate = z
       .optional(),
     // Why optional: older hosts drop it and launch with their active account.
     agentAccountId: z.string().min(1).max(256).optional(),
+    // Why lenient: older hosts drop it (the prompt reaches the user); a malformed policy is
+    // dropped the same way instead of failing the create or widening to approve-all.
+    agentPermissionPolicy: z
+      .unknown()
+      .transform((value) => parseAgentPermissionPolicy(value) ?? undefined)
+      .optional(),
     // Why: mobile retries a create interrupted by a connection migration with the
     // same key so the host dedupes instead of spawning a duplicate worktree.
     clientMutationId: z.string().min(1).max(128).optional(),

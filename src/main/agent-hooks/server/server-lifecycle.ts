@@ -20,6 +20,11 @@ import {
   serveAgentHookChannelRoute
 } from './server-channel-route'
 import { AgentHookServerRuntimeEnv } from './server-runtime-env'
+import { AGENT_HOOK_DECISION_REPLY_HEADER } from '../hook-post-command'
+import {
+  replyToBypassPermissionRequest,
+  type BypassPermissionResolver
+} from './server-bypass-permission-reply'
 
 type AgentHookServerStartOptions = {
   env?: string
@@ -29,6 +34,11 @@ type AgentHookServerStartOptions = {
 
 export abstract class AgentHookServerLifecycle extends AgentHookServerRuntimeEnv {
   private lifecycleOperation: Promise<void> = Promise.resolve()
+  private bypassPermissionResolver: BypassPermissionResolver | null = null
+
+  setBypassPermissionResolver(resolver: BypassPermissionResolver | null): void {
+    this.bypassPermissionResolver = resolver
+  }
 
   start(options?: AgentHookServerStartOptions): Promise<void> {
     const started = this.lifecycleOperation.then(() => this.startListener(options))
@@ -143,6 +153,22 @@ export abstract class AgentHookServerLifecycle extends AgentHookServerRuntimeEnv
             clientPort: req.socket.remotePort,
             serverPort: this.port
           }).catch((error: unknown) => console.warn('[agent-hooks] closed-pane hook failed', error))
+        }
+        if (
+          normalized.event &&
+          statusDisposition === 'accept' &&
+          (await replyToBypassPermissionRequest({
+            resolver: this.bypassPermissionResolver,
+            source,
+            body: aliasedBody,
+            event: normalized.event,
+            clientRelaysDecision:
+              req.headers[AGENT_HOOK_DECISION_REPLY_HEADER.toLowerCase()] === '1',
+            res
+          }))
+        ) {
+          // Why: an approved prompt never shows, so the pane must not flash 'waiting'.
+          return
         }
         if (normalized.event && statusDisposition !== 'suppress') {
           const restartedAuthority =

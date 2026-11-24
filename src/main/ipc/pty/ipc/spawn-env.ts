@@ -22,6 +22,7 @@ import type { PtyIpcSpawnState } from './spawn-state'
 import { assemblePtyIpcSpawnCodexEnv } from './spawn-env-codex'
 import { overlayPlatformEnv } from '../../../../shared/platform-env-overlay'
 import { resolveSshClaudeAgentTeamsLeaderEnv } from '../../../runtime/claude-agent-teams-shim-env'
+import { withClaudeDangerousRmNoTimeoutEnv } from '../../../claude/claude-dangerous-rm-launch-env'
 
 export async function assemblePtyIpcSpawnEnv(ctx: PtyIpcSpawnState): Promise<void> {
   const args = ctx.args
@@ -35,11 +36,14 @@ export async function assemblePtyIpcSpawnEnv(ctx: PtyIpcSpawnState): Promise<voi
   // Safety: skip entirely for SSH — every injection is a loopback secret or a local path that leaks or misleads on the remote host.
   // Why: forward pane env to SSH only when the relay hook path is enabled, or a newer relay could emit statuses this build can't route.
   const sshSourceEnv = stripRemotePaneEnvWhenHooksDisabled(args.connectionId, args.env)
-  const baseEnvWithAuth = ctx.claudeAuth
-    ? { ...sshSourceEnv, ...ctx.claudeAuth.envPatch }
-    : ctx.deepSeekEnvPatch
-      ? overlayPlatformEnv(sshSourceEnv ?? {}, ctx.deepSeekEnvPatch)
-      : sshSourceEnv
+  const baseEnvWithAuth = withClaudeDangerousRmNoTimeoutEnv(
+    ctx.claudeAuth
+      ? { ...sshSourceEnv, ...ctx.claudeAuth.envPatch }
+      : ctx.deepSeekEnvPatch
+        ? overlayPlatformEnv(sshSourceEnv ?? {}, ctx.deepSeekEnvPatch)
+        : sshSourceEnv,
+    { launchAgent: args.launchAgent, command: args.command }
+  )
   const spawnPaneKey = baseEnvWithAuth?.DOLPHIN_PANE_KEY
   const parsedSpawnPaneKey = parseValidPaneKey(spawnPaneKey)
   const verifiedPaneKey =

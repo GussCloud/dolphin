@@ -12,6 +12,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { translate } from '@/i18n/i18n'
 import { WORKSPACE_FILE_PATH_MIME, WORKSPACE_FILE_PATHS_MIME } from '@/lib/workspace-file-drag'
 import { isImeCompositionKeyDown } from '@/lib/ime-composition-keyboard-event'
+import { isTerminalLeafId, makePaneKey } from '../../../../shared/stable-pane-id'
+import PaneTitleAgentMark from './PaneTitleAgentMark'
 import type { PtyTransport } from './pty-transport'
 import { handleInternalTerminalFileDrop } from './terminal-drop-handler'
 
@@ -244,6 +246,9 @@ export default function TerminalPaneHeaderOverlay({
                     }}
                   />
                 )}
+                {title && isTerminalLeafId(pane.leafId) ? (
+                  <PaneTitleAgentMark paneKey={makePaneKey(tabId, pane.leafId)} />
+                ) : null}
                 {title ? (
                   <button
                     type="button"
@@ -258,6 +263,7 @@ export default function TerminalPaneHeaderOverlay({
                     {title}
                   </button>
                 ) : null}
+                {title && cwd ? <span className="pane-title-cwd">{cwd}</span> : null}
                 <div className="pane-title-actions ml-auto flex shrink-0 items-center gap-0">
                   {canContinueAgentSessionInNewSession && isActivePane ? (
                     <Tooltip>

@@ -4,9 +4,10 @@ import {
   resolveTerminalSessionWorktreeId,
   runtimeWorktreeIdsEqual
 } from './runtime-worktree-path-identity'
-import { makePaneKey } from '../../shared/stable-pane-id'
+import { makePaneKey, parsePaneKey } from '../../shared/stable-pane-id'
 import type { RuntimeAgentTeamLineage } from '../../shared/runtime-session-contracts'
 import { terminalLayoutContainsLeaf } from './headless-terminal-split-layout'
+import { teammateLaunchAgent } from './claude-agent-teams-pane-layout'
 import type {
   AgentTeamsTmuxCompatRequest,
   AgentTeamsTmuxCompatResponse
@@ -112,7 +113,18 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
     request: AgentTeamsTmuxCompatRequest
   ): Promise<AgentTeamsTmuxCompatResponse> {
     return await this.claudeAgentTeams.handleTmuxCompat(request, {
-      splitTerminal: (handle, opts) => this.splitTerminal(handle, opts),
+      splitTerminal: (handle, { agentTeamLeaderHandle, ...opts }) => {
+        const leaderPaneKey = agentTeamLeaderHandle
+          ? this.getPaneKeyForTerminalHandle(agentTeamLeaderHandle)
+          : null
+        const agentTeamLeaderLeafId = leaderPaneKey ? parsePaneKey(leaderPaneKey)?.leafId : null
+        return this.splitTerminal(handle, {
+          ...opts,
+          ...(agentTeamLeaderLeafId ? { agentTeamLeaderLeafId } : {}),
+          // Why: its hook posts carry this spawn's token; status rows name the team's real provider.
+          agentTeammate: { launchAgent: teammateLaunchAgent(opts.env) }
+        })
+      },
       readTerminal: (handle, opts) => this.readTerminal(handle, opts),
       sendTerminal: (handle, action) => this.sendTerminal(handle, action),
       focusTerminal: (handle) => this.focusTerminal(handle),

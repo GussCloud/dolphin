@@ -1,5 +1,6 @@
 import { teammatePaneShellOverride, type AgentTeamHostShell } from './claude-agent-teams-host-shell'
 import type { AgentTeam, TeamPane } from './claude-agent-teams-types'
+import { isDeepSeekProviderEnv } from '../../shared/deepseek-claude-provider'
 
 export type SplitTarget = { pane: TeamPane; direction: 'horizontal' | 'vertical' }
 
@@ -24,6 +25,13 @@ export function teammatePaneSpawnOptions(
     envToDelete: ['TERM_PROGRAM'],
     ...(shellOverride ? { shellOverride } : {})
   }
+}
+
+/** The agent a teammate pane runs: DeepSeek teams carry the provider marker in the team env. */
+export function teammateLaunchAgent(
+  env: Record<string, string> | undefined
+): 'claude' | 'deepseek' {
+  return isDeepSeekProviderEnv(env) ? 'deepseek' : 'claude'
 }
 
 export function resolveSplitTarget(

@@ -113,6 +113,9 @@ export async function createRuntimeFolderWorktree(args: {
       : {}),
     ...(args.createdWithAgent ? { createdWithAgent: args.createdWithAgent } : {}),
     ...(request.agentAccountId ? { agentAccountId: request.agentAccountId } : {}),
+    ...(request.agentPermissionPolicy
+      ? { agentPermissionPolicy: request.agentPermissionPolicy }
+      : {}),
     ...(request.comment !== undefined ? { comment: request.comment } : {}),
     ...(request.manualOrder !== undefined ? { manualOrder: request.manualOrder } : {}),
     ...(request.workspaceStatus !== undefined ? { workspaceStatus: request.workspaceStatus } : {})

@@ -12,6 +12,7 @@ mobile/src/session/use-mobile-structured-agent-options.ts 2
 mobile/src/session/use-mobile-structured-agent-session.ts 1
 src/cli/codex-command-classification.ts 1
 src/cli/handlers/account.ts 2
+src/main/agent-hooks/bypass-permission-decision.ts 1
 src/main/agent-hooks/managed-agent-hook-controls.ts 1
 src/main/agent-hooks/managed-hook-detection-commands.ts 1
 src/main/agent-hooks/server/server-claude-status-rules.ts 4
@@ -36,6 +37,7 @@ src/main/ai-vault/session-scanner-worker-entry.ts 1
 src/main/ai-vault/session-title-result-validation.ts 1
 src/main/ai-vault/structured-session-ownership.ts 3
 src/main/automations/run-usage-collection.ts 2
+src/main/claude/claude-dangerous-rm-launch-env.ts 2
 src/main/claude/claude-structured-history-window.ts 1
 src/main/claude/claude-structured-launch-resolution.ts 7
 src/main/claude/hook-service.ts 8

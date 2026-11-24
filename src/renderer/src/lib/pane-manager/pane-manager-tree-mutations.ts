@@ -8,6 +8,21 @@ import {
   splitManagedPane
 } from './pane-split-close'
 import { splitPaneAroundMountedSubtree } from './pane-subtree-split'
+import {
+  addAgentTeamPane,
+  arrangeAgentTeamPanes,
+  readAgentTeamLeader
+} from './pane-agent-team-layout'
+
+// Why: removing a teammate leaves a hole in the team grid, so the rest re-balance.
+function rebalanceAgentTeamAfter<T>(host: PaneManagerHost, paneId: number, remove: () => T): T {
+  const leaderLeafId = readAgentTeamLeader(host, paneId)
+  const result = remove()
+  if (leaderLeafId && !host.panes.has(paneId)) {
+    arrangeAgentTeamPanes(host, leaderLeafId)
+  }
+  return result
+}
 
 export function splitPaneOnManager(
   host: PaneManagerHost,
@@ -15,7 +30,7 @@ export function splitPaneOnManager(
   direction: 'vertical' | 'horizontal',
   opts?: PaneSplitOptions
 ): ManagedPane | null {
-  return splitManagedPane({
+  const created = splitManagedPane({
     paneId,
     direction,
     opts,
@@ -32,6 +47,10 @@ export function splitPaneOnManager(
     },
     isDestroyed: () => host.isDestroyed()
   })
+  if (created && opts?.agentTeamLeaderLeafId) {
+    addAgentTeamPane(host, created.id, opts.agentTeamLeaderLeafId)
+  }
+  return created
 }
 
 export function splitPaneAroundLeafIdsOnManager(
@@ -63,49 +82,55 @@ export function splitPaneAroundLeafIdsOnManager(
 }
 
 export function closePaneOnManager(host: PaneManagerHost, paneId: number): void {
-  closeManagedPane({
-    paneId,
-    activePaneId: host.getActivePaneId(),
-    panes: host.panes,
-    root: host.root,
-    styleOptions: host.getStyleOptions(),
-    managerOptions: host.options,
-    getDragCallbacks: () => host.getDragCallbacks(),
-    releasePaneIdentity: (numericPaneId) => host.identities.release(numericPaneId),
-    setActivePaneId: (id) => {
-      host.setActivePaneId(id)
-    }
-  })
+  rebalanceAgentTeamAfter(host, paneId, () =>
+    closeManagedPane({
+      paneId,
+      activePaneId: host.getActivePaneId(),
+      panes: host.panes,
+      root: host.root,
+      styleOptions: host.getStyleOptions(),
+      managerOptions: host.options,
+      getDragCallbacks: () => host.getDragCallbacks(),
+      releasePaneIdentity: (numericPaneId) => host.identities.release(numericPaneId),
+      setActivePaneId: (id) => {
+        host.setActivePaneId(id)
+      }
+    })
+  )
 }
 
 export function detachPaneForExternalMoveOnManager(host: PaneManagerHost, paneId: number): boolean {
-  return detachManagedPaneForExternalMove({
-    paneId,
-    activePaneId: host.getActivePaneId(),
-    panes: host.panes,
-    root: host.root,
-    styleOptions: host.getStyleOptions(),
-    managerOptions: host.options,
-    getDragCallbacks: () => host.getDragCallbacks(),
-    releasePaneIdentity: (numericPaneId) => host.identities.release(numericPaneId),
-    setActivePaneId: (id) => {
-      host.setActivePaneId(id)
-    }
-  })
+  return rebalanceAgentTeamAfter(host, paneId, () =>
+    detachManagedPaneForExternalMove({
+      paneId,
+      activePaneId: host.getActivePaneId(),
+      panes: host.panes,
+      root: host.root,
+      styleOptions: host.getStyleOptions(),
+      managerOptions: host.options,
+      getDragCallbacks: () => host.getDragCallbacks(),
+      releasePaneIdentity: (numericPaneId) => host.identities.release(numericPaneId),
+      setActivePaneId: (id) => {
+        host.setActivePaneId(id)
+      }
+    })
+  )
 }
 
 export function retirePanePreservingPtyOnManager(host: PaneManagerHost, paneId: number): boolean {
-  return retireManagedPanePreservingPty({
-    paneId,
-    activePaneId: host.getActivePaneId(),
-    panes: host.panes,
-    root: host.root,
-    styleOptions: host.getStyleOptions(),
-    managerOptions: host.options,
-    getDragCallbacks: () => host.getDragCallbacks(),
-    releasePaneIdentity: (numericPaneId) => host.identities.release(numericPaneId),
-    setActivePaneId: (id) => {
-      host.setActivePaneId(id)
-    }
-  })
+  return rebalanceAgentTeamAfter(host, paneId, () =>
+    retireManagedPanePreservingPty({
+      paneId,
+      activePaneId: host.getActivePaneId(),
+      panes: host.panes,
+      root: host.root,
+      styleOptions: host.getStyleOptions(),
+      managerOptions: host.options,
+      getDragCallbacks: () => host.getDragCallbacks(),
+      releasePaneIdentity: (numericPaneId) => host.identities.release(numericPaneId),
+      setActivePaneId: (id) => {
+        host.setActivePaneId(id)
+      }
+    })
+  )
 }

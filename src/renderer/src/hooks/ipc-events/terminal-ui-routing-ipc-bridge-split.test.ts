@@ -56,6 +56,30 @@ afterEach(() => {
 })
 
 describe('runtime terminal split IPC routing', () => {
+  it('forwards the agent-team leader so the mounted tab can re-balance the team', () => {
+    const received: SplitTerminalPaneDetail[] = []
+    mocks.hasRegisteredRuntimeTerminalTab.mockReturnValue(true)
+    const unregister = registerTerminalPaneSplitRequestHandler(
+      'tab-parked',
+      'repo::/folder',
+      (detail) => received.push(detail)
+    )
+
+    routeRuntimeTerminalSplitRequest({
+      tabId: 'tab-parked',
+      worktreeId: 'repo::/folder',
+      paneRuntimeId: 41,
+      direction: 'vertical',
+      command: 'claude',
+      agentTeamLeaderLeafId: '22222222-2222-4222-8222-222222222222'
+    })
+    unregister()
+
+    expect(received.map((detail) => detail.agentTeamLeaderLeafId)).toEqual([
+      '22222222-2222-4222-8222-222222222222'
+    ])
+  })
+
   it('mounts and replays an unmounted target without focusing it or waiting a fixed delay', () => {
     const received: SplitTerminalPaneDetail[] = []
     mocks.hasRegisteredRuntimeTerminalTab.mockReturnValue(false)

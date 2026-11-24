@@ -47,6 +47,28 @@ export class DolphinRuntimeWithGetPtyRecordForPaneKey extends DolphinRuntimeWith
     return leafPty ?? newestMatch
   }
 
+  /**
+   * The agent launch Dolphin minted when it spawned this pane's live local PTY, or null when there
+   * is none or more than one. Built from spawn records only, never from hook posts.
+   */
+  getSpawnedAgentLaunchForPaneKey(
+    paneKey: string
+  ): { worktreeId: string; launchToken: string } | null {
+    const matches = [...this.ptysById.values()].filter(
+      (pty) =>
+        pty.paneKey === paneKey &&
+        pty.connected &&
+        pty.connectionId === null &&
+        typeof pty.launchToken === 'string' &&
+        pty.launchToken.length > 0 &&
+        pty.launchIncarnationId === pty.incarnationId
+    )
+    if (matches.length !== 1) {
+      return null
+    }
+    return { worktreeId: matches[0].worktreeId, launchToken: matches[0].launchToken }
+  }
+
   protected getPaneKeyForTerminalHandle(handle: string): string | null {
     const livePty = this.getLivePtyForHandle(handle)
     if (livePty?.pty.paneKey) {

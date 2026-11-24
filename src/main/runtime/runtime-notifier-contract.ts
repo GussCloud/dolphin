@@ -64,6 +64,7 @@ export type RuntimeNotifier = {
       splitFromLeafId?: string
       splitDirection?: 'horizontal' | 'vertical'
       splitTelemetrySource?: TerminalPaneSplitSource
+      agentTeamLeaderLeafId?: string
       focus?: boolean
       expectedProcessIdentity?: {
         terminalHandle: string
@@ -90,6 +91,7 @@ export type RuntimeNotifier = {
       sourceLeafId?: string
       telemetrySource?: TerminalPaneSplitSource
       newLeafId?: string
+      agentTeamLeaderLeafId?: string
     }
   ): void
   renameTerminal(tabId: string, title: string | null): void

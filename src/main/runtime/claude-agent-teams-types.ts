@@ -42,6 +42,8 @@ export type AgentTeamsTerminalApi = {
       shellOverride?: string
       /** Run `command` as a Git Bash launch arg; the pane still works if the host types it. */
       gitBashStartupCommandInArgs?: boolean
+      /** The leader whose team this pane joins, so the renderer re-balances the team grid. */
+      agentTeamLeaderHandle?: string
     }
   ): Promise<RuntimeTerminalSplit>
   /** Handle of the pane's live PTY; lets a team persisted before a main restart find its leader again. */

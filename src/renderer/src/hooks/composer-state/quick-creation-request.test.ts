@@ -149,4 +149,14 @@ describe('quick composer pinned agent account', () => {
       buildQuickCreationRequest(createInput({ agent: null, agentAccountId: 'acct-pinned' }))
     ).not.toHaveProperty('agentAccountId')
   })
+
+  it('carries the permission policy only when an agent will launch', () => {
+    const agentPermissionPolicy = { mode: 'approve-all' as const }
+    expect(
+      buildQuickCreationRequest(createInput({ agent: 'claude', agentPermissionPolicy }))
+    ).toMatchObject({ agentPermissionPolicy })
+    expect(
+      buildQuickCreationRequest(createInput({ agent: null, agentPermissionPolicy }))
+    ).not.toHaveProperty('agentPermissionPolicy')
+  })
 })

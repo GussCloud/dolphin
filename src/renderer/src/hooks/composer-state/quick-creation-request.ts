@@ -1,4 +1,5 @@
 import type { AgentStartedTelemetry } from '@/lib/worktree-startup-payload'
+import type { AgentPermissionPolicy } from '../../../../shared/agent-permission-policy'
 import type { WorktreeCreationRequest } from '@/lib/pending-worktree-creation'
 import type { AgentStartupPlan } from '@/lib/tui-agent-startup'
 import type { LinkedWorkItemSummary } from '@/lib/new-workspace'
@@ -52,6 +53,7 @@ export type QuickCreationRequestInput = {
   suppressTerminalFocusOnCompletion: boolean
   autonomousGoalWorkspace?: boolean
   agentAccountId?: string
+  agentPermissionPolicy?: AgentPermissionPolicy
 }
 
 export function buildQuickCreationRequest(
@@ -115,6 +117,9 @@ export function buildQuickCreationRequest(
     quickTelemetry: input.quickTelemetry,
     ...(input.suppressTerminalFocusOnCompletion ? { suppressTerminalFocusOnCompletion: true } : {}),
     ...(input.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {}),
-    ...(input.agent && input.agentAccountId ? { agentAccountId: input.agentAccountId } : {})
+    ...(input.agent && input.agentAccountId ? { agentAccountId: input.agentAccountId } : {}),
+    ...(input.agent && input.agentPermissionPolicy
+      ? { agentPermissionPolicy: input.agentPermissionPolicy }
+      : {})
   }
 }

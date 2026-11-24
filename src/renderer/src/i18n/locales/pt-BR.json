@@ -18481,6 +18481,28 @@
           "open": "Abrir em nova janela",
           "focus": "Mostrar a janela do Design"
         }
+      },
+      "ComposerAgentPermissionPolicyField": {
+        "workingDirectory": "Pasta do workspace",
+        "workingDirectoryDescription": "Apagar a pasta do workspace",
+        "variableTarget": "Caminho com variável",
+        "variableTargetDescription": "Apagar um caminho montado com variável ($PASTA)",
+        "commandSubstitution": "Resultado de comando",
+        "commandSubstitutionDescription": "Apagar o resultado de um comando $(…)",
+        "mountedDrive": "Drive montado",
+        "mountedDriveDescription": "Apagar um drive montado (/Volumes/… no Mac)",
+        "mostUsed": "Mais usados",
+        "all": "Todos",
+        "none": "Nenhum (limpar)",
+        "selectedCount": "{{value0}} de {{value1}} selecionados",
+        "label": "Confirmações de exclusão no modo bypass",
+        "ask": "Perguntar sempre",
+        "catalog": "Lista configurável",
+        "approveAll": "Aprovar tudo",
+        "askDescription": "O Claude pergunta a você antes de cada exclusão arriscada. O Dolphin não aprova nada sozinho.",
+        "catalogDescription": "O Dolphin aprova só os tipos de exclusão marcados. O resto continua perguntando a você.",
+        "approveAllWarning": "O Dolphin aprova toda exclusão que o Claude perguntar no modo bypass, inclusive apagar a pasta deste workspace. Nada pergunta a você antes.",
+        "unseenTargetCaution": "O Dolphin não consegue ver o alvo: pode apagar qualquer pasta"
       }
     },
     "i18n": {

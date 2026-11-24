@@ -1,4 +1,5 @@
 import type { TuiAgent } from '../../../../shared/tui-agent'
+import type { AgentPermissionPolicy } from '../../../../shared/agent-permission-policy'
 import type { GitPushTarget } from '../../../../shared/worktree/types'
 import type { SetupDecision } from '../../../../shared/worktree/create-types'
 import type { Repo } from '../../../../shared/repo-types'
@@ -82,6 +83,8 @@ export type PreparedQuickSubmit = QuickSubmitSource & {
 export type QuickSubmitOptions = {
   /** Managed account the created agent launches with; omitted keeps the active account. */
   agentAccountId?: string
+  /** See CreateWorktreeArgs.agentPermissionPolicy; omitted leaves every prompt to the user. */
+  agentPermissionPolicy?: AgentPermissionPolicy
 }
 
 export type ComposerSubmitModel = {

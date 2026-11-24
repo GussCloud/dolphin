@@ -115,6 +115,54 @@
   );
 }
 
+/* ── Pane cards ───────────────────────────────────────── */
+
+/* Every pane is a bordered card; the divider hit area is the gap between cards. */
+:root {
+  --dolphin-pane-card-radius: var(--radius-lg);
+}
+
+.pane-card-root {
+  --dolphin-pane-card-border: var(--dolphin-terminal-divider-color, var(--border));
+  --dolphin-pane-card-active-border: color-mix(
+    in srgb,
+    var(--dolphin-pane-title-fg) 72%,
+    transparent
+  );
+  padding: var(--dolphin-pane-gap, 10px);
+}
+
+.pane-card-root .pane {
+  box-sizing: border-box;
+  overflow: hidden;
+  border: 1px solid var(--dolphin-pane-card-border);
+  border-radius: var(--dolphin-pane-card-radius);
+}
+
+.pane-card-root .pane[data-active-pane] {
+  border-color: var(--dolphin-pane-card-active-border);
+}
+
+/* Cards replace the divider line; it only shows while hovered or dragged. */
+.pane-card-root .pane-divider::after {
+  background: transparent;
+}
+
+/* A bottom inset keeps the last row off the rounded corners; the right edge is
+   already the scrollbar strip FitAddon reserves, so width stays as before. */
+.pane-card-root .xterm-container {
+  height: calc(100% - 2 * var(--pane-padding-y, 4px));
+}
+
+.pane-card-root .pane[data-has-title] .xterm-container {
+  height: calc(100% - var(--dolphin-pane-title-height) - var(--pane-padding-y, 4px));
+}
+
+.pane-card-root .pane.pane-focus-rim-flash::before,
+.pane-card-root .pane[data-terminal-attention] .xterm-container::after {
+  border-radius: calc(var(--dolphin-pane-card-radius) - 1px);
+}
+
 /* ── Pane drag handle ─────────────────────────────────── */
 
 .pane-drag-handle {
@@ -287,6 +335,9 @@
   color: var(--dolphin-pane-title-fg, rgb(255 255 255 / 0.52));
   background: var(--dolphin-pane-title-bg, #000);
   border-bottom: 1px solid var(--dolphin-pane-title-separator, rgb(255 255 255 / 0.06));
+  /* Sits inside the card border, so its corners follow the card's inner radius. */
+  border-radius: calc(var(--dolphin-pane-card-radius) - 1px)
+    calc(var(--dolphin-pane-card-radius) - 1px) 0 0;
   pointer-events: auto;
   user-select: none;
 }
@@ -363,6 +414,29 @@
   text-align: left;
   cursor: pointer;
   line-height: var(--dolphin-pane-title-height);
+}
+
+.pane-title-agent-mark {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+
+/* Muted and first to truncate, so the title keeps its room. */
+.pane-title-text:has(+ .pane-title-cwd) {
+  flex: 0 0 auto;
+  max-width: 70%;
+}
+
+.pane-title-cwd {
+  flex: 0 1000 auto;
+  min-width: 0;
+  margin-left: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--dolphin-pane-title-placeholder);
 }
 
 .pane-title-text:focus-visible {

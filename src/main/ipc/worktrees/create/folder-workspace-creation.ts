@@ -40,6 +40,7 @@ export function createFolderWorkspace(
     ...(args.cliProvenance ? { cliProvenance: args.cliProvenance } : {}),
     ...(args.createdWithAgent ? { createdWithAgent: args.createdWithAgent } : {}),
     ...(args.agentAccountId ? { agentAccountId: args.agentAccountId } : {}),
+    ...(args.agentPermissionPolicy ? { agentPermissionPolicy: args.agentPermissionPolicy } : {}),
     ...(args.linkedIssue !== undefined ? { linkedIssue: args.linkedIssue } : {}),
     ...(args.linkedPR !== undefined ? { linkedPR: args.linkedPR } : {}),
     ...(args.linkedLinearIssue !== undefined ? { linkedLinearIssue: args.linkedLinearIssue } : {}),
