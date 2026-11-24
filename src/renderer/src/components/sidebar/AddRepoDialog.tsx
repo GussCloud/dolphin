@@ -171,7 +171,8 @@ export default React.memo(function AddRepoDialog({
     resetCloneFlow,
     handlePickDestination,
     handleClone,
-    projectAccounts: cloneProjectAccounts
+    projectAccounts: cloneProjectAccounts,
+    azureSignIn: cloneAzureSignIn
   } = useAddRepoCloneFlow({
     step,
     activeRuntimeEnvironmentId: selectedRuntimeEnvironmentId,
@@ -374,6 +375,7 @@ export default React.memo(function AddRepoDialog({
         onPickCloneDestination={handlePickDestination}
         onClone={handleClone}
         cloneProjectAccounts={cloneProjectAccounts}
+        cloneAzureSignIn={cloneAzureSignIn}
         accountsPanel={accountsPanel}
         accountStep={accounts.state}
         createIdentity={createIdentity}

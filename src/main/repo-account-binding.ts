@@ -5,6 +5,8 @@ import {
   type RepoAccountBinding
 } from '../shared/source-control-account-types'
 import { prepareRepoGitAccountInvocation } from './git/command-runner/repo-git-account-env'
+import type { RepoGitAccountContext } from './git/command-runner/repo-git-account-config'
+import { usesDefaultAzureCliGitSignIn } from './azure-devops/azure-cli-default-git-sign-in'
 
 type RepoBindingStore = {
   updateRepo: (
@@ -32,9 +34,18 @@ export function applyRepoAccountBindingToNewRepo(
 /** `git clone` args/env that authenticate as the account chosen in the clone request. */
 export async function prepareCloneGitInvocation(
   args: string[],
-  options: { cwd: string; env: NodeJS.ProcessEnv; binding: unknown }
+  options: { cwd: string; env: NodeJS.ProcessEnv; url: string; binding: unknown }
 ): Promise<{ args: string[]; env: NodeJS.ProcessEnv }> {
-  const repoAccount = normalizeRepoAccountBinding(options.binding)
+  const binding = normalizeRepoAccountBinding(options.binding)
+  // Why: the same "Default sign-in" an added repo gets; under the non-interactive clone env GCM cannot prompt.
+  const defaultCliSignIn = usesDefaultAzureCliGitSignIn({
+    azureDevOpsAccountId: binding?.azureDevOpsAccountId,
+    remoteUrl: options.url
+  })
+  const repoAccount: RepoGitAccountContext | undefined =
+    binding || defaultCliSignIn
+      ? { ...binding, ...(defaultCliSignIn ? { azureDevOpsDefaultCliSignIn: true as const } : {}) }
+      : undefined
   const prepared = repoAccount
     ? await prepareRepoGitAccountInvocation(args, {
         cwd: options.cwd,

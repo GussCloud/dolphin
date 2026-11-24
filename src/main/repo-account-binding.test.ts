@@ -1,4 +1,7 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Repo } from '../shared/repo-types'
 
 const preference = vi.hoisted(() => {
@@ -8,9 +11,16 @@ const preference = vi.hoisted(() => {
 vi.mock('./azure-devops/azure-devops-auth-preference-store', () => ({
   getAzureDevOpsAuthPreference: () => ({ method: preference.method, autoRenewCliSession: true })
 }))
+const tokens = vi.hoisted(() => ({ azureCli: vi.fn(), managedAzure: vi.fn() }))
+vi.mock('./azure-devops/azure-cli-access-token', () => ({
+  getAzureCliAccessToken: tokens.azureCli
+}))
+vi.mock('./azure-devops/azure-devops-account-scope', () => ({
+  resolveAzureDevOpsAccountToken: tokens.managedAzure
+}))
 import { RepoClone, RepoUpdate } from '../shared/rpc-contract/repo-params'
 import { getRepoGitAccountContext } from './project-runtime-git-options'
-import { applyRepoAccountBindingToNewRepo } from './repo-account-binding'
+import { applyRepoAccountBindingToNewRepo, prepareCloneGitInvocation } from './repo-account-binding'
 
 const identity = { name: 'Ana Dev', email: 'ana@corp.example' }
 
@@ -117,6 +127,70 @@ describe('applyRepoAccountBindingToNewRepo', () => {
       { accountSetupReviewedAt: expect.any(Number) },
       'local'
     )
+  })
+})
+
+describe('prepareCloneGitInvocation', () => {
+  const AZURE_URL = 'https://evup@dev.azure.com/evup/P/_git/app'
+  let cwd: string
+  let env: NodeJS.ProcessEnv
+
+  beforeEach(() => {
+    preference.method = 'azure-cli'
+    tokens.azureCli.mockReset().mockResolvedValue('az-token')
+    tokens.managedAzure.mockReset().mockResolvedValue('managed-token')
+    cwd = mkdtempSync(join(tmpdir(), 'dolphin-clone-account-'))
+    // Why an empty HOME: the remote/insteadOf read must not see the developer's global git config.
+    env = { PATH: process.env.PATH, HOME: cwd, GIT_CONFIG_NOSYSTEM: '1', GIT_TERMINAL_PROMPT: '0' }
+  })
+  afterEach(() => {
+    rmSync(cwd, { recursive: true, force: true })
+  })
+
+  function clone(url: string, binding: unknown) {
+    return prepareCloneGitInvocation(['clone', '--progress', '--', url, join(cwd, 'app')], {
+      cwd,
+      env,
+      url,
+      binding
+    })
+  }
+
+  it('uses the global az login for an Azure DevOps https clone with no account chosen', async () => {
+    for (const binding of [undefined, {}]) {
+      const invocation = await clone(AZURE_URL, binding)
+      expect(invocation.args).toContain('credential.https://dev.azure.com.helper=')
+      expect(invocation.args.join(' ')).not.toContain('az-token')
+      expect(Object.values(invocation.env)).toContain('az-token')
+    }
+    expect(tokens.azureCli).toHaveBeenCalledTimes(2)
+  })
+
+  it("still clones on git's own credentials when the az token is unavailable", async () => {
+    tokens.azureCli.mockRejectedValue(new Error('az login required'))
+    const args = ['clone', '--progress', '--', AZURE_URL, join(cwd, 'app')]
+    await expect(clone(AZURE_URL, undefined)).resolves.toEqual({ args, env })
+  })
+
+  it('keeps a chosen managed Azure DevOps account instead of the global az login', async () => {
+    const invocation = await clone(AZURE_URL, { azureDevOpsAccountId: 'acct' })
+    expect(Object.values(invocation.env)).toContain('managed-token')
+    expect(Object.values(invocation.env)).not.toContain('az-token')
+    expect(tokens.azureCli).not.toHaveBeenCalled()
+  })
+
+  it('leaves non-Azure clones and non-CLI preferences untouched', async () => {
+    const githubUrl = 'https://github.com/acme/app.git'
+    await expect(clone(githubUrl, undefined)).resolves.toEqual({
+      args: ['clone', '--progress', '--', githubUrl, join(cwd, 'app')],
+      env
+    })
+    preference.method = 'token'
+    await expect(clone(AZURE_URL, undefined)).resolves.toEqual({
+      args: ['clone', '--progress', '--', AZURE_URL, join(cwd, 'app')],
+      env
+    })
+    expect(tokens.azureCli).not.toHaveBeenCalled()
   })
 })
 

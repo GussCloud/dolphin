@@ -258,7 +258,12 @@ export class GitHandler {
           resolve({ stdout, stderr })
           return
         }
-        reject(new Error(`Clone failed: ${getGitCloneFailureMessage(stderr)}`))
+        const cloneUrl = args.find((arg) => /^https:\/\//i.test(arg))
+        const message = getGitCloneFailureMessage(
+          stderr,
+          cloneUrl ? { azureDevOps: { cloneUrl, signInHost: 'ssh-host' } } : {}
+        )
+        reject(new Error(`Clone failed: ${message}`))
       })
     })
   }

@@ -104,7 +104,13 @@ export async function cloneRemoteRepo(
     }
     const message = err instanceof Error ? err.message : String(err)
     if (message.startsWith('Clone failed:')) {
-      throw new Error(`Clone failed: ${getGitCloneFailureMessage(message, { clonePath })}`)
+      throw new Error(
+        `Clone failed: ${getGitCloneFailureMessage(message, {
+          clonePath,
+          // Why also here: an older relay returns the raw git line without the guidance.
+          azureDevOps: { cloneUrl: args.url.trim(), signInHost: 'ssh-host' }
+        })}`
+      )
     }
     throw err
   } finally {

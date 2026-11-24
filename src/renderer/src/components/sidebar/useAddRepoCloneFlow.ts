@@ -14,39 +14,17 @@ import type { ExecutionHostId } from '../../../../shared/execution-host'
 import {
   accountBindingArg,
   isAccountBindingEchoed,
-  resolveNewProjectAccountSettings,
   useNewProjectAccountDraft,
-  type CloneProjectAccounts,
-  type NewProjectAccountDraft
+  type CloneProjectAccounts
 } from '../project-accounts/new-project-account-settings'
-import {
-  projectStartBinding,
-  startAgentAccounts,
-  type ProjectStartAccounts
-} from '../project-accounts/project-start-accounts'
-import { projectRemoteTargetFromUrl } from '../project-accounts/project-account-provider'
-import type { RepoAccountBinding } from '../../../../shared/source-control-account-types'
-import { parseWslUncPath } from '../../../../shared/wsl-paths'
+import type { ProjectStartAccounts } from '../project-accounts/project-start-accounts'
+import { cloneAccountSettings } from './clone-account-settings'
 import { commitIdentityDraftFrom } from '../project-accounts/commit-identity-draft'
-
-/**
- * The binding a clone request carries. On this PC the accounts panel decides it, matched to the
- * URL's provider and host; a WSL destination or a remote host uses the per-remote form instead,
- * because its gh logins are not the ones the panel lists. Null while that form is invalid.
- */
-function cloneAccountSettings(
-  url: string,
-  destination: string,
-  startAccounts: ProjectStartAccounts | undefined,
-  formDraft: NewProjectAccountDraft
-): RepoAccountBinding | null {
-  if (startAccounts && !parseWslUncPath(destination)) {
-    const knownHosts = startAccounts.ghAccount ? [startAccounts.ghAccount.host] : []
-    return projectStartBinding(startAccounts, projectRemoteTargetFromUrl(url, knownHosts))
-  }
-  const fromForm = resolveNewProjectAccountSettings(formDraft)
-  return fromForm ? { ...fromForm, ...startAgentAccounts(startAccounts) } : null
-}
+import {
+  canOfferCloneAzureSignIn,
+  signInToAzureAndRetryClone,
+  type CloneAzureSignIn
+} from './clone-azure-sign-in'
 
 export function useAddRepoCloneFlow({
   step,
@@ -85,6 +63,7 @@ export function useAddRepoCloneFlow({
   handlePickDestination: () => Promise<void>
   handleClone: () => Promise<void>
   projectAccounts: CloneProjectAccounts
+  azureSignIn: CloneAzureSignIn
 } {
   const [cloneUrl, setCloneUrl] = useState('')
   const [cloneDestination, setCloneDestination] = useState('')
@@ -93,6 +72,9 @@ export function useAddRepoCloneFlow({
   const [cloneProgress, setCloneProgress] = useState<{ phase: string; percent: number } | null>(
     null
   )
+  const [isAzureSigningIn, setIsAzureSigningIn] = useState(false)
+  const [azureSignInError, setAzureSignInError] = useState<string | null>(null)
+  const azureAuthMethod = useAppStore((s) => s.preflightStatus?.azureDevOps?.authMethod)
   const hostToken = `${activeRuntimeEnvironmentId?.trim() ?? ''}:${sshTargetId?.trim() ?? ''}`
   const hostTokenRef = useRef(hostToken)
   hostTokenRef.current = hostToken
@@ -101,6 +83,9 @@ export function useAddRepoCloneFlow({
   // Why: track whether we've already auto-filled for this entry into the clone step,
   // so a late settings hydration still gets a chance to set the default.
   const cloneStepAutoFilledRef = useRef(false)
+  // Why: a retry after sign-in must clone what the user asked for when it started.
+  const cloneInputsRef = useRef('')
+  cloneInputsRef.current = `${cloneUrl.trim()}\n${cloneDestination.trim()}`
   const accountDraft = useNewProjectAccountDraft()
   const resetProjectAccounts = accountDraft.reset
   const projectAccounts: CloneProjectAccounts = {
@@ -147,6 +132,8 @@ export function useAddRepoCloneFlow({
     setIsCloning(false)
     setCloneError(null)
     setCloneProgress(null)
+    setIsAzureSigningIn(false)
+    setAzureSignInError(null)
     resetProjectAccounts()
   }, [resetProjectAccounts])
 
@@ -188,6 +175,7 @@ export function useAddRepoCloneFlow({
     const gen = ++cloneGenRef.current
     setIsCloning(true)
     setCloneError(null)
+    setAzureSignInError(null)
     setCloneProgress(null)
     try {
       const target = activeRuntimeEnvironmentId?.trim()
@@ -270,6 +258,25 @@ export function useAddRepoCloneFlow({
     startAccounts
   ])
 
+  const handleAzureSignIn = useCallback(async (): Promise<void> => {
+    const gen = cloneGenRef.current
+    const requestHostToken = hostTokenRef.current
+    const requestInputs = cloneInputsRef.current
+    setIsAzureSigningIn(true)
+    setAzureSignInError(null)
+    // Why no try: signInToAzureAndRetryClone settles every failure, and handleClone catches its own.
+    const error = await signInToAzureAndRetryClone({
+      startSignIn: () => window.api.azureDevOps.startCliSignIn('device-code'),
+      isStillCurrent: () =>
+        gen === cloneGenRef.current &&
+        requestHostToken === hostTokenRef.current &&
+        requestInputs === cloneInputsRef.current,
+      retryClone: handleClone
+    })
+    setAzureSignInError(error)
+    setIsAzureSigningIn(false)
+  }, [handleClone])
+
   return {
     cloneUrl,
     cloneDestination,
@@ -282,6 +289,26 @@ export function useAddRepoCloneFlow({
     resetCloneFlow,
     handlePickDestination,
     handleClone,
-    projectAccounts
+    projectAccounts,
+    azureSignIn: {
+      available: canOfferCloneAzureSignIn({
+        cloneUrl,
+        cloneError,
+        isCloning,
+        runtimeEnvironmentId: activeRuntimeEnvironmentId,
+        sshTargetId,
+        authMethod: azureAuthMethod,
+        // Why the current form: it is the binding the retry would send.
+        azureDevOpsAccountId: cloneAccountSettings(
+          cloneUrl.trim(),
+          cloneDestination.trim(),
+          startAccounts,
+          projectAccounts.draft
+        )?.azureDevOpsAccountId
+      }),
+      isSigningIn: isAzureSigningIn,
+      error: azureSignInError,
+      signIn: handleAzureSignIn
+    }
   }
 }

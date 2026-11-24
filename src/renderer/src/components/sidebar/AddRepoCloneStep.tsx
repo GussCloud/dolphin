@@ -1,5 +1,5 @@
 import React, { useState, type ReactNode } from 'react'
-import { Folder } from 'lucide-react'
+import { Folder, KeyRound, Loader2 } from 'lucide-react'
 import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +12,9 @@ import {
   resolveNewProjectAccountSettings,
   type CloneProjectAccounts
 } from '../project-accounts/new-project-account-settings'
+import { AzureDevOpsDeviceCodeDetails } from '../azure-devops/AzureDevOpsDeviceCodeDetails'
+import { useAzureCliSignInState } from '../azure-devops/use-azure-cli-sign-in-notice'
+import type { CloneAzureSignIn } from './clone-azure-sign-in'
 
 type CloneStepProps = {
   cloneUrl: string
@@ -30,6 +33,56 @@ type CloneStepProps = {
   projectAccounts?: CloneProjectAccounts
   /** The add-project accounts panel; replaces the per-remote fields on this PC's host. */
   accountsPanel?: ReactNode
+  azureSignIn?: CloneAzureSignIn
+}
+
+function CloneAzureSignInAction({
+  azureSignIn,
+  isCloning
+}: {
+  azureSignIn: CloneAzureSignIn
+  isCloning: boolean
+}): React.JSX.Element {
+  const signInState = useAzureCliSignInState()
+  // Why inline: the app's sign-in notice sits under this modal dialog's overlay.
+  const deviceCode =
+    azureSignIn.isSigningIn && signInState?.kind === 'signing-in'
+      ? signInState.deviceCode
+      : undefined
+  return (
+    <div className="space-y-2">
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full"
+        onClick={() => void azureSignIn.signIn()}
+        disabled={azureSignIn.isSigningIn || isCloning}
+        aria-busy={azureSignIn.isSigningIn}
+      >
+        {azureSignIn.isSigningIn ? (
+          <Loader2 className="size-3.5 animate-spin" />
+        ) : (
+          <KeyRound className="size-3.5" />
+        )}
+        {azureSignIn.isSigningIn
+          ? translate('auto.components.sidebar.AddRepoSteps.azureSigningIn', 'Signing in…')
+          : translate(
+              'auto.components.sidebar.AddRepoSteps.azureSignInWithCode',
+              'Sign in with a code'
+            )}
+      </Button>
+      {deviceCode ? <AzureDevOpsDeviceCodeDetails deviceCode={deviceCode} /> : null}
+      {azureSignIn.error ? (
+        <p className="text-[11px] text-destructive">
+          {translate(
+            'auto.components.sidebar.AddRepoSteps.azureSignInFailed',
+            'Azure DevOps sign-in failed: {{value0}}',
+            { value0: azureSignIn.error }
+          )}
+        </p>
+      ) : null}
+    </div>
+  )
 }
 
 export function CloneStep({
@@ -47,7 +100,8 @@ export function CloneStep({
   onPickDestination,
   onClone,
   projectAccounts,
-  accountsPanel
+  accountsPanel,
+  azureSignIn
 }: CloneStepProps): React.JSX.Element {
   const [browsingDestination, setBrowsingDestination] = useState(false)
   const isRemoteClone = Boolean(runtimeEnvironmentId || sshTargetId)
@@ -61,7 +115,9 @@ export function CloneStep({
     !showAccountFields ||
     !projectAccounts ||
     resolveNewProjectAccountSettings(projectAccounts.draft) !== null
-  const canClone = !!cloneUrl.trim() && !!cloneDestination.trim() && !isCloning && accountsValid
+  // Why: the retry after a sign-in clones the URL and folder the sign-in started with.
+  const inputsLocked = isCloning || Boolean(azureSignIn?.isSigningIn)
+  const canClone = !!cloneUrl.trim() && !!cloneDestination.trim() && !inputsLocked && accountsValid
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
     if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
       e.preventDefault()
@@ -144,10 +200,10 @@ export function CloneStep({
               'https://github.com/user/repo.git'
             )}
             className="h-8 text-xs"
-            disabled={isCloning}
+            disabled={inputsLocked}
             autoFocus
           />
-          <AzureReposClonePicker disabled={isCloning} onPick={onUrlChange} />
+          <AzureReposClonePicker disabled={inputsLocked} onPick={onUrlChange} />
         </div>
 
         <div className="space-y-1">
@@ -171,7 +227,7 @@ export function CloneStep({
                     )
               }
               className="h-8 text-xs flex-1"
-              disabled={isCloning}
+              disabled={inputsLocked}
             />
             <Button
               variant="outline"
@@ -184,7 +240,7 @@ export function CloneStep({
                 }
                 onPickDestination()
               }}
-              disabled={isCloning || (disableDestinationPicker && !canBrowseRemoteDestination)}
+              disabled={inputsLocked || (disableDestinationPicker && !canBrowseRemoteDestination)}
               title={
                 canBrowseRemoteDestination
                   ? translate(
@@ -216,11 +272,14 @@ export function CloneStep({
             draft={projectAccounts.draft}
             onSelectionChange={projectAccounts.setSelection}
             onIdentityChange={projectAccounts.setIdentity}
-            disabled={isCloning}
+            disabled={inputsLocked}
           />
         ) : null}
 
         {cloneError && <p className="text-[11px] text-destructive">{cloneError}</p>}
+        {azureSignIn?.available ? (
+          <CloneAzureSignInAction azureSignIn={azureSignIn} isCloning={isCloning} />
+        ) : null}
 
         <Button onClick={onClone} disabled={!canClone} className="w-full">
           {isCloning

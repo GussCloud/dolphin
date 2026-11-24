@@ -12,6 +12,7 @@ import type { NestedRepoScanResult } from '../../../../shared/project-group-type
 import type { SshConnectionState, SshTarget } from '../../../../shared/ssh-types'
 import type { GitAvailability } from './create-project-defaults'
 import type { CloneProjectAccounts } from '../project-accounts/new-project-account-settings'
+import type { CloneAzureSignIn } from './clone-azure-sign-in'
 import type { CommitIdentityDraft } from '../project-accounts/commit-identity-draft'
 
 type AddRepoDialogStepContentProps = {
@@ -75,6 +76,7 @@ type AddRepoDialogStepContentProps = {
   onPickCloneDestination: () => void
   onClone: () => void
   cloneProjectAccounts?: CloneProjectAccounts
+  cloneAzureSignIn?: CloneAzureSignIn
   /** The add-project accounts panel; clone and create show it in place of their own fields. */
   accountsPanel?: ReactNode
   accountStep?: AddRepoAccountStepState | null
@@ -150,6 +152,7 @@ export function AddRepoDialogStepContent({
   onPickCloneDestination,
   onClone,
   cloneProjectAccounts,
+  cloneAzureSignIn,
   accountsPanel,
   accountStep,
   createIdentity,
@@ -241,6 +244,7 @@ export function AddRepoDialogStepContent({
         onPickDestination={onPickCloneDestination}
         onClone={onClone}
         projectAccounts={cloneProjectAccounts}
+        azureSignIn={cloneAzureSignIn}
         accountsPanel={accountsPanel}
       />
     )

@@ -156,6 +156,7 @@ export function registerRepoCloneHandlers(mainWindow: BrowserWindow, store: Stor
               cwd: args.destination,
               // Why: without this, an auth-needing clone pops Git Credential Manager's OAuth window on Windows, unclosable in a restricted env (issue #7652).
               env: nonInteractiveGitEnv(),
+              url: args.url,
               binding: args.accountBinding
             }
           )
@@ -233,7 +234,12 @@ export function registerRepoCloneHandlers(mainWindow: BrowserWindow, store: Stor
               resolve()
             } else {
               reject(
-                new Error(`Clone failed: ${getGitCloneFailureMessage(stderrTail, { clonePath })}`)
+                new Error(
+                  `Clone failed: ${getGitCloneFailureMessage(stderrTail, {
+                    clonePath,
+                    azureDevOps: { cloneUrl: args.url, signInHost: 'this-computer' }
+                  })}`
+                )
               )
             }
           }
