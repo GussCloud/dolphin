@@ -111,6 +111,9 @@ async function captureProof(page: Page, testInfo: TestInfo, name: string): Promi
   await page.screenshot({ path: testInfo.outputPath(name), animations: 'disabled' })
 }
 
+// The card's bottom padding plus its 1px border; a tooltip-sized shrink is several times this.
+const MAX_CARD_BOTTOM_INSET_PX = 12
+
 test.describe('Issue #12656 terminal link tooltip', () => {
   test('clears hover state without permanently shrinking the terminal', async ({
     appPage
@@ -144,7 +147,11 @@ test.describe('Issue #12656 terminal link tooltip', () => {
       throw new Error('URL probe disappeared before hover')
     }
     const idle = await readTooltipState(appPage, probe.tabId)
-    expect(Math.abs(idle.paneBottom - idle.terminalBottom)).toBeLessThanOrEqual(1)
+    // Why a measured gap, not 0: pane cards inset the terminal from the card's bottom edge
+    // (padding plus border); the bug was the terminal shrinking when the tooltip appears.
+    const idleGap = idle.paneBottom - idle.terminalBottom
+    expect(idleGap).toBeGreaterThanOrEqual(0)
+    expect(idleGap).toBeLessThanOrEqual(MAX_CARD_BOTTOM_INSET_PX)
     await expect
       .poll(async () => {
         const currentProbe = await locateUrl(appPage, url)
@@ -160,7 +167,7 @@ test.describe('Issue #12656 terminal link tooltip', () => {
     const hovered = await readTooltipState(appPage, probe.tabId)
     expect(hovered.text).toContain(url)
     expect(hovered.tooltipHeight).toBeGreaterThan(0)
-    expect(Math.abs(hovered.paneBottom - hovered.terminalBottom)).toBeLessThanOrEqual(1)
+    expect(Math.abs(hovered.paneBottom - hovered.terminalBottom - idleGap)).toBeLessThanOrEqual(1)
     expect(Math.abs(hovered.paneBottom - hovered.tooltipBottom)).toBeLessThanOrEqual(1)
     expect(hovered.tooltipTop).toBeLessThan(hovered.terminalBottom)
     await captureProof(appPage, testInfo, 'issue-12656-fixed-hover.png')
@@ -170,7 +177,7 @@ test.describe('Issue #12656 terminal link tooltip', () => {
       .poll(() => readTooltipState(appPage, probe.tabId))
       .toMatchObject({ display: 'none', cursor: 'text' })
     const cleared = await readTooltipState(appPage, probe.tabId)
-    expect(Math.abs(cleared.paneBottom - cleared.terminalBottom)).toBeLessThanOrEqual(1)
+    expect(Math.abs(cleared.paneBottom - cleared.terminalBottom - idleGap)).toBeLessThanOrEqual(1)
     await captureProof(appPage, testInfo, 'issue-12656-fixed-after-blur.png')
 
     await expect.poll(() => getTerminalContent(appPage)).toContain(url)

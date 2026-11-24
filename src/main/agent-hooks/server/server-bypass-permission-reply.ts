@@ -88,6 +88,12 @@ export async function replyToBypassPermissionRequest(args: {
   try {
     const spawned = verifySpawnedLaunch(resolver, event)
     if (!spawned) {
+      // Why log: a Dolphin-launched pane with no matching spawn record otherwise falls back silently.
+      if (event.launchToken) {
+        console.warn(
+          `[agent-hooks] bypass permission left to the user: no spawn record matches ${event.paneKey}`
+        )
+      }
       return false
     }
     const approval = decideBypassPermission({
