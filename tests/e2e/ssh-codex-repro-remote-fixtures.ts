@@ -65,8 +65,10 @@ for (let frame = 0; frame < ${REMOTE_TUI_FRAMES}; frame += 1) {
   await write(\`\\x1b[22;1H\\x1b[38;2;106;176;76m+\${' added code '.repeat(8)}\${frame}\\x1b[0m\`)
   await write(\`\\x1b[23;1H\\x1b[38;2;230;90;75m-\${' removed code '.repeat(8)}\${frame}\\x1b[0m\`)
   await write(\`\\x1b[25;1H\\x1b[38;2;153;199;255m› \${'Run focused and full validation gates '.repeat(3)}\${frame}\\x1b[0m\`)
+  // Why short: this row scrolls into history, and a row the pane wraps would cut off the frame
+  // number that keeps each copy distinct for the duplicate-row check.
   if (frame % 18 === 0) {
-    await write(\`\\x1b[52;1H\\x1b[0m• Waited for background terminal · rtk bun run e2e:ui --filter=@dalp/app \${frame}\\r\\n\`)
+    await write(\`\\x1b[52;1H\\x1b[0m• Waited for background terminal · e2e \${frame}\\r\\n\`)
   }
   await write('\\x1b[?2026l')
   await sleep(8)

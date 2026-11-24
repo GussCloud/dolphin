@@ -89,7 +89,7 @@ await writeStdout('LONG_TABLE_SCROLL_RESTORE_${runId}\\n')
 
 export function emojiFixtureMarkdownTableScript(table: string, runId: string): string {
   const marker = `EMOJI_FIXTURE_TABLE_RESTORE_${runId}`
-  const widthMarker = `${marker} WIDTH`
+  const widthMarker = emojiFixtureTableWidthMarker(runId)
   return `
 const table = ${JSON.stringify(table)}
 const minimumWidths = [2, 5, 4, 7, 7, 4, 3, 4]
@@ -214,12 +214,14 @@ for (const line of rendered) {
   await writeStdout(line + '\\r\\n')
 }
 await writeStdout('\\x1b[?2026l')
-await writeStdout('${widthMarker}:' + generatedTableWidth + '\\r\\n')
+await writeStdout('${marker}\\r\\n')
+await writeStdout('${widthMarker}' + generatedTableWidth + '\\r\\n')
 `
 }
 
+// Why short: the repro runs in a narrow terminal, and a wrapped marker line splits the match.
 export function emojiFixtureTableWidthMarker(runId: string): string {
-  return `EMOJI_FIXTURE_TABLE_RESTORE_${runId} WIDTH:`
+  return `EFW_${runId.slice(0, 8)}:`
 }
 
 export function narrowSignerMarkdownTableScript(runId: string): string {
