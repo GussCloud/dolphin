@@ -6,6 +6,8 @@ vi.mock('electron', () => ({
     getAppMetrics: () => []
   }
 }))
+// Why: its macOS-only async attach is covered in process-gone-darwin-memory.test.ts.
+vi.mock('./process-gone-darwin-memory', () => ({ attachDarwinProcessGoneMemory: async () => {} }))
 
 import { clearCrashBreadcrumbsForTest, getCrashBreadcrumbSnapshot } from './crash-breadcrumb-store'
 import { ProcessGoneDedupe } from './process-gone-dedupe'

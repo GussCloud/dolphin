@@ -22,11 +22,11 @@ import type { SwapVolumeFreeSpace } from './swap-volume-free-space'
 //     to grow, so the floor cannot heal (`available-commit-hard-capped`).
 //   linux  — MemAvailable is the real signal; MemFree is not (it excludes page
 //     cache and other reclaimable memory).
-//   darwin — none. `free` stays low on healthy machines and
+//   darwin — none here. `free` stays low on healthy machines and
 //     fileBacked/purgeable are only a reclaimability proxy. The real signal
-//     needs `memory_pressure -Q`; Dolphin's reader for it
-//     (src/main/memory/host-memory.ts) is on-demand, and spawning a subprocess
-//     on a 10 s app-lifetime timer costs more than the gap it closes.
+//     needs `memory_pressure -Q`, a subprocess too costly for a 10 s
+//     app-lifetime timer; process-gone-darwin-memory.ts takes one reading per
+//     recorded crash and relabels it `memory-pressure-free-percentage`.
 
 type CrashReportDetails = Record<string, CrashReportDetailValue>
 
@@ -55,6 +55,7 @@ export type SystemMemoryPressureSignal =
   | 'available-commit-volume-cotimed'
   | 'available-commit-unqualified'
   | 'mem-available'
+  | 'memory-pressure-free-percentage'
   | 'none'
 
 function readElectronSystemMemoryInfo(): SystemMemoryInfoLike | null {
