@@ -123,8 +123,9 @@ describe('release workflows', () => {
   it('publishes nothing from a promote until the whole e2e suite passed on the promoted commit', () => {
     const { jobs } = workflow('release-promote')
     expect(jobs.e2e.uses).toBe('./.github/workflows/e2e.yml')
-    expect(jobs.e2e.with).toEqual({ ref: '${{ needs.resolve.outputs.target_sha }}' })
+    expect(jobs.e2e.with).toEqual({ ref: '${{ needs.resolve.outputs.target_sha }}', retries: '1' })
     expect(jobs.e2e_wsl.uses).toBe('./.github/workflows/windows-wsl-e2e.yml')
+    expect(jobs.e2e_wsl.with.retries).toBe('1')
     // Why the builds may run beside the suite: they only stage, never publish.
     expect(jobs.desktop.with.publish).toBe(false)
     expect(jobs.android.with.publish_github_release).toBe(false)
@@ -155,21 +156,43 @@ describe('release workflows', () => {
     )
   })
 
-  it('runs the whole suite on develop twice a day and reports failures in one issue', () => {
+  it('runs the whole suite on every develop merge and reports failures and flaky tests', () => {
     const nightly = workflow('e2e-develop')
     expect(nightly.on.schedule).toEqual([{ cron: '13 6,16 * * *' }])
+    expect(nightly.on.push).toEqual({ branches: ['develop'] })
     expect(nightly.jobs.suite.uses).toBe('./.github/workflows/e2e.yml')
     // Why no test_files: an empty list is what makes e2e.yml run every shard and lane.
     // Why decide's sha: schedules fire from main, where github.sha is main, not develop.
-    expect(nightly.jobs.suite.with).toEqual({ ref: '${{ needs.decide.outputs.sha }}' })
+    expect(nightly.jobs.suite.with).toEqual({
+      ref: '${{ needs.decide.outputs.sha }}',
+      retries: '1'
+    })
     expect(nightly.jobs.wsl.uses).toBe('./.github/workflows/windows-wsl-e2e.yml')
-    expect(nightly.jobs.wsl.with).toEqual({ ref: '${{ needs.decide.outputs.sha }}' })
+    expect(nightly.jobs.wsl.with).toEqual({ ref: '${{ needs.decide.outputs.sha }}', retries: '1' })
+    const flakyRun = nightly.jobs.flaky.steps.map((step) => step.run ?? '').join('\n')
+    expect(flakyRun).toContain('select(.title == "Flaky e2e")')
     const decideRun = nightly.jobs.decide.steps.map((step) => step.run ?? '').join('\n')
     expect(decideRun).toContain('commits/develop')
     expect(JSON.stringify(nightly)).not.toContain('github.sha')
     expect(nightly.jobs.record.needs).toEqual(['decide', 'suite', 'wsl'])
     expect(nightly.jobs.report.permissions).toEqual({ contents: 'read', issues: 'write' })
     expect(nightly.concurrency).toEqual({ group: 'e2e-develop', 'cancel-in-progress': false })
+  })
+
+  it('retries only in the full-suite runs, and reports each retried pass as flaky', () => {
+    for (const name of ['e2e', 'windows-wsl-e2e']) {
+      const { env, on } = workflow(name)
+      expect(env.DOLPHIN_E2E_RETRIES, name).toBe("${{ inputs.retries || '0' }}")
+      expect(on.workflow_call.inputs.retries.required, name).toBe(false)
+    }
+    // Why PRs stay at 0: a spec a PR writes or edits must pass on its first attempt.
+    expect(JSON.stringify(workflow('pr'))).not.toContain('retries')
+    const config = readFileSync('tests/playwright.config.ts', 'utf8')
+    expect(config).toContain("process.env.DOLPHIN_E2E_RETRIES ?? '0'")
+    expect(config).toContain('./e2e/flaky-annotation-reporter.ts')
+    const reporter = readFileSync('tests/e2e/flaky-annotation-reporter.ts', 'utf8')
+    expect(reporter).toContain("test.outcome() !== 'flaky'")
+    expect(reporter).toContain('::warning title=Flaky e2e::')
   })
 
   it('moves main after a promote, never by force', () => {

@@ -1,5 +1,11 @@
 import { defineConfig } from '@playwright/test'
 
+// Why an env knob: PR runs keep 0 so a new spec must pass first time; the full-suite runs
+// (e2e-develop, release-promote) pass 1, so one hiccup in ~900 tests does not block a release
+// while a test that fails twice still does. Retried passes are reported as flaky.
+const retries = Number.parseInt(process.env.DOLPHIN_E2E_RETRIES ?? '0', 10)
+const e2eRetries = Number.isInteger(retries) && retries > 0 ? Math.min(retries, 2) : 0
+
 /**
  * Playwright config for Dolphin E2E tests.
  *
@@ -31,12 +37,12 @@ export default defineConfig({
   // on Xvfb/git enough to create false E2E failures, so CI scales by shards.
   workers: process.env.CI ? 1 : undefined,
   forbidOnly: !!process.env.CI,
-  retries: 0,
-  reporter: 'list',
+  retries: e2eRetries,
+  reporter: e2eRetries > 0 ? [['list'], ['./e2e/flaky-annotation-reporter.ts']] : 'list',
   use: {
-    // Why: this suite intentionally runs with retries disabled so first-failure
-    // traces are the only reliable debugging artifact we can collect in CI.
-    trace: 'retain-on-failure',
+    // Why: the first failure's trace is the reliable debugging artifact, so a retry must not
+    // replace it.
+    trace: e2eRetries > 0 ? 'retain-on-first-failure' : 'retain-on-failure',
     screenshot: 'only-on-failure'
   },
   projects: [

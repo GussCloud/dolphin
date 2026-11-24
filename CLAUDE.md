@@ -28,7 +28,7 @@ A evidência é o CI, nunca uma etapa do agente. O agente **não** abre o app, n
 
 # Portões do Pipeline
 
-O check obrigatório `verify` bloqueia só três coisas: **código quebrado** (typecheck, testes, empacotamento, contratos de plataforma e os e2e que o PR criou ou alterou), **segurança** e **performance**. Regras de estilo e tamanho só geram aviso. O PR roda só os e2e dele; a suíte e2e completa roda na `develop` duas vezes ao dia (`e2e-develop`, que abre uma issue quando falha) e antes de cada promoção. Formatação, lint corrigível e catálogos gerados se resolvem localmente com `node config/scripts/verify-pr-local.mjs --fix`.
+O check obrigatório `verify` bloqueia só três coisas: **código quebrado** (typecheck, testes, empacotamento, contratos de plataforma e os e2e que o PR criou ou alterou), **segurança** e **performance**. Regras de estilo e tamanho só geram aviso. O PR roda só os e2e dele; a suíte e2e completa roda na `develop` a cada merge (`e2e-develop`, que abre uma issue quando falha) e antes de cada promoção. Na suíte completa, um teste que falha ganha uma nova tentativa: falhar de novo bloqueia; passar na nova tentativa vai para a issue de testes instáveis. Nos PRs não há nova tentativa. Formatação, lint corrigível e catálogos gerados se resolvem localmente com `node config/scripts/verify-pr-local.mjs --fix`.
 
 # Versão e Release
 

@@ -21,6 +21,10 @@ on:
         description: '"true" when the PR touches SSH execution source; gates the Docker-SSH lane'
         required: false
         type: string
+      retries:
+        description: Retries per failed test; full-suite runs pass 1, PR runs keep 0
+        required: false
+        type: string
   workflow_dispatch:
     inputs:
       ref:
@@ -31,6 +35,14 @@ on:
         description: JSON array of specs to run; empty runs the full suite
         required: false
         type: string
+      retries:
+        description: Retries per failed test; full-suite runs pass 1, PR runs keep 0
+        required: false
+        type: string
+
+# Read by tests/playwright.config.ts in every lane; a retried pass is annotated as flaky.
+env:
+  DOLPHIN_E2E_RETRIES: ${{ inputs.retries || '0' }}
 
 jobs:
   build:

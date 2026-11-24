@@ -1,23 +1,24 @@
 name: E2E develop
 
-# The whole e2e suite on develop, twice a day. PRs run only the specs they wrote or edited
-# (pr.yml); this run is the regression net for everything else, and release-promote.yml runs the
-# same suite on the commit it promotes before main may move. A failing run opens or updates one
-# issue naming the PRs merged since the last green run.
+# The whole e2e suite on develop after every merge, plus twice a day. PRs run only the specs they
+# wrote or edited (pr.yml); this run is the regression net for everything else, so a merge that
+# breaks another spec is known within the hour, not at the next promote. release-promote.yml runs
+# the same suite on the commit it promotes before main may move. A failing run opens or updates
+# one issue naming the PRs merged since the last green run; a test that passed only on its retry
+# goes into a separate flaky-tests issue instead of failing the run.
 #
 # Why every job tests needs.decide.outputs.sha, never github.sha: GitHub fires schedules only from
-# the default branch (main), where github.sha is main. The schedule stays silent until this file
-# reaches main with the first promotion; until then the push trigger below starts the runs.
+# the default branch (main), where github.sha is main.
 
 on:
   schedule:
     # 03:13 and 13:13 in Brasília (UTC-3): outside working hours, because the suite holds 14 of
     # the 20 concurrent jobs a free account gets.
     - cron: '13 6,16 * * *'
-  # Why: the commit that adds or edits this file measures the suite at once instead of waiting.
+  # Why every merge: a regression surfaces right after the PR that caused it. The concurrency
+  # group keeps one run going and only the newest merge waiting, so a burst of merges is one queue.
   push:
     branches: [develop]
-    paths: [.github/workflows/e2e-develop.yml]
   workflow_dispatch:
 
 permissions:
@@ -72,6 +73,7 @@ jobs:
     uses: ./.github/workflows/e2e.yml
     with:
       ref: ${{ needs.decide.outputs.sha }}
+      retries: '1'
 
   wsl:
     needs: decide
@@ -81,6 +83,45 @@ jobs:
     uses: ./.github/workflows/windows-wsl-e2e.yml
     with:
       ref: ${{ needs.decide.outputs.sha }}
+      retries: '1'
+
+  # Why its own issue: a retried pass does not fail the run, so without this it would go unseen.
+  flaky:
+    needs: [decide, suite, wsl]
+    if: ${{ always() && needs.decide.outputs.run == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      checks: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SHA: ${{ needs.decide.outputs.sha }}
+    steps:
+      - name: Collect tests that passed only on retry
+        run: |
+          set -euo pipefail
+          flaky=""
+          for job in $(gh api --paginate "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs" --jq '.jobs[].id'); do
+            flaky+="$(gh api --paginate "repos/$GITHUB_REPOSITORY/check-runs/$job/annotations" \
+              --jq '.[] | select(.title == "Flaky e2e") | "- " + .message' || true)"$'\n'
+          done
+          flaky="$(printf '%s' "$flaky" | sed '/^$/d' | sort -u)"
+          if [[ -z "$flaky" ]]; then
+            echo "No flaky tests in this run." >>"$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          run_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          body="$(printf 'These e2e tests failed once and passed on retry at `%s`:\n\n%s\n\nRun: %s\n' "${SHA:0:10}" "$flaky" "$run_url")"
+          printf '%s\n' "$body" >>"$GITHUB_STEP_SUMMARY"
+          title="Flaky e2e tests on develop"
+          number="$(gh issue list -R "$GITHUB_REPOSITORY" --state open --search "\"$title\" in:title" --json number --jq '.[0].number // ""')"
+          if [[ -n "$number" ]]; then
+            gh issue comment "$number" -R "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create -R "$GITHUB_REPOSITORY" --title "$title" --body "$body"
+          fi
 
   record:
     needs: [decide, suite, wsl]
