@@ -157,7 +157,7 @@ async function reverseIndexCodexHistory(frame) {
   await write(\`\\x1b[\${historyBottom};1H\`)
   for (let index = 0; index < scrollAmount; index += 1) {
     await write('\\r\\n')
-    await write(\`\\x1b[48;2;72;72;72m\\x1b[K\\x1b[38;2;220;220;220;48;2;72;72;72m\${pad('• Waited for background terminal · rtk bun run e2e:ui --filter=@dalp/app ' + frame + ':' + index, width)}\\x1b[0m\`)
+    await write(\`\\x1b[48;2;72;72;72m\\x1b[K\\x1b[38;2;220;220;220;48;2;72;72;72m\${pad(frame + ':' + index + ' • Waited for background terminal · rtk bun run e2e:ui --filter=@dalp/app', width)}\\x1b[0m\`)
   }
   await write('\\x1b[r')
   await write(\`\\x1b[\${viewportBottom};1H\`)
