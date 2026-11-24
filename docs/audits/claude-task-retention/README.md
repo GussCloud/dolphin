@@ -62,3 +62,7 @@ The mobile response sanitizer can temporarily retain the original until JSON
 serialization flattens its concatenated ID. Worker transcript bounding already
 serializes for its byte budget and released that parent in the probe. No durable
 ID-owner leak was established, so that helper is unchanged.
+
+## Regression coverage
+
+Regression coverage: `src/main/claude/claude-background-task-retention.test.ts:57` (unit suite), and this reproduction runs in the nightly `node config/scripts/run-memory-audit-reproductions.mjs`: every fixed case must retain under 1 MiB, with its baseline still present.

@@ -56,3 +56,7 @@ A separate audit found that an unreachable unrelated legacy daemon can make aggr
 ## Pull request dependency
 
 The graph PR is stacked on #21000, reusing its daemon socket fixture and physical-exit delivery contract. The graph mechanism is separate; the stack makes the executable proof dependencies explicit.
+
+## Regression coverage
+
+Regression coverage: `src/main/runtime/queued-terminal-graph-exit.test.ts:87` (unit suite). The reproduction no longer runs against current source (`fixture.ts` builds a writable `Store` without the SQLite profile-state authority it now requires), so it is not in `node config/scripts/run-memory-audit-reproductions.mjs`.

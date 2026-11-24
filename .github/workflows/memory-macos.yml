@@ -1,0 +1,129 @@
+name: Memory macOS
+
+# Why: every other memory gate runs on Linux, where e2e disables the GPU, so WebGL and renderer
+# heap retention on macOS is never measured. Weekly and manual only; not a required check.
+# Cost: one macos-15 job of about 30-60 min a week; free on this public repo, but it holds one
+# of the account's 5 concurrent macOS slots that release packaging also uses.
+on:
+  schedule:
+    - cron: '17 5 * * 0'
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Ref to check out (defaults to the workflow ref)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: memory-macos-${{ inputs.ref || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  memory-macos:
+    name: terminal perf and parked memory budgets on macOS
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+      DOLPHIN_BACKGROUND_LAUNCH: '1'
+      DOLPHIN_E2E_FORWARD_APP_LOGS: '1'
+      DOLPHIN_E2E_TERMINAL_PERF_REPORT_PATH: test-results/terminal-scale-perf-report.json
+      DOLPHIN_E2E_TERMINAL_PERF_HTML_REPORT_PATH: test-results/terminal-perf-impact-report.html
+      PARKED_MEMORY_REPORT_PATH: test-results/terminal-parked-memory-report.json
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+          persist-credentials: false
+
+      - uses: ./.github/actions/install-node-dependencies
+        with:
+          native-runtime: electron
+          cache-electron-package: 'true'
+
+      # Same build as e2e.yml; SKIP_BUILD below makes Playwright globalSetup reuse it.
+      - name: Build E2E outputs
+        env:
+          VITE_EXPOSE_STORE: 'true'
+        run: pnpm run build:electron-vite:parallel --mode e2e
+
+      # Runs the scale spec with a JSON reporter, then the summary, the budget checker and the HTML report.
+      - name: Run terminal scale perf report gate
+        timeout-minutes: 50
+        env:
+          SKIP_BUILD: '1'
+        run: pnpm run test:e2e:terminal-perf:scale:report
+
+      # Why a JSON report plus the checker: the spec only annotates its heap; the 128/192 MB
+      # budgets live in terminal-perf-report-budgets.mjs. No parked rows (a skipped spec) also fails.
+      - name: Run terminal parked memory spec
+        if: success() || failure()
+        timeout-minutes: 20
+        env:
+          SKIP_BUILD: '1'
+          PLAYWRIGHT_JSON_OUTPUT_NAME: ${{ env.PARKED_MEMORY_REPORT_PATH }}
+        run: >-
+          pnpm exec playwright test tests/e2e/terminal-parked-memory.spec.ts
+          --config tests/playwright.config.ts --project=electron-headless --workers=1
+          --reporter=list,json
+
+      - name: Check parked memory budgets
+        if: success() || failure()
+        run: node config/scripts/check-terminal-perf-report-budgets.mjs "$PARKED_MEMORY_REPORT_PATH"
+
+      - name: Upload terminal perf reports
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: memory-macos-reports
+          path: |
+            ${{ env.DOLPHIN_E2E_TERMINAL_PERF_REPORT_PATH }}
+            ${{ env.DOLPHIN_E2E_TERMINAL_PERF_HTML_REPORT_PATH }}
+            ${{ env.PARKED_MEMORY_REPORT_PATH }}
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload Playwright traces
+        if: failure()
+        continue-on-error: true
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: memory-macos-traces
+          path: test-results/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # Why: a red weekly run is invisible unless someone opens Actions. One open issue per streak.
+  report-weekly-failure:
+    name: report weekly failure
+    needs: [memory-macos]
+    if: failure() && github.event_name == 'schedule'
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    permissions:
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      LABEL: memory-macos-failure
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+    steps:
+      - name: Open or update the failure issue
+        run: |
+          set -euo pipefail
+          gh label create "$LABEL" --color B60205 \
+            --description 'Weekly macOS memory budgets failed' 2>/dev/null || true
+          body="Weekly macOS memory budgets failed on \`${GITHUB_SHA}\`: ${RUN_URL}"
+          issue="$(gh api "repos/$GH_REPO/issues?state=open&labels=$LABEL&per_page=1" --jq '.[0].number // empty')"
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --body "$body"
+          else
+            gh issue create --label "$LABEL" --title 'Weekly macOS memory budgets failing' \
+              --body "$body. Close this issue once the weekly run is green again."
+          fi

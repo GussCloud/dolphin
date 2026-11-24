@@ -28,3 +28,7 @@ Existing catchup tests also verify that live appends and recovery of writes made
 Named-path reads of `v1.4.198` confirm that its host close calls the same owner-close helper, that helper omits catchup cleanup, and its catchup owns the same state/watcher lifetime. The executable comparison uses current production source. This establishes a retaining path present in the reported build; it does not establish that either #19831 or #19768 exercised this handoff-and-close sequence, or measure either report's memory growth.
 
 The separate asynchronous acquisition race remains open: teardown calls `stopAll` before draining handoffs, while catchup setup can still be awaiting path resolution or subscription acquisition. Merely rejecting a canceled preparation is insufficient as a full teardown fix: the forward handoff's existing failure recovery may acquire a native replacement, and the handoff drain has a five-second limit. That race needs its own owner-cancellation policy and regression proof; this change covers successful close of an acquired TUI owner.
+
+## Regression coverage
+
+Regression coverage: none — the TUI handoff, `structured-agent-session-handoff-owner-close.ts` and its test were removed in #22783 (`d443320af2`), so neither the reproduction nor a test has code to run against.

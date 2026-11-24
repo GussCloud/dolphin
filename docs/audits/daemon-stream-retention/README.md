@@ -31,3 +31,7 @@ DOLPHIN_BACKGROUND_LAUNCH=1 node docs/audits/daemon-stream-retention/reproduce.m
 ```
 
 This proves a current stalled-consumer retaining path. It does not attribute issue #19831's whole-system memory total to this path; that report lacks per-process measurements.
+
+## Regression coverage
+
+Regression coverage: `src/main/daemon/daemon-stream-backpressure-socket.test.ts:11` (unit suite), and this reproduction runs in the nightly `node config/scripts/run-memory-audit-reproductions.mjs`: visible producers must pause before the 8 MiB input ends and every queue must drain.

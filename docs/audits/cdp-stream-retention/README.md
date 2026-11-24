@@ -13,3 +13,7 @@ Before the fix, 128 MiB of generated payload left 133,177,280 bytes in the WebSo
 Unit tests also cover a reader that drains a complete burst in order, request/session correlation, queue disposal on close/replacement, and a 65 MiB healthy reply. Debugger events and command responses share this writer.
 
 This establishes an Electron-main retention mechanism when a CDP automation client stops reading. Neither #19831 nor #19768 establishes that precondition, so it is not a confirmed cause of either incident. RSS reflects GC/allocator timing; queued bytes are the direct measurement.
+
+## Regression coverage
+
+Regression coverage: `src/main/browser/cdp-client-response-writer.test.ts:85` (unit suite), and this reproduction runs in the nightly `node config/scripts/run-memory-audit-reproductions.mjs` with a 16 MiB peak socket-buffer ceiling (the unbounded writer buffers about 128 MiB).

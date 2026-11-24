@@ -120,3 +120,7 @@ renderer, operating-system PTY, or incident heap was used in this proof.
 This reduces retained output in local and SSH paths without changing published
 terminal content. It neither establishes the trigger in #19831/#19768 nor
 explains a reported sustained growth rate or multi-gigabyte incident by itself.
+
+## Regression coverage
+
+Regression coverage: `src/shared/terminal-kitty-keyboard-tail-retention.test.ts:17` and `src/main/daemon/terminal-mouse-tail-retention.test.ts:16` (unit suite). The reproduction pins exact source hashes and fails on any edit to the five modules, so it is not in `node config/scripts/run-memory-audit-reproductions.mjs`.
