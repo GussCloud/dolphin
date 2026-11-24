@@ -18,7 +18,7 @@ import {
 } from './helpers/terminal'
 import { scrollActiveTerminalToText } from './artificial-opencode-active-terminal-scroll'
 import {
-  waitForPtyColumnsAtMost,
+  waitForPtyColumnsToMatchRendered,
   waitForRenderedTerminalColumnsAtMost
 } from './terminal-column-probes'
 import { nodeTerminalCommand } from './terminal-node-command'
@@ -512,12 +512,8 @@ test.describe('Terminal long table scroll restore repro', () => {
     await ensureTerminalVisible(appPage)
     await waitForActiveTerminalManager(appPage, 30_000)
     await setNarrowTerminalViewport(appPage)
-    const renderedTableTerminalCols = await waitForRenderedTerminalColumnsAtMost(
-      appPage,
-      NARROW_TERMINAL_MAX_COLS
-    )
     const ptyId = await waitForActivePanePtyId(appPage)
-    await waitForPtyColumnsAtMost(appPage, ptyId, renderedTableTerminalCols)
+    await waitForPtyColumnsToMatchRendered(appPage, ptyId, NARROW_TERMINAL_MAX_COLS)
     const runId = randomUUID()
     const marker = `EMOJI_FIXTURE_TABLE_RESTORE_${runId}`
     const scriptPath = path.join(testRepoPath, `.dolphin-emoji-fixture-table-${runId}.mjs`)

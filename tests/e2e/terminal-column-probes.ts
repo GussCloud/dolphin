@@ -129,3 +129,26 @@ export async function waitForPtyColumnsAtMost(
     )}`
   )
 }
+
+// Why: "at most" also accepts a PTY still at a transient narrower grid (e.g. the
+// sidebar-open width); bash then wraps its prompt at that width and a later
+// resync SIGWINCH makes readline redraw one row up, erasing the line above it.
+export async function waitForPtyColumnsToMatchRendered(
+  page: Page,
+  ptyId: string,
+  maxCols: number,
+  timeoutMs = 30_000
+): Promise<number> {
+  const deadline = Date.now() + timeoutMs
+  let rendered = 0
+  let pty = 0
+  while (Date.now() < deadline) {
+    rendered = await waitForRenderedTerminalColumnsAtMost(page, maxCols)
+    pty = await waitForPtyColumnsAtMost(page, ptyId, rendered, Math.max(1, deadline - Date.now()))
+    if (pty === rendered) {
+      return pty
+    }
+    await page.waitForTimeout(100)
+  }
+  throw new Error(`PTY columns ${pty} never matched rendered terminal columns ${rendered}`)
+}
