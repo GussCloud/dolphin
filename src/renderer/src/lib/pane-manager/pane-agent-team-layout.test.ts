@@ -7,7 +7,9 @@ import type { ManagedPaneInternal } from './pane-manager-types'
 vi.mock('./pane-split-close', () => ({ prepareMovedPanesForSplit: () => [] }))
 vi.mock('./pane-split-scroll', () => ({ scheduleSplitScrollRestore: vi.fn() }))
 vi.mock('./pane-webgl-reattach', () => ({ reattachWebglIfNeeded: vi.fn() }))
+const DIVIDER_PX = 10
 vi.mock('./pane-divider', () => ({
+  getDividerHitSize: () => DIVIDER_PX,
   applyDividerStyles: vi.fn(),
   createDivider: vi.fn(),
   disposeDivider: vi.fn(),
@@ -86,6 +88,41 @@ function domRects(el: HTMLElement, rect: Rect, out: Map<string, Rect>): void {
   })
 }
 
+/**
+ * Pixel sizes as a browser lays out the flex tree: dividers take their hit size, each pane or split
+ * gets its flex-basis plus a flex-grow share of what is left.
+ */
+function pixelRects(el: HTMLElement, rect: Rect, dividerPx: number, out: Map<string, Rect>): void {
+  if (el.classList.contains('pane')) {
+    out.set(el.dataset.leafId!, roundRect(rect))
+    return
+  }
+  const vertical = el.classList.contains('is-vertical')
+  const children = Array.from(el.children).filter(
+    (child): child is HTMLElement => child instanceof HTMLElement
+  )
+  const items = children.filter((child) => !child.classList.contains('pane-divider'))
+  const dividers = children.length - items.length
+  const basis = items.map((item) => Number.parseFloat(item.style.flexBasis) || 0)
+  const grows = items.map((item) => Number.parseFloat(item.style.flexGrow) || 1)
+  const total = grows.reduce((sum, grow) => sum + grow, 0)
+  const length = vertical ? rect.w : rect.h
+  const free = length - dividers * dividerPx - basis.reduce((sum, value) => sum + value, 0)
+  let offset = 0
+  items.forEach((item, index) => {
+    const size = basis[index] + (free * grows[index]) / total
+    pixelRects(
+      item,
+      vertical
+        ? { x: rect.x + offset, y: rect.y, w: size, h: rect.h }
+        : { x: rect.x, y: rect.y + offset, w: rect.w, h: size },
+      dividerPx,
+      out
+    )
+    offset += size + dividerPx
+  })
+}
+
 function createHarness() {
   const root = document.createElement('div')
   const panes = new Map<number, ManagedPaneInternal>()
@@ -159,6 +196,28 @@ describe('addAgentTeamPane', () => {
       expect(teammates).toEqual(expectedTeammateRects(count))
     }
     expect(harness.root.querySelectorAll('.pane').length).toBe(7)
+  })
+
+  it('gives every teammate card the same pixel size once dividers take their width', () => {
+    const harness = createHarness()
+    let last = harness.leader
+    for (let count = 1; count <= 6; count += 1) {
+      last = harness.splitTeammate(last, count === 1, `t${count}`)
+      addAgentTeamPane(harness.host, last.id, 'leader')
+      const rects = new Map<string, Rect>()
+      pixelRects(
+        harness.root.firstElementChild as HTMLElement,
+        { x: 0, y: 0, w: 1000, h: 600 },
+        DIVIDER_PX,
+        rects
+      )
+      const teammates = Array.from({ length: count }, (_, index) => rects.get(`t${index + 1}`)!)
+      const columns = count <= 3 ? 1 : 2
+      const rows = Math.ceil(count / columns)
+      const cellHeight = round((600 - (rows - 1) * DIVIDER_PX) / rows)
+      expect(new Set(teammates.map((rect) => rect.h))).toEqual(new Set([cellHeight]))
+      expect(rects.get('leader')).toEqual({ x: 0, y: 0, w: 495, h: 600 })
+    }
   })
 
   it('re-balances the remaining teammates after one is removed', () => {

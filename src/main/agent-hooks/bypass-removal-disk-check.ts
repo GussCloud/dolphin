@@ -16,7 +16,11 @@ export type DiskCheckFilesystem = {
   stat: (path: string) => Promise<{ dev: number }>
 }
 
-const HOST_FILESYSTEM: DiskCheckFilesystem = { realpath, stat }
+// Why: bound lazily so suites that mock fs/promises without these exports can still import this.
+const HOST_FILESYSTEM: DiskCheckFilesystem = {
+  realpath: (path) => realpath(path),
+  stat: (path) => stat(path)
+}
 
 async function isMountPoint(path: string, fs: DiskCheckFilesystem): Promise<boolean> {
   const [self, parent] = await Promise.all([fs.stat(path), fs.stat(dirname(path))])

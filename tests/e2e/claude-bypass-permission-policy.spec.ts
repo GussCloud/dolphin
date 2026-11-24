@@ -25,7 +25,12 @@ const ALLOW_REPLY =
 
 const fakeCliDir = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-bypass-claude-'))
 const fakeClaude = path.join(fakeCliDir, 'claude')
-const fakeTeamLeader = path.join(fakeCliDir, 'fake-team-leader')
+// Why its own dir: the launch plan only routes a command whose first token is `claude` or `…/claude`
+// through the tmux shim, and the PATH `claude` above must stay the plain fake.
+const teamLeaderDir = mkdtempSync(path.join(os.tmpdir(), 'dolphin-e2e-bypass-leader-'))
+const fakeTeamLeader = path.join(teamLeaderDir, 'claude')
+// The tmux shim needs an absolute Dolphin CLI; CI has none on PATH, so point it at the e2e build.
+const shimCli = path.join(teamLeaderDir, 'dolphin-shim-cli')
 
 // Env values are written as presence markers only, so no token reaches a file or a log.
 const permissionRequest = (target: string): string =>
@@ -60,13 +65,19 @@ tmux send-keys -t "$pane" "cd '$PWD' && env DOLPHIN_E2E_OUT='$out' DOLPHIN_E2E_H
 exec sleep 600
 `
 )
+writeFileSync(
+  shimCli,
+  `#!/bin/sh\nexec '${process.execPath}' '${path.join(process.cwd(), 'out', 'cli', 'index.js')}' "$@"\n`
+)
 chmodSync(fakeClaude, 0o755)
 chmodSync(fakeTeamLeader, 0o755)
+chmodSync(shimCli, 0o755)
 
 test.use({ launchEnv: { PATH: `${fakeCliDir}${path.delimiter}${process.env.PATH ?? ''}` } })
 
 test.afterAll(() => {
   rmSync(fakeCliDir, { recursive: true, force: true })
+  rmSync(teamLeaderDir, { recursive: true, force: true })
 })
 
 test.skip(process.platform === 'win32', 'The Windows .cmd hook keeps today’s behavior')
@@ -84,7 +95,11 @@ type BypassHarness = {
   run: (
     label: string,
     policy: AgentPermissionPolicy | null,
-    launch?: { agent: 'claude' | 'claude-agent-teams'; command: string }
+    launch?: {
+      agent: 'claude' | 'claude-agent-teams'
+      command: string
+      env?: Record<string, string>
+    }
   ) => Promise<PaneRun>
   readPaneState: (paneKey: string) => Promise<string | null>
   readAudit: () => { worktreeId?: string; paneKey?: string; policyMode?: string }[]
@@ -171,14 +186,20 @@ async function createBypassHarness(
       command: launch.command,
       launchAgent: launch.agent,
       launchConfig: { agentCommand: launch.command, agentArgs: '', agentEnv: {} },
-      env: { DOLPHIN_E2E_OUT: out, DOLPHIN_E2E_HOOK: hookPath }
+      env: { ...launch.env, DOLPHIN_E2E_OUT: out, DOLPHIN_E2E_HOOK: hookPath }
     })
+    // The tmux shim's stderr is the only trace of a failed teammate split, so surface it.
+    const splitErr = (): string =>
+      existsSync(`${out}.split-err`) ? readText(`${out}.split-err`) : '(no split attempted)'
     await expect
       .poll(() => existsSync(`${out}.done`), {
         timeout: 30_000,
         message: `The fake claude in the ${label} pane never finished its hook calls`
       })
       .toBe(true)
+      .catch((error: unknown) => {
+        throw new Error(`${String(error)}\ntmux shim stderr: ${splitErr()}`)
+      })
     const env = readText(`${out}.env`)
     return {
       worktreeId,
@@ -274,7 +295,11 @@ test.describe('Claude bypass permission policy', () => {
     const teammate = await harness.run(
       'teammate',
       { mode: 'approve-all' },
-      { agent: 'claude-agent-teams', command: `${fakeTeamLeader} --teammate-mode auto` }
+      {
+        agent: 'claude-agent-teams',
+        command: `${fakeTeamLeader} --teammate-mode auto`,
+        env: { DOLPHIN_AGENT_TEAMS_SHIM_BIN: shimCli }
+      }
     )
     expect(teammate.env).toContain('TMUX_PANE=set')
     expect(teammate.env).toContain('NO_TIMEOUT=1')

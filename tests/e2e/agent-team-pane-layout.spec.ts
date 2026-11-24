@@ -123,8 +123,8 @@ function teamLayoutProblems(
   leaderLeafId: string,
   teammateLeafIds: readonly string[]
 ): string[] {
-  // Stacked splits each subtract one divider, so rows differ by up to half a divider.
-  const tolerance = measured.dividerThickness / 2 + 2
+  // Equal means equal: only card borders and subpixel rounding may differ.
+  const tolerance = 2
   const byLeaf = new Map(measured.panes.map((pane) => [pane.leafId, pane]))
   const leader = byLeaf.get(leaderLeafId)
   const teammates = teammateLeafIds.map((leafId) => byLeaf.get(leafId))

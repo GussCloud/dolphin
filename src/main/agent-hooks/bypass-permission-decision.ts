@@ -44,6 +44,7 @@ export function decideBypassPermission(args: {
   homeDir?: string
 }): BypassPermissionApproval | null {
   const { payload, policy } = args
+  // Why: the hook route, not the agent; DeepSeek's managed script also posts to /hook/claude.
   if (args.source !== 'claude' || !policy || typeof payload !== 'object' || payload === null) {
     return null
   }

@@ -1,7 +1,7 @@
 import type { TerminalPaneLayoutNode } from '../../../../shared/terminal-tab-types'
 import type { PaneManagerHost } from './pane-manager-host'
 import type { ManagedPaneInternal } from './pane-manager-types'
-import { applyDividerStyles, disposeDividersIn } from './pane-divider'
+import { applyDividerStyles, disposeDividersIn, getDividerHitSize } from './pane-divider'
 import { prepareMovedPanesForSplit } from './pane-split-close'
 import { scheduleSplitScrollRestore } from './pane-split-scroll'
 import { applyPaneFlexStyle } from './pane-tree-ops'
@@ -109,10 +109,30 @@ function findTeamSubtree(
   return node
 }
 
+/** Dividers a subtree spends along `direction`; a cross-axis split's dividers cut its own share. */
+function sameAxisDividerCount(
+  node: TerminalPaneLayoutNode,
+  direction: 'horizontal' | 'vertical'
+): number {
+  if (node.type === 'leaf' || node.direction !== direction) {
+    return 0
+  }
+  return (
+    1 + sameAxisDividerCount(node.first, direction) + sameAxisDividerCount(node.second, direction)
+  )
+}
+
+// Why the basis: a nested split pays for its own dividers out of its share, so without it every
+// deeper row comes out a divider-width smaller.
+function teamFlex(grow: number, dividers: number, dividerPx: number): string {
+  return `${grow} 1 ${dividers * dividerPx}px`
+}
+
 function buildSubtree(
   host: PaneManagerHost,
   node: TerminalPaneLayoutNode,
-  panesByLeafId: ReadonlyMap<string, ManagedPaneInternal>
+  panesByLeafId: ReadonlyMap<string, ManagedPaneInternal>,
+  dividerPx: number
 ): HTMLElement {
   if (node.type === 'leaf') {
     const container = panesByLeafId.get(node.leafId)!.container
@@ -127,10 +147,14 @@ function buildSubtree(
   split.style.minWidth = '0'
   split.style.minHeight = '0'
   const ratio = node.ratio ?? 0.5
-  const first = buildSubtree(host, node.first, panesByLeafId)
-  const second = buildSubtree(host, node.second, panesByLeafId)
-  first.style.flex = `${ratio} 1 0%`
-  second.style.flex = `${1 - ratio} 1 0%`
+  const first = buildSubtree(host, node.first, panesByLeafId, dividerPx)
+  const second = buildSubtree(host, node.second, panesByLeafId, dividerPx)
+  first.style.flex = teamFlex(ratio, sameAxisDividerCount(node.first, node.direction), dividerPx)
+  second.style.flex = teamFlex(
+    1 - ratio,
+    sameAxisDividerCount(node.second, node.direction),
+    dividerPx
+  )
   split.append(first, host.createDivider(isVertical), second)
   return split
 }
@@ -162,7 +186,12 @@ export function arrangeAgentTeamPanes(host: PaneManagerHost, leaderLeafId: strin
   const panesByLeafId = new Map<string, ManagedPaneInternal>(
     team.map((pane) => [pane.leafId, pane])
   )
-  const nextSubtree = buildSubtree(host, plan, panesByLeafId)
+  const nextSubtree = buildSubtree(
+    host,
+    plan,
+    panesByLeafId,
+    getDividerHitSize(host.getStyleOptions())
+  )
   if (parent === host.root) {
     nextSubtree.style.flex = ''
     nextSubtree.style.width = '100%'
