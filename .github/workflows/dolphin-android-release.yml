@@ -44,6 +44,20 @@ on:
         required: false
         default: native
         type: string
+    # Why outputs: release-promote publishes the APK itself, after its e2e suite passes.
+    outputs:
+      artifact:
+        description: Name of the artifact holding the signed APK
+        value: ${{ jobs.build-android.outputs.artifact }}
+      apk_name:
+        description: File name of the APK inside the artifact
+        value: dolphin-android.apk
+      tag:
+        value: ${{ jobs.build-android.outputs.tag }}
+      version:
+        value: ${{ jobs.build-android.outputs.version }}
+      version_code:
+        value: ${{ jobs.build-android.outputs.version_code }}
   workflow_dispatch:
     inputs:
       release_version:
@@ -67,7 +81,6 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  LATEST_TAG: mobile-android-latest
   APK_NAME: dolphin-android.apk
 
 jobs:
@@ -77,6 +90,11 @@ jobs:
     timeout-minutes: 60
     permissions:
       contents: write
+    outputs:
+      artifact: dolphin-android-${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
+      version: ${{ steps.release.outputs.version }}
+      version_code: ${{ steps.release.outputs.android_version_code }}
 
     defaults:
       run:
@@ -207,51 +225,12 @@ jobs:
 
       - name: Publish GitHub release
         if: steps.gate.outputs.skip != 'true' && steps.release.outputs.publish_release == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.release.outputs.tag }}
-          VERSION: ${{ steps.release.outputs.version }}
-          VERSION_CODE: ${{ steps.release.outputs.android_version_code }}
-          PRERELEASE: ${{ inputs.prerelease }}
-          TARGET_SHA: ${{ inputs.ref || github.sha }}
-        run: |
-          set -euo pipefail
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "::error::release $TAG already exists; bump mobile/app.json instead of overwriting it."
-            exit 1
-          fi
-          notes="$RUNNER_TEMP/android-release-notes.md"
-          printf 'Dolphin Mobile Android %s (versionCode %s)\n\nDownload `%s` and open it on the phone to install.\n' \
-            "${TAG#mobile-android-v}" "$VERSION_CODE" "$APK_NAME" >"$notes"
-          flags=()
-          if [[ "$PRERELEASE" == "true" ]]; then
-            flags+=(--prerelease)
-          fi
-          # Why --latest=false: "latest" belongs to the desktop release the in-app updater reads.
-          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
-            --target "$TARGET_SHA" \
-            --title "Dolphin Mobile Android ${TAG#mobile-android-v}" \
-            --latest=false \
-            --notes-file "$notes" \
-            "${flags[@]}" \
-            "$APK_PATH"
-
-      # Why a rolling release: the desktop's "Download APK" link must not go stale on every bump.
-      # Why stable only: the link should not move testers' and users' phones onto a beta.
-      - name: Refresh the latest Android download
-        if: steps.gate.outputs.skip != 'true' && steps.release.outputs.publish_release == 'true' && !inputs.prerelease
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.release.outputs.version }}
-          TARGET_SHA: ${{ inputs.ref || github.sha }}
-        run: |
-          set -euo pipefail
-          if gh release view "$LATEST_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release delete "$LATEST_TAG" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
-          fi
-          gh release create "$LATEST_TAG" --repo "$GITHUB_REPOSITORY" \
-            --target "$TARGET_SHA" \
-            --title "Dolphin Mobile Android (latest: $VERSION)" \
-            --latest=false \
-            --notes "Always the newest Dolphin Mobile Android build, currently $VERSION." \
-            "$APK_PATH"
+        uses: ./.github/actions/publish-android-release
+        with:
+          apk-path: ${{ env.APK_PATH }}
+          tag: ${{ steps.release.outputs.tag }}
+          version: ${{ steps.release.outputs.version }}
+          version-code: ${{ steps.release.outputs.android_version_code }}
+          prerelease: ${{ inputs.prerelease }}
+          target-sha: ${{ inputs.ref || github.sha }}
+          github-token: ${{ github.token }}

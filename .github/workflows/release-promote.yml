@@ -2,7 +2,7 @@ name: Release Promote
 
 # Promotes a published beta to the official release; docs/reference/release-process.md is the
 # operator guide. After approval in the `production` environment it rebuilds THE SAME COMMIT the rc
-# tag points at, versioned X.Y.Z:
+# tag points at, versioned X.Y.Z, while the full e2e suite runs; nothing is published until it passes:
 # Desktop: vX.Y.Z, the latest stable GitHub release the in-app updater serves.
 # Mobile: APK as mobile-android-vX.Y.Z (and mobile-android-latest), and an iOS build distributed to
 # the external TestFlight group. App Store review submission stays manual.
@@ -140,7 +140,8 @@ jobs:
       - name: Approved
         run: echo "Promotion approved by $GITHUB_TRIGGERING_ACTOR."
 
-  # Why before any build: main may only move to a commit the whole e2e suite passed on.
+  # Why in parallel with the builds: they only stage (desktop draft, APK artifact, internal
+  # TestFlight upload), and every *-publish job below waits for this suite to pass.
   e2e:
     needs: resolve
     permissions:
@@ -158,7 +159,7 @@ jobs:
       ref: ${{ needs.resolve.outputs.target_sha }}
 
   desktop:
-    needs: [resolve, approve, e2e, e2e_wsl]
+    needs: [resolve, approve]
     if: inputs.app != 'mobile'
     permissions:
       contents: write
@@ -167,10 +168,11 @@ jobs:
       version: ${{ needs.resolve.outputs.desktop_version }}
       ref: ${{ needs.resolve.outputs.desktop_sha }}
       prerelease: false
+      publish: false
     secrets: inherit
 
   android:
-    needs: [resolve, approve, e2e, e2e_wsl]
+    needs: [resolve, approve]
     if: inputs.app != 'desktop'
     permissions:
       contents: write
@@ -181,21 +183,107 @@ jobs:
       android_version_code: ${{ needs.resolve.outputs.android_version_code }}
       release_tag: ${{ needs.resolve.outputs.mobile_tag }}
       prerelease: false
+      publish_github_release: false
     secrets: inherit
 
   ios:
-    needs: [resolve, approve, e2e, e2e_wsl]
+    needs: [resolve, approve]
     if: inputs.app != 'desktop'
     uses: ./.github/workflows/dolphin-ios-release.yml
     with:
       ref: ${{ needs.resolve.outputs.mobile_sha }}
       release_version: ${{ needs.resolve.outputs.mobile_version }}
-      distribute_external: true
     secrets: inherit
 
-  # Why after every build: main must only ever point at something that was actually published.
+  # Why no always()/!failure() on the three publish jobs: a failed e2e or build must skip them.
+  desktop-publish:
+    needs: [resolve, e2e, e2e_wsl, desktop]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.resolve.outputs.desktop_sha }}
+          persist-credentials: false
+
+      - uses: ./.github/actions/publish-desktop-release
+        with:
+          tag: ${{ needs.desktop.outputs.tag }}
+          prerelease: 'false'
+          github-token: ${{ github.token }}
+
+  android-publish:
+    needs: [resolve, e2e, e2e_wsl, android]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.resolve.outputs.mobile_sha }}
+          persist-credentials: false
+
+      - name: Download the signed APK
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: ${{ needs.android.outputs.artifact }}
+          path: ${{ runner.temp }}/apk
+
+      - uses: ./.github/actions/publish-android-release
+        with:
+          apk-path: ${{ runner.temp }}/apk/${{ needs.android.outputs.apk_name }}
+          tag: ${{ needs.android.outputs.tag }}
+          version: ${{ needs.android.outputs.version }}
+          version-code: ${{ needs.android.outputs.version_code }}
+          prerelease: 'false'
+          target-sha: ${{ needs.resolve.outputs.mobile_sha }}
+          github-token: ${{ github.token }}
+
+  # Why distribute_only: the ios job already uploaded this build; this only waits for processing and
+  # hands that exact build to the external TestFlight group.
+  ios-distribute:
+    needs: [resolve, e2e, e2e_wsl, ios]
+    runs-on: macos-15
+    timeout-minutes: 90
+    env:
+      BUNDLE_FROZEN: 'true'
+      FASTLANE_SKIP_UPDATE_CHECK: '1'
+      FASTLANE_HIDE_CHANGELOG: '1'
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.resolve.outputs.mobile_sha }}
+          persist-credentials: false
+
+      - name: Setup Ruby and fastlane
+        uses: ruby/setup-ruby@be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18 # v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: mobile
+
+      - name: Distribute to external TestFlight testers
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          VERSION: ${{ needs.ios.outputs.version }}
+          BUILD_NUMBER: ${{ needs.ios.outputs.build_number }}
+        run: bundle exec fastlane ios distribute_testflight version:"$VERSION" build_number:"$BUILD_NUMBER"
+
+  # Why after every publish: main must only ever point at something that was actually published.
+  # Why e2e in needs: a failed suite skips the publish jobs, and a skipped job is not a failure.
   fast-forward-main:
-    needs: [resolve, e2e, e2e_wsl, desktop, android, ios]
+    needs: [resolve, e2e, e2e_wsl, desktop-publish, android-publish, ios-distribute]
     if: ${{ !cancelled() && !failure() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10

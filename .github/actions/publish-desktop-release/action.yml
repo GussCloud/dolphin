@@ -1,0 +1,41 @@
+name: Publish the desktop release
+description: Checks that the draft desktop release carries every platform's assets, then makes it visible to the in-app updater. Needs a checkout of the release commit.
+
+inputs:
+  tag:
+    description: Desktop release tag, vX.Y.Z or vX.Y.Z-rc.N
+    required: true
+  prerelease:
+    description: "'true' publishes to the rc channel; 'false' publishes the latest stable"
+    required: true
+  github-token:
+    description: Token with contents:write on this repository
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # Why one check for every leg: a release the updater can see must already carry each
+    # platform's manifest and installers, or that platform 404s.
+    - name: Verify every platform's assets
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        TAG: ${{ inputs.tag }}
+      run: node config/scripts/verify-release-required-assets.mjs "$TAG" --platforms=mac,win,win-arm64
+
+    # Why --latest=false on an rc: /releases/latest is the stable fallback feed and download link.
+    - name: Publish the release
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        TAG: ${{ inputs.tag }}
+        PRERELEASE: ${{ inputs.prerelease }}
+      run: |
+        set -euo pipefail
+        if [[ "$PRERELEASE" == "true" ]]; then
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease --latest=false
+        else
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease=false --latest
+        fi
+        gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease,url

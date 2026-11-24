@@ -5,7 +5,7 @@ name: Dolphin iOS Release
 # a build reaches its testers as soon as App Store Connect finishes processing it; no beta review.
 #
 # Releases come only from release-beta.yml (internal TestFlight build) and release-promote.yml
-# (same commit rebuilt, then distributed to the external TestFlight group); see
+# (same commit rebuilt; promote distributes it to the external TestFlight group once its e2e passes); see
 # docs/reference/release-process.md. fastlane stamps the version and build number into the
 # checkout, so no app.json bump is committed. A manual dispatch still uploads an internal build.
 #
@@ -23,15 +23,16 @@ on:
         description: iOS marketing version, X.Y.Z
         required: true
         type: string
-      distribute_external:
-        description: Run the release lane, which also distributes the build to external TestFlight testers
-        required: false
-        default: false
-        type: boolean
       shell:
         required: false
         default: native
         type: string
+    # Why outputs: release-promote distributes this exact build to external testers after its e2e.
+    outputs:
+      version:
+        value: ${{ jobs.ios-build.outputs.version }}
+      build_number:
+        value: ${{ jobs.ios-build.outputs.build_number }}
   workflow_dispatch:
     inputs:
       bump_patch_version:
@@ -70,6 +71,9 @@ jobs:
     # Why xcode-27: App Store Connect requires the iOS 27 SDK for uploads from April 2027 (ITMS-90725).
     runs-on: xcode-27
     timeout-minutes: 90
+    outputs:
+      version: ${{ steps.gate.outputs.version }}
+      build_number: ${{ steps.gate.outputs.build_number }}
 
     env:
       BUNDLE_FROZEN: 'true'
@@ -126,6 +130,8 @@ jobs:
           set -euo pipefail
           read -r version build_number < <(node -p 'const { expo } = require("./app.json"); `${expo.version} ${expo.ios.buildNumber}`')
           echo "Dolphin Mobile iOS $version ($build_number)"
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+          echo "build_number=$build_number" >>"$GITHUB_OUTPUT"
           echo "skip=false" >>"$GITHUB_OUTPUT"
 
       - name: Install dependencies
@@ -178,15 +184,10 @@ jobs:
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           EXPO_PUBLIC_MOBILE_SHELL: ${{ inputs.shell || 'native' }}
           SKIP_UPLOAD: ${{ inputs.skip_upload || false }}
-          DISTRIBUTE_EXTERNAL: ${{ inputs.distribute_external || false }}
         run: |
           set -euo pipefail
           echo "Mobile shell: $EXPO_PUBLIC_MOBILE_SHELL"
-          if [[ "$DISTRIBUTE_EXTERNAL" == "true" ]]; then
-            bundle exec fastlane ios release
-          else
-            bundle exec fastlane ios build_and_upload skip_upload:"$SKIP_UPLOAD"
-          fi
+          bundle exec fastlane ios build_and_upload skip_upload:"$SKIP_UPLOAD"
 
       - name: Upload .ipa artifact
         if: always() && steps.gate.outputs.skip != 'true'

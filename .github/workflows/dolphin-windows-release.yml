@@ -25,6 +25,15 @@ on:
         description: Publish as a GitHub prerelease (the rc update channel) instead of the latest stable
         required: true
         type: boolean
+      publish:
+        description: Publish the draft once every leg uploaded; false leaves it a draft for the caller
+        required: false
+        default: true
+        type: boolean
+    outputs:
+      tag:
+        description: The draft release tag every leg uploaded into
+        value: ${{ jobs.draft.outputs.tag }}
 
 permissions:
   contents: read
@@ -34,18 +43,17 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build-win:
+  # Why its own job: every leg uploads into this draft, so with it created up front the three
+  # builds run in parallel instead of arm64 and mac waiting on build-win.
+  draft:
     if: github.repository == 'GussCloud/dolphin'
-    # Why windows-2022: windows-latest's VS 2026 image breaks node-gyp native installs.
-    runs-on: windows-2022
-    timeout-minutes: 90
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
     outputs:
-      skip: ${{ steps.version.outputs.skip }}
       tag: ${{ steps.version.outputs.tag }}
     env:
-      NODE_OPTIONS: --max-old-space-size=4096
       REQUESTED_VERSION: ${{ inputs.version }}
 
     steps:
@@ -55,18 +63,15 @@ jobs:
           ref: ${{ inputs.ref }}
           persist-credentials: false
 
-      - name: Check and stamp the requested version
+      - name: Check the requested version
         id: version
-        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           VERSION="${REQUESTED_VERSION#v}"
-          echo "VERSION=$VERSION" >>"$GITHUB_ENV"
           echo "TAG=v$VERSION" >>"$GITHUB_ENV"
           echo "tag=v$VERSION" >>"$GITHUB_OUTPUT"
-          echo "skip=false" >>"$GITHUB_OUTPUT"
           # Why a draft may be replaced: drafts carry no tag and no users, so one left by a failed
           # run is debris; a published release is never overwritten.
           if is_draft="$(gh release view "v$VERSION" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null)"; then
@@ -77,16 +82,49 @@ jobs:
             echo "Deleting stale draft v$VERSION from an earlier failed run."
             gh release delete "v$VERSION" --repo "$GITHUB_REPOSITORY" --yes
           fi
-          node config/scripts/stamp-release-version.mjs desktop "$VERSION"
+
+      # Why a draft: the atom feed the updater walks hides drafts, so no platform sees the release
+      # until the publish job has checked every leg's assets.
+      - name: Create the draft GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TARGET_SHA: ${{ inputs.ref }}
+        run: |
+          set -euo pipefail
+          node config/scripts/create-draft-release.mjs "$TAG"
+          if [[ -f "docs/releases/$TAG.md" ]]; then
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file "docs/releases/$TAG.md"
+          fi
+
+  build-win:
+    needs: draft
+    if: github.repository == 'GussCloud/dolphin'
+    # Why windows-2022: windows-latest's VS 2026 image breaks node-gyp native installs.
+    runs-on: windows-2022
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
+      TAG: ${{ needs.draft.outputs.tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      - name: Stamp the release version
+        shell: bash
+        run: node config/scripts/stamp-release-version.mjs desktop "${TAG#v}"
 
       - name: Setup pnpm
-        if: steps.version.outputs.skip != 'true'
         uses: pnpm/setup@703c52620218391530e48b9e8870d5c0082e1b9b # v2
         with:
           install: false
 
       - name: Setup Node.js
-        if: steps.version.outputs.skip != 'true'
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version-file: package.json
@@ -96,7 +134,6 @@ jobs:
             mobile/pnpm-lock.yaml
 
       - name: Cache electron-builder downloads
-        if: steps.version.outputs.skip != 'true'
         uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
         with:
           path: |
@@ -109,7 +146,6 @@ jobs:
       # Why retried: electron's postinstall pulls its binary from GitHub release assets, which
       # returns transient 504s.
       - name: Install dependencies
-        if: steps.version.outputs.skip != 'true'
         uses: nick-fields/retry@ad984534de44a9489a53aefd81eb77f87c70dc60 # v4
         with:
           timeout_minutes: 10
@@ -118,17 +154,14 @@ jobs:
           command: pnpm install --frozen-lockfile
 
       - uses: ./.github/actions/install-mobile-dependencies
-        if: steps.version.outputs.skip != 'true'
 
       - name: Build Windows process-table addon for the relay
-        if: steps.version.outputs.skip != 'true'
         shell: bash
         run: |
           node config/scripts/build-windows-process-tree-relay-addon.mjs --arch=x64
           node config/scripts/build-windows-process-tree-relay-addon.mjs --arch=arm64
 
       - name: Build app
-        if: steps.version.outputs.skip != 'true'
         shell: bash
         run: pnpm build:release
         env:
@@ -137,7 +170,6 @@ jobs:
           # stable/rc identities, so the fork build stays silent.
 
       - name: Package Windows installer
-        if: steps.version.outputs.skip != 'true'
         shell: pwsh
         run: |
           node config/scripts/ensure-native-runtime.mjs --runtime=electron
@@ -150,7 +182,6 @@ jobs:
       # Why assert before publishing: the updater resolves a tag, then fetches latest.yml from it;
       # a release with the installer but no manifest is one updates 404 on.
       - name: Collect release assets
-        if: steps.version.outputs.skip != 'true'
         id: assets
         shell: bash
         run: |
@@ -166,20 +197,12 @@ jobs:
           echo "Packaged:"
           ls -la dist/*.exe dist/*.blockmap dist/latest.yml
 
-      # Why a draft: the atom feed the updater walks hides drafts, so no platform sees the release
-      # until the publish job has checked every leg's assets.
-      - name: Create the draft GitHub release
-        if: steps.version.outputs.skip != 'true'
+      - name: Upload to the GitHub release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TARGET_SHA: ${{ inputs.ref }}
         run: |
           set -euo pipefail
-          node config/scripts/create-draft-release.mjs "$TAG"
-          if [[ -f "docs/releases/$TAG.md" ]]; then
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --notes-file "docs/releases/$TAG.md"
-          fi
           gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" \
             dist/dolphin-windows-setup.exe \
             dist/dolphin-windows-setup.exe.blockmap \
@@ -189,11 +212,9 @@ jobs:
   # combined installer roughly doubles every x64 download, and electron-updater's Windows manifest
   # (latest.yml) has no arch suffix. arm64 publishes latest-arm64.yml beside it, and only arm64
   # builds read it, so x64 installs see exactly the assets they did before.
-  # Why after build-win rather than in parallel: it reuses that job's version check and uploads
-  # into the draft build-win created; the publish job waits for it.
   build-win-arm64:
-    needs: build-win
-    if: github.repository == 'GussCloud/dolphin' && needs.build-win.outputs.skip != 'true'
+    needs: draft
+    if: github.repository == 'GussCloud/dolphin'
     # Why a native Arm runner: afterPack boots the packaged daemon and probes node-pty, which a
     # cross-built slice cannot execute on an x64 host.
     runs-on: windows-11-arm
@@ -202,7 +223,7 @@ jobs:
       contents: write
     env:
       NODE_OPTIONS: --max-old-space-size=4096
-      TAG: ${{ needs.build-win.outputs.tag }}
+      TAG: ${{ needs.draft.outputs.tag }}
 
     steps:
       - name: Checkout
@@ -307,11 +328,9 @@ jobs:
   # Why Developer ID + notarization: Squirrel.Mac installs an update only when its signature satisfies
   # the running app's designated requirement, so every build must carry the same team identity.
   # Installs from earlier ad-hoc releases carry the unsigned marker and still need one manual .dmg.
-  # Why after build-win: it reuses that job's version check and uploads into the draft build-win
-  # created; the publish job waits for it.
   build-mac:
-    needs: build-win
-    if: github.repository == 'GussCloud/dolphin' && needs.build-win.outputs.skip != 'true'
+    needs: draft
+    if: github.repository == 'GussCloud/dolphin'
     # Why an Arm runner: it packages both slices, and afterPack boots the daemon on the host-arch one.
     runs-on: macos-15
     timeout-minutes: 90
@@ -319,7 +338,7 @@ jobs:
       contents: write
     env:
       NODE_OPTIONS: --max-old-space-size=4096
-      TAG: ${{ needs.build-win.outputs.tag }}
+      TAG: ${{ needs.draft.outputs.tag }}
 
     steps:
       - name: Checkout
@@ -437,15 +456,12 @@ jobs:
   # Why one publish step for every leg: a release the updater can see must already carry each
   # platform's manifest and installers (verify-release-required-assets), or that platform 404s.
   publish:
-    needs: [build-win, build-win-arm64, build-mac]
-    if: github.repository == 'GussCloud/dolphin' && needs.build-win.outputs.skip != 'true'
+    needs: [draft, build-win, build-win-arm64, build-mac]
+    if: github.repository == 'GussCloud/dolphin' && inputs.publish
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
       contents: write
-    env:
-      TAG: ${{ needs.build-win.outputs.tag }}
-      PRERELEASE: ${{ inputs.prerelease }}
 
     steps:
       - name: Checkout
@@ -454,20 +470,8 @@ jobs:
           ref: ${{ inputs.ref }}
           persist-credentials: false
 
-      - name: Verify every platform's assets
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node config/scripts/verify-release-required-assets.mjs "$TAG" --platforms=mac,win,win-arm64
-
-      # Why --latest=false on an rc: /releases/latest is the stable fallback feed and download link.
-      - name: Publish the release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          if [[ "$PRERELEASE" == "true" ]]; then
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease --latest=false
-          else
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --prerelease=false --latest
-          fi
-          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json tagName,isDraft,isPrerelease,url
+      - uses: ./.github/actions/publish-desktop-release
+        with:
+          tag: ${{ needs.draft.outputs.tag }}
+          prerelease: ${{ inputs.prerelease }}
+          github-token: ${{ github.token }}

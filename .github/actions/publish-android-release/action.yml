@@ -1,0 +1,82 @@
+name: Publish the Android release
+description: Creates the mobile-android GitHub release for a signed APK and, for a stable, refreshes mobile-android-latest.
+
+inputs:
+  apk-path:
+    description: Path to the signed APK
+    required: true
+  tag:
+    description: mobile-android-vX.Y.Z or mobile-android-vX.Y.Z-rc.N
+    required: true
+  version:
+    description: Android versionName
+    required: true
+  version-code:
+    description: Android versionCode
+    required: true
+  prerelease:
+    description: "'true' publishes a prerelease and leaves mobile-android-latest on the last stable"
+    required: true
+  target-sha:
+    description: Commit the release tag points at
+    required: true
+  github-token:
+    description: Token with contents:write on this repository
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Publish GitHub release
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        APK_PATH: ${{ inputs.apk-path }}
+        TAG: ${{ inputs.tag }}
+        VERSION_CODE: ${{ inputs.version-code }}
+        PRERELEASE: ${{ inputs.prerelease }}
+        TARGET_SHA: ${{ inputs.target-sha }}
+      run: |
+        set -euo pipefail
+        if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          echo "::error::release $TAG already exists; bump mobile/app.json instead of overwriting it."
+          exit 1
+        fi
+        notes="$RUNNER_TEMP/android-release-notes.md"
+        printf 'Dolphin Mobile Android %s (versionCode %s)\n\nDownload `%s` and open it on the phone to install.\n' \
+          "${TAG#mobile-android-v}" "$VERSION_CODE" "$(basename "$APK_PATH")" >"$notes"
+        flags=()
+        if [[ "$PRERELEASE" == "true" ]]; then
+          flags+=(--prerelease)
+        fi
+        # Why --latest=false: "latest" belongs to the desktop release the in-app updater reads.
+        gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+          --target "$TARGET_SHA" \
+          --title "Dolphin Mobile Android ${TAG#mobile-android-v}" \
+          --latest=false \
+          --notes-file "$notes" \
+          "${flags[@]}" \
+          "$APK_PATH"
+
+    # Why a rolling release: the desktop's "Download APK" link must not go stale on every bump.
+    # Why stable only: the link should not move testers' and users' phones onto a beta.
+    - name: Refresh the latest Android download
+      if: inputs.prerelease != 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        APK_PATH: ${{ inputs.apk-path }}
+        VERSION: ${{ inputs.version }}
+        TARGET_SHA: ${{ inputs.target-sha }}
+        LATEST_TAG: mobile-android-latest
+      run: |
+        set -euo pipefail
+        if gh release view "$LATEST_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+          gh release delete "$LATEST_TAG" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
+        fi
+        gh release create "$LATEST_TAG" --repo "$GITHUB_REPOSITORY" \
+          --target "$TARGET_SHA" \
+          --title "Dolphin Mobile Android (latest: $VERSION)" \
+          --latest=false \
+          --notes "Always the newest Dolphin Mobile Android build, currently $VERSION." \
+          "$APK_PATH"
