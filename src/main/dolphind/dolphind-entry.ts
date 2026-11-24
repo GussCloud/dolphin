@@ -206,8 +206,9 @@ async function startDolphindRuntime(
   const { startRuntimeHostHeapHeartbeat } =
     await import('../diagnostics/runtime-host-heap-heartbeat')
   // Why stdout: dolphind's log is whatever its supervisor captures (journald, launchd, a file).
-  startRuntimeHostHeapHeartbeat((fields) =>
-    console.info(`[dolphind] heap-heartbeat ${JSON.stringify(fields)}`)
+  startRuntimeHostHeapHeartbeat(
+    (fields) => console.info(`[dolphind] heap-heartbeat ${JSON.stringify(fields)}`),
+    (fields) => console.warn(`[dolphind] heap-pressure ${JSON.stringify(fields)}`)
   )
 
   // Why a holder and not a direct reference: the index is installed after the runtime is

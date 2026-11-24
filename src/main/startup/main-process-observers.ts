@@ -10,6 +10,7 @@ import { setCodexTrustGrantTelemetry } from '../codex/codex-trust-grant-telemetr
 import { initObservability } from '../observability'
 import { startSpan } from '../observability/tracer'
 import { startRuntimeHostHeapHeartbeat } from '../diagnostics/runtime-host-heap-heartbeat'
+import { startPeriodicMemoryBudgetCheck } from '../ipc/memory'
 import { recordDurableCrashBreadcrumb } from '../crash-reporting/durable-crash-breadcrumb'
 import { recoverPendingSkillTransactions } from '../skills/skill-transaction-startup-recovery'
 import { initCohortClassifier } from '../telemetry/cohort-classifier'
@@ -101,9 +102,16 @@ export function initializeMainProcessObservers(): void {
   // / CI internally; those gates do not need to be re-checked here.
   initObservability()
   // Why a span: main.trace.ndjson is main's only on-disk log and it ships in support bundles.
-  startRuntimeHostHeapHeartbeat((fields) =>
-    startSpan('process.heap-heartbeat', { attributes: { process: 'main', ...fields } }).end()
+  startRuntimeHostHeapHeartbeat(
+    (fields) =>
+      startSpan('process.heap-heartbeat', { attributes: { process: 'main', ...fields } }).end(),
+    (fields) => {
+      startSpan('process.heap-pressure', { attributes: { process: 'main', ...fields } }).end()
+      console.warn(`[memory] main heap at ${fields.heapUsedPercent}% of the V8 limit`)
+    }
   )
+  // Why: otherwise budget warnings reach main.trace.ndjson only while the resource popover is open.
+  state.stopPeriodicMemoryBudgetCheck = startPeriodicMemoryBudgetCheck(store)
   recordDurableCrashBreadcrumb('main_process_lifecycle_started', {
     packaged: app.isPackaged,
     platform: process.platform

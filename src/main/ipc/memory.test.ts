@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { handleMock, collectMemorySnapshotMock, collectHostMemoryMock, evaluateMemoryBudgetMock } =
   vi.hoisted(() => ({
@@ -17,7 +17,11 @@ vi.mock('../diagnostics/memory-budget', () => ({
 }))
 vi.mock('../observability/tracer', () => ({ startSpan: () => ({ end: () => {} }) }))
 
-import { registerMemoryHandlers } from './memory'
+import {
+  collectMemorySnapshotWithBudget,
+  registerMemoryHandlers,
+  startPeriodicMemoryBudgetCheck
+} from './memory'
 
 function fakeStore() {
   return {
@@ -76,5 +80,48 @@ describe('registerMemoryHandlers', () => {
     })
     expect(warn).toHaveBeenCalledTimes(1)
     warn.mockRestore()
+  })
+})
+
+describe('startPeriodicMemoryBudgetCheck', () => {
+  const INTERVAL_MS = 5 * 60_000
+
+  beforeEach(() => {
+    vi.useFakeTimers()
+    collectMemorySnapshotMock.mockReset()
+    collectMemorySnapshotMock.mockResolvedValue({ collectedAt: 3 })
+    evaluateMemoryBudgetMock.mockReset()
+    evaluateMemoryBudgetMock.mockReturnValue([])
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('evaluates the budget on its own interval and stops when disposed', async () => {
+    const stop = startPeriodicMemoryBudgetCheck(fakeStore())
+
+    await vi.advanceTimersByTimeAsync(INTERVAL_MS - 1)
+    expect(evaluateMemoryBudgetMock).not.toHaveBeenCalled()
+    await vi.advanceTimersByTimeAsync(1)
+    expect(evaluateMemoryBudgetMock).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(INTERVAL_MS)
+    expect(evaluateMemoryBudgetMock).toHaveBeenCalledTimes(2)
+
+    stop()
+    await vi.advanceTimersByTimeAsync(INTERVAL_MS * 3)
+    expect(evaluateMemoryBudgetMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('skips a tick when an open popover evaluated the budget moments ago', async () => {
+    const store = fakeStore()
+    const stop = startPeriodicMemoryBudgetCheck(store)
+
+    await vi.advanceTimersByTimeAsync(INTERVAL_MS - 10_000)
+    await collectMemorySnapshotWithBudget(store)
+    expect(evaluateMemoryBudgetMock).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(10_000)
+    expect(evaluateMemoryBudgetMock).toHaveBeenCalledTimes(1)
+    stop()
   })
 })

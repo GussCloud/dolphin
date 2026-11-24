@@ -16,13 +16,39 @@ const budgetWarningLog = createMemoryBudgetWarningLog((entry) => {
   }
 })
 
+const PERIODIC_BUDGET_INTERVAL_MS = 5 * 60_000
+// Why: an open popover polls the snapshot every few seconds and already logs its warnings.
+const RECENT_BUDGET_EVALUATION_MS = 60_000
+let lastBudgetEvaluatedAtMs = Number.NEGATIVE_INFINITY
+
 export async function collectMemorySnapshotWithBudget(
   store: MemorySnapshotStore
 ): Promise<MemorySnapshot> {
   const snapshot = await collectMemorySnapshot(store)
   const budgetWarnings = evaluateMemoryBudget(snapshot, readMemoryBudget())
   budgetWarningLog.observe(budgetWarnings)
+  lastBudgetEvaluatedAtMs = Date.now()
   return budgetWarnings.length > 0 ? { ...snapshot, budgetWarnings } : snapshot
+}
+
+/** Warn-only: logs over-budget owners even when no window is asking for snapshots. */
+export function startPeriodicMemoryBudgetCheck(store: MemorySnapshotStore): () => void {
+  let inFlight = false
+  const timer = setInterval(() => {
+    if (inFlight || Date.now() - lastBudgetEvaluatedAtMs < RECENT_BUDGET_EVALUATION_MS) {
+      return
+    }
+    inFlight = true
+    collectMemorySnapshotWithBudget(store)
+      .catch(() => {
+        // Why: the collector already degrades to an empty snapshot; nothing else to report.
+      })
+      .finally(() => {
+        inFlight = false
+      })
+  }, PERIODIC_BUDGET_INTERVAL_MS)
+  timer.unref?.()
+  return () => clearInterval(timer)
 }
 
 export function registerMemoryHandlers(store: MemorySnapshotStore): void {

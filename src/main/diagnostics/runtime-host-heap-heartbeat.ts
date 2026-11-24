@@ -6,7 +6,12 @@ import { startProcessHeapHeartbeat } from './process-heap-heartbeat'
  * supplies its own log sink; the session count is the local PTYs it tracks.
  */
 export function startRuntimeHostHeapHeartbeat(
-  emit: (fields: Record<string, number>) => void
+  emit: (fields: Record<string, number>) => void,
+  emitHeapPressure?: (fields: Record<string, number>) => void
 ): () => void {
-  return startProcessHeapHeartbeat({ emit, readSessionCount: () => listRegisteredPtys().length })
+  return startProcessHeapHeartbeat({
+    emit,
+    emitHeapPressure,
+    readSessionCount: () => listRegisteredPtys().length
+  })
 }

@@ -8,6 +8,9 @@ import type { ProcessHeapSample } from '../../shared/process-heap-sample'
 export const PROCESS_HEAP_HEARTBEAT_INTERVAL_MS = 5 * 60_000
 
 const MB = 1024 * 1024
+// Why the gap: a heap hovering at the threshold would otherwise warn on every heartbeat.
+const HEAP_PRESSURE_WARN_RATIO = 0.8
+const HEAP_PRESSURE_REARM_RATIO = 0.7
 
 function readHeapLimitBytes(): number | undefined {
   try {
@@ -54,8 +57,31 @@ export function formatProcessHeapHeartbeatFields(
   }
 }
 
+/** Returns the used/limit ratio once per upward crossing of the warn threshold, else null. */
+export function createHeapPressureTracker(): (sample: ProcessHeapSample) => number | null {
+  let warned = false
+  return (sample) => {
+    const limit = sample.heapLimitBytes
+    if (limit === undefined || limit <= 0) {
+      return null
+    }
+    const ratio = sample.heapUsedBytes / limit
+    if (warned) {
+      warned = ratio >= HEAP_PRESSURE_REARM_RATIO
+      return null
+    }
+    if (ratio < HEAP_PRESSURE_WARN_RATIO) {
+      return null
+    }
+    warned = true
+    return ratio
+  }
+}
+
 export type ProcessHeapHeartbeatOptions = {
   emit: (fields: Record<string, number>) => void
+  /** Called once each time heapUsed climbs to 80% of the V8 ceiling; re-arms below 70%. */
+  emitHeapPressure?: (fields: Record<string, number>) => void
   /** Sessions this process hosts or tracks; null when unknown. */
   readSessionCount?: () => number | null
   intervalMs?: number
@@ -65,6 +91,7 @@ export type ProcessHeapHeartbeatOptions = {
 /** Starts the heartbeat; returns a stop function. The timer never keeps the process alive. */
 export function startProcessHeapHeartbeat(options: ProcessHeapHeartbeatOptions): () => void {
   const readSample = options.readSample ?? readProcessHeapSample
+  const observeHeapPressure = createHeapPressureTracker()
   const timer = setInterval(() => {
     try {
       let sessionCount: number | null = null
@@ -73,7 +100,13 @@ export function startProcessHeapHeartbeat(options: ProcessHeapHeartbeatOptions):
       } catch {
         // Why: a session count is context, not the payload; still log the heap.
       }
-      options.emit(formatProcessHeapHeartbeatFields(readSample(), sessionCount))
+      const heapSample = readSample()
+      const fields = formatProcessHeapHeartbeatFields(heapSample, sessionCount)
+      options.emit(fields)
+      const pressureRatio = observeHeapPressure(heapSample)
+      if (pressureRatio !== null) {
+        options.emitHeapPressure?.({ ...fields, heapUsedPercent: Math.round(pressureRatio * 100) })
+      }
     } catch {
       // Why: diagnostics must never throw into the host's event loop.
     }

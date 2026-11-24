@@ -4,10 +4,15 @@ import {
   getSessionMemoryByPaneKey,
   type HostMemoryPressureLevel
 } from './agent-hibernation-memory-pressure'
+import { getRendererAppPlatform } from './renderer-app-platform'
 
 export async function sampleHostMemoryPressure(): Promise<HostMemoryPressureLevel> {
   try {
-    return classifyHostMemoryPressure(await window.api.memory.getHostMemory())
+    // Why the renderer's platform: getHostMemory is served by this window's own main process.
+    return classifyHostMemoryPressure(
+      await window.api.memory.getHostMemory(),
+      getRendererAppPlatform()
+    )
   } catch {
     // An unreadable host never makes hibernation more aggressive.
     return 'none'
