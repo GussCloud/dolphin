@@ -307,6 +307,62 @@ describe('useTerminalPaneGlobalEffects', () => {
     vi.advanceTimersByTime(500)
   })
 
+  it('takes the heavy resume when memory pressure suspended a tab-hidden manager', () => {
+    vi.useFakeTimers()
+    vi.stubGlobal(
+      'requestAnimationFrame',
+      vi.fn((callback: FrameRequestCallback) => {
+        callback(0)
+        return 1
+      })
+    )
+    let renderingSuspended = false
+    const manager = {
+      getPanes: vi.fn(() => [{ id: 1, terminal: { name: 'terminal-a' } }]),
+      isRenderingSuspended: vi.fn(() => renderingSuspended),
+      resumeRendering: vi.fn(() => {
+        renderingSuspended = false
+      }),
+      resetWebglTextureAtlases: vi.fn(),
+      scheduleRevealRepaint: vi.fn(),
+      scheduleRevealPresent: vi.fn(),
+      refreshAllPanes: vi.fn(),
+      suspendRendering: vi.fn(),
+      fitAllPanes: vi.fn(),
+      fitAllRevealedPanes: vi.fn(),
+      getActivePane: vi.fn(() => null),
+      setActivePane: vi.fn()
+    }
+    registerManagerForReset(manager)
+    const baseArgs = {
+      tabId: 'tab-1',
+      worktreeId: 'wt-1',
+      managerRef: { current: manager as never },
+      containerRef: { current: null },
+      paneTransportsRef: { current: new Map() },
+      isActiveRef: { current: false },
+      isVisibleRef: { current: false },
+      paneCount: 1,
+      isSyncFitEnabled: true,
+      isWorktreeActive: true,
+      toggleExpandPane: vi.fn()
+    }
+    beginHookRender()
+    useTerminalPaneGlobalEffects({ ...baseArgs, isActive: true, isVisible: true })
+    beginHookRender()
+    useTerminalPaneGlobalEffects({ ...baseArgs, isActive: false, isVisible: false })
+    expect(manager.suspendRendering).not.toHaveBeenCalled()
+    // The pressure sweep disposed this tab-hidden manager's WebGL behind the hook's back.
+    renderingSuspended = true
+    manager.resumeRendering.mockClear()
+
+    beginHookRender()
+    useTerminalPaneGlobalEffects({ ...baseArgs, isActive: true, isVisible: true })
+
+    expect(manager.resumeRendering).toHaveBeenCalledTimes(1)
+    vi.advanceTimersByTime(500)
+  })
+
   it.each([
     ['skips focus while the chat leaf is active', true],
     ['keeps focusing an active split terminal leaf', false]

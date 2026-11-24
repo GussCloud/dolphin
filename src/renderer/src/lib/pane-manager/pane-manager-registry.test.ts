@@ -1,5 +1,19 @@
 import { afterEach, describe, expect, it, vi, type Mock } from 'vitest'
 import { collectRendererMemoryProfileCounts } from '../renderer-memory-profile'
+
+const mocks = vi.hoisted(() => ({
+  measureInlineImageStorageBytes: vi.fn<(terminals: unknown[]) => number>(() => 0)
+}))
+
+// Why mocked: the image addon is a lazy chunk; the registry only sums what this reports.
+vi.mock('./pane-inline-images', () => ({
+  measureInlineImageStorageBytes: mocks.measureInlineImageStorageBytes
+}))
+
+import {
+  TERMINAL_HIDDEN_TAB_RETENTION_BYTES,
+  selectHiddenTerminalTabsBeyondRetentionBudget
+} from '../../components/terminal-pane/terminal-hidden-worktree-retention'
 import {
   forEachLivePaneForDesyncSentinel,
   getLivePaneCensus,
@@ -319,6 +333,39 @@ describe('pane manager registry', () => {
     expect(getMountedTerminalTabBufferEstimates(new Set(['tab-1', 'missing']))).toEqual(
       new Map([['tab-1', (1025 * 100 + 50 * 80) * 16]])
     )
+  })
+
+  it('adds inline-image storage to a mounted tab estimate so image-heavy tabs park first', () => {
+    const imageBytes = TERMINAL_HIDDEN_TAB_RETENTION_BYTES
+    mocks.measureInlineImageStorageBytes.mockReturnValueOnce(imageBytes)
+    const manager = {
+      resetWebglTextureAtlases: vi.fn<() => void>(),
+      getPaneCount: () => 1,
+      getPanes: () => [
+        {
+          id: 1,
+          terminal: { cols: 80, buffer: { normal: { length: 100 }, alternate: { length: 24 } } }
+        }
+      ]
+    }
+    registerLivePaneManager(manager, 'tab-images')
+    registeredManagers.push(manager)
+
+    const estimate = getMountedTerminalTabBufferEstimates(new Set(['tab-images'])).get('tab-images')
+    expect(estimate).toBe(124 * 80 * 16 + imageBytes)
+    expect(mocks.measureInlineImageStorageBytes).toHaveBeenCalledWith([
+      manager.getPanes()[0].terminal
+    ])
+    expect(
+      selectHiddenTerminalTabsBeyondRetentionBudget({
+        candidates: [
+          { tabId: 'tab-images', hiddenSinceMs: 0, estimatedBufferBytes: estimate ?? 0 }
+        ],
+        nowMs: 60_000,
+        enabled: true,
+        coldParkDelayMs: 0
+      })
+    ).toEqual(new Set(['tab-images']))
   })
 
   it('bounds manager and pane sampling while extrapolating totals', () => {

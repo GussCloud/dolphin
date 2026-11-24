@@ -2,10 +2,17 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({ releaseAllRetainedHiddenWebgl: vi.fn(() => 3) }))
+const mocks = vi.hoisted(() => ({
+  releaseAllRetainedHiddenWebgl: vi.fn(() => 3),
+  suspendUnsuspendedHiddenTerminalRendering: vi.fn(() => 2)
+}))
 
 vi.mock('@/lib/pane-manager/terminal-webgl-hidden-retention', () => ({
   releaseAllRetainedHiddenWebgl: mocks.releaseAllRetainedHiddenWebgl
+}))
+
+vi.mock('@/lib/pane-manager/pane-manager-registry', () => ({
+  suspendUnsuspendedHiddenTerminalRendering: mocks.suspendUnsuspendedHiddenTerminalRendering
 }))
 
 vi.mock('@/lib/crash-breadcrumb-recorder', () => ({
@@ -22,6 +29,7 @@ describe('useTerminalMemoryPressureResponse', () => {
   afterEach(() => {
     resetRendererMemoryPressureForTest()
     mocks.releaseAllRetainedHiddenWebgl.mockClear()
+    mocks.suspendUnsuspendedHiddenTerminalRendering.mockClear()
   })
 
   it('drops hidden WebGL contexts and requests one shedding parking pass per signal', () => {
@@ -34,6 +42,11 @@ describe('useTerminalMemoryPressureResponse', () => {
     })
 
     expect(mocks.releaseAllRetainedHiddenWebgl).toHaveBeenCalledTimes(1)
+    expect(mocks.suspendUnsuspendedHiddenTerminalRendering).toHaveBeenCalledTimes(1)
+    // Suspending first moves tab-hidden contexts into the LRU the release disposes.
+    expect(
+      mocks.suspendUnsuspendedHiddenTerminalRendering.mock.invocationCallOrder[0]
+    ).toBeLessThan(mocks.releaseAllRetainedHiddenWebgl.mock.invocationCallOrder[0])
     expect(result.current.current).toBe(true)
     expect(setRevision).toHaveBeenCalledTimes(1)
 
@@ -47,10 +60,14 @@ describe('useTerminalMemoryPressureResponse', () => {
     const { result, unmount } = renderHook(() => useTerminalMemoryPressureResponse(setRevision))
 
     act(() => {
-      noteRendererMemoryPressureSample({ heapRatio: 0.1, privateMB: 100, gpuPrivateMB: 500 }, 0)
+      noteRendererMemoryPressureSample(
+        { heapRatio: 0.1, privateMB: 100, gpu: { metric: 'private-bytes', mb: 500 } },
+        0
+      )
     })
 
     expect(mocks.releaseAllRetainedHiddenWebgl).toHaveBeenCalledTimes(1)
+    expect(mocks.suspendUnsuspendedHiddenTerminalRendering).toHaveBeenCalledTimes(1)
     expect(result.current.current).toBe(false)
     expect(setRevision).not.toHaveBeenCalled()
     unmount()

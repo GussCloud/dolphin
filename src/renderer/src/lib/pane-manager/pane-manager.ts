@@ -189,10 +189,7 @@ export class PaneManager {
   }
 
   getActivePane(): ManagedPane | null {
-    if (this.activePaneId === null) {
-      return null
-    }
-    const pane = this.panes.get(this.activePaneId)
+    const pane = this.activePaneId === null ? undefined : this.panes.get(this.activePaneId)
     return pane ? toPublicPane(pane) : null
   }
 
@@ -320,6 +317,10 @@ export class PaneManager {
         ? undefined
         : { owner: this, livePanes: () => (this.destroyed ? [] : this.panes.values()) }
     )
+  }
+
+  isRenderingSuspended(): boolean {
+    return this.renderingSuspended
   }
 
   resumeRendering(): void {

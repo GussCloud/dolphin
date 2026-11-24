@@ -16,7 +16,7 @@ const panesAwaitingImageAddon = new Set<ManagedPaneInternal>()
 
 // Keyed on the terminal, not the pane: PTY connections hold a toPublicPane()
 // wrapper, which does not carry imageAddon.
-const terminalsRenderingInlineImages = new WeakSet<Terminal>()
+const terminalsRenderingInlineImages = new WeakMap<object, ImageAddon>()
 
 /** True only once the addon is really attached — not while its chunk loads or after it fails. */
 export function terminalRendersInlineImages(terminal: Terminal): boolean {
@@ -60,7 +60,7 @@ export function attachInlineImages(pane: ManagedPaneInternal): void {
     imageAddon = new ImageAddonConstructor(buildInlineImageAddonOptions())
     pane.terminal.loadAddon(imageAddon)
     pane.imageAddon = imageAddon
-    terminalsRenderingInlineImages.add(pane.terminal)
+    terminalsRenderingInlineImages.set(pane.terminal, imageAddon)
   } catch (err) {
     console.warn('[terminal] inline-image addon failed to attach for pane', pane.id, err)
     try {
@@ -97,4 +97,22 @@ export function setInlineImagesEnabled(pane: ManagedPaneInternal, enabled: boole
     rearmTerminalImageAddonLoad()
     detachInlineImages(pane)
   }
+}
+
+// The addon reports storageUsage in MB of 1e6 bytes (pixels x 4 / 1e6), or -1 before activation.
+const BYTES_PER_IMAGE_STORAGE_MB = 1_000_000
+
+/** Decoded inline-image bytes these terminals hold; read-only so hidden images are never dropped. */
+export function measureInlineImageStorageBytes(terminals: Iterable<unknown>): number {
+  let bytes = 0
+  for (const terminal of terminals) {
+    const usageMb =
+      typeof terminal === 'object' && terminal !== null
+        ? terminalsRenderingInlineImages.get(terminal)?.storageUsage
+        : undefined
+    if (typeof usageMb === 'number' && Number.isFinite(usageMb) && usageMb > 0) {
+      bytes += usageMb * BYTES_PER_IMAGE_STORAGE_MB
+    }
+  }
+  return bytes
 }

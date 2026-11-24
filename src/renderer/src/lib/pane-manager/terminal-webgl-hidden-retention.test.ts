@@ -3,6 +3,10 @@ import type { ManagedPaneInternal, PaneManagerOptions } from './pane-manager-typ
 import { resumePaneRendering, suspendPaneRendering } from './pane-rendering-control'
 import { PaneManager } from './pane-manager'
 import {
+  suspendUnsuspendedHiddenTerminalRendering,
+  unregisterLivePaneManager
+} from './pane-manager-registry'
+import {
   RETAINED_HIDDEN_WEBGL_EXPIRY_MS,
   releaseAllRetainedHiddenWebgl,
   releaseHiddenWebglRetention,
@@ -286,5 +290,49 @@ describe('terminal-webgl-hidden-retention expiry', () => {
     expect(vi.getTimerCount()).toBe(0)
     vi.advanceTimersByTime(RETAINED_HIDDEN_WEBGL_EXPIRY_MS)
     expect(addons.every((addon) => vi.mocked(addon!.dispose).mock.calls.length === 1)).toBe(true)
+  })
+
+  describe('memory pressure on tab-hidden managers outside the retention LRU', () => {
+    const managers: PaneManager[] = []
+    afterEach(() => {
+      for (const manager of managers.splice(0)) {
+        unregisterLivePaneManager(manager)
+      }
+    })
+    function trackedManager(pane: ManagedPaneInternal): PaneManager {
+      const manager = managerWithPane(pane, {})
+      managers.push(manager)
+      return manager
+    }
+
+    // Why: intra-worktree hidden tabs (eviction-exempt ones never park) skip suspendRendering,
+    // so releaseAllRetainedHiddenWebgl never reaches their live contexts.
+    it('disposes a tab-hidden manager context but keeps its panes', () => {
+      const pane = createPane()
+      const addon = pane.webglAddon
+      const manager = trackedManager(pane)
+      manager.setAtlasRecoveryVisible(false)
+
+      expect(suspendUnsuspendedHiddenTerminalRendering()).toBe(1)
+      releaseAllRetainedHiddenWebgl()
+      expect(addon?.dispose).toHaveBeenCalledTimes(1)
+      expect(pane.webglAddon).toBeNull()
+      expect(pane.webglAttachmentDeferred).toBe(true)
+      expect(manager.getPaneCount()).toBe(1)
+      expect(manager.isRenderingSuspended()).toBe(true)
+      expect(retainedHiddenWebglOwnerCountForTest()).toBe(0)
+    })
+
+    it('leaves visible and already-suspended managers alone', () => {
+      const visiblePane = createPane()
+      trackedManager(visiblePane)
+      const retainedPane = createPane()
+      trackedManager(retainedPane).suspendRendering()
+      const retainedAddon = retainedPane.webglAddon
+
+      expect(suspendUnsuspendedHiddenTerminalRendering()).toBe(0)
+      expect(visiblePane.webglAddon).not.toBeNull()
+      expect(retainedPane.webglAddon).toBe(retainedAddon)
+    })
   })
 })

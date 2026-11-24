@@ -10,6 +10,7 @@ vi.mock('@xterm/addon-image', () => ({
   ImageAddon: class {
     options: unknown
     disposed = false
+    storageUsage = 0
     constructor(options?: unknown) {
       this.options = options
     }
@@ -30,6 +31,7 @@ import { primeTerminalImageAddon } from './terminal-image-addon-loader'
 import {
   attachInlineImages,
   detachInlineImages,
+  measureInlineImageStorageBytes,
   setInlineImagesEnabled,
   terminalRendersInlineImages
 } from './pane-inline-images'
@@ -160,5 +162,22 @@ describe('pane inline images', () => {
     expect(options.kittySizeLimit).toBe(8 * 1024 * 1024)
     // Pin the value, not the formula the source already states.
     expect(options.pixelLimit).toBe(8_000_000)
+  })
+
+  it('measures decoded image storage only for panes with a loaded addon', () => {
+    const heavy = makePane(10)
+    const inactive = makePane(11)
+    const imageless = makePane(12)
+    attachInlineImages(heavy)
+    attachInlineImages(inactive)
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the mocked addon exposes a writable storageUsage.
+    ;(heavy.imageAddon as unknown as { storageUsage: number }).storageUsage = 30.5
+    // The real addon reports -1 before activation.
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the mocked addon exposes a writable storageUsage.
+    ;(inactive.imageAddon as unknown as { storageUsage: number }).storageUsage = -1
+
+    expect(
+      measureInlineImageStorageBytes([heavy.terminal, inactive.terminal, imageless.terminal, null])
+    ).toBe(30_500_000)
   })
 })
