@@ -60,7 +60,7 @@ The owner's approval is the dispatch itself: only someone who can run workflows 
 
 - **Desktop:** `desktop-publish` undrafts `vX.Y.Z` as the latest stable release.
 - **Android:** `android-publish` creates `mobile-android-vX.Y.Z` from the build's APK artifact and refreshes `mobile-android-latest`.
-- **iOS:** the `ios` job uploads a new build of `X.Y.Z` with `build_and_upload`; `ios-distribute` then runs the `distribute_testflight` lane, which hands that build to the external TestFlight group `peeps`.
+- **iOS:** the `ios` job uploads a new build of `X.Y.Z` with `build_and_upload`; `ios-distribute` then runs the `distribute_testflight` lane, which hands that build to the external TestFlight group `dolphin-testers`.
 
 If the suite fails, the staged builds stay unpublished: the next run for the same version replaces the desktop draft, and the internal TestFlight build is simply superseded.
 
