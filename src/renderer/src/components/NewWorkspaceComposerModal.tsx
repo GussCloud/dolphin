@@ -26,7 +26,7 @@ import type { WorkspaceSource as WorkspaceCreateTelemetrySource } from '../../..
 import type { WorkspaceStatus } from '../../../shared/worktree/types'
 import type { TaskSourceContext } from '../../../shared/task-source-context'
 import { translate } from '@/i18n/i18n'
-import { resolveSubmittedAgentAccountId } from '@/components/agent/agent-account-picker-choices'
+import { useComposerAgentLaunchChoices } from '@/components/new-workspace/use-composer-agent-launch-choices'
 import { getWorkspaceComposerInitialFocusTarget } from '@/lib/workspace-composer-initial-focus'
 import { getFolderWorkspacePrimaryActionLabel } from '@/components/sidebar/folder-workspace-composer-helpers'
 import { useMultiProjectMemberRepoIds } from '@/components/new-workspace/use-multi-project-members'
@@ -284,12 +284,13 @@ function QuickTabBody({
   const createDisabled =
     composerCreateDisabled || (designMode ? designBlocksCreate : autonomousBlocksCreate)
 
-  // Why: folder and multi-project creates do not persist a pin, so they never offer one.
-  const accountPinSupported = !isFolderWorkspaceTarget && !isMultiProjectTarget
-  const [agentAccountId, setAgentAccountId] = useState<string | null>(null)
-  const selectedRepoPath = useAppStore(
-    (state) => state.repos.find((repo) => repo.id === cardProps.repoId)?.path ?? null
-  )
+  const agentLaunchChoices = useComposerAgentLaunchChoices({
+    supported: !isFolderWorkspaceTarget && !isMultiProjectTarget,
+    agent: quickAgent,
+    repoId: cardProps.repoId,
+    executionHostId: cardProps.selectedRepoExecutionHostId
+  })
+  const { resolveSubmitOptions } = agentLaunchChoices
   const customOrchestrationAgents = useAppStore((state) => state.settings?.orchestrationAgents)
   const handleCreate = useCallback(async (): Promise<void> => {
     if (designMode && (designBlocksCreate || composerCreateDisabled)) {
@@ -298,18 +299,7 @@ function QuickTabBody({
     if (!designMode && autonomousGoalDraftBlocksCreate(effectiveAutonomousGoalDraft, quickAgent)) {
       return
     }
-    const submittedAgentAccountId = accountPinSupported
-      ? resolveSubmittedAgentAccountId({
-          agent: quickAgent,
-          executionHostId: cardProps.selectedRepoExecutionHostId,
-          repoPath: selectedRepoPath,
-          settings: useAppStore.getState().settings,
-          value: agentAccountId
-        })
-      : undefined
-    const submitOptions = submittedAgentAccountId
-      ? { agentAccountId: submittedAgentAccountId }
-      : undefined
+    const submitOptions = resolveSubmitOptions()
     if (designMode) {
       await submitDesign(submitOptions)
       return
@@ -325,16 +315,13 @@ function QuickTabBody({
       submitOptions
     )
   }, [
-    accountPinSupported,
-    agentAccountId,
-    cardProps.selectedRepoExecutionHostId,
     composerCreateDisabled,
     customOrchestrationAgents,
     designBlocksCreate,
     designMode,
     effectiveAutonomousGoalDraft,
     quickAgent,
-    selectedRepoPath,
+    resolveSubmitOptions,
     submitDesign,
     submitQuick
   ])
@@ -434,8 +421,7 @@ function QuickTabBody({
         quickAgent={quickAgent}
         onQuickAgentChange={handleQuickAgentChange}
         {...cardProps}
-        agentAccountId={agentAccountId}
-        onAgentAccountIdChange={accountPinSupported ? setAgentAccountId : undefined}
+        {...agentLaunchChoices.cardProps}
         createDisabled={createDisabled}
         autonomousGoalDraft={designMode ? undefined : effectiveAutonomousGoalDraft}
         onAutonomousGoalDraftChange={designMode ? undefined : setAutonomousGoalDraft}

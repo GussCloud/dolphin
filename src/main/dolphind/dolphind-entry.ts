@@ -265,6 +265,16 @@ async function startDolphindRuntime(
       }
     }
   })
+  // Why after the runtime: answering a permission prompt needs its spawn-time pane records.
+  const { createBypassPermissionResolver } =
+    await import('../agent-hooks/bypass-permission-resolver')
+  agentHookServer.setBypassPermissionResolver(
+    createBypassPermissionResolver({
+      getWorktreeMeta: (worktreeId) => profileStore.getWorktreeMeta(worktreeId),
+      getRuntime: () => runtime,
+      userDataPath: runtimeUserDataPath
+    })
+  )
 
   const { installDolphindSessionSearchService } = await import('./dolphind-session-search')
   sessionSearch = await installDolphindSessionSearchService({

@@ -127,10 +127,12 @@ export function useTerminalPaneTitleEffects(controller: TerminalPaneCloseControl
       if (paneRect.width <= 0 || paneRect.height <= 0) {
         continue
       }
+      // Why: the title bar sits inside the pane card's border, not over it.
+      const { clientLeft = 0, clientTop = 0, clientWidth } = pane.container
       nextRects[pane.id] = {
-        left: paneRect.left - containerRect.left,
-        top: paneRect.top - containerRect.top,
-        width: paneRect.width
+        left: paneRect.left - containerRect.left + clientLeft,
+        top: paneRect.top - containerRect.top + clientTop,
+        width: clientWidth > 0 ? clientWidth : paneRect.width
       }
     }
     setPaneTitleOverlayRects((previous) =>

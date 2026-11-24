@@ -57,6 +57,8 @@ export type SplitTerminalPaneDetail = {
   telemetrySource?: TerminalPaneSplitSource
   newLeafId?: string
   ptyId?: string
+  /** Set on Claude agent-teams teammate splits; the leader leaf whose team re-balances. */
+  agentTeamLeaderLeafId?: string
 }
 
 export type RequestActiveTerminalPaneSplitDetail = {

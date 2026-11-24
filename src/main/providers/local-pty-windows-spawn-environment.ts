@@ -11,6 +11,7 @@ import {
 } from './windows-shell-args'
 import type { PtySpawnOptions } from './types'
 import { forwardDeepSeekEnvToWsl } from '../deepseek/deepseek-wsl-env'
+import { forwardClaudeDangerousRmEnvToWsl } from '../claude/claude-dangerous-rm-prompt-env'
 
 export function finalizeWindowsLocalPtySpawnEnvironment(args: {
   spawn: PtySpawnOptions
@@ -58,6 +59,7 @@ export function finalizeWindowsLocalPtySpawnEnvironment(args: {
       addWslEnvKeys(env, ['CLAUDE_CONFIG_DIR'])
     }
     forwardDeepSeekEnvToWsl(env)
+    forwardClaudeDangerousRmEnvToWsl(env)
     if (env[DOLPHIN_HERMES_STARTUP_QUERY_ENV] !== undefined) {
       // Why: wsl.exe drops custom Windows env vars; the startup wrapper needs this imported inside WSL.
       addWslEnvKeys(env, [DOLPHIN_HERMES_STARTUP_QUERY_ENV])

@@ -199,6 +199,17 @@ describe('Git Bash teams (native Windows)', () => {
 })
 
 describe('default host shell teams', () => {
+  it('tags every teammate split with the leader so the renderer re-balances the team', async () => {
+    const { splits, tmux } = setup('default')
+    await tmux('split-window', '-t', '%1', '-h', '-P', '-F', '#{pane_id}', '--', 'claude a')
+    await tmux('split-window', '-t', '%2', '-v', '-P', '-F', '#{pane_id}', '--', 'claude b')
+
+    expect(splits.map(({ opts }) => opts.agentTeamLeaderHandle)).toEqual([
+      'leader-handle',
+      'leader-handle'
+    ])
+  })
+
   it('keeps the cat holding pane pending and spawns the command typed as-is on respawn', async () => {
     const { api, splits, tmux } = setup('default')
     await expect(tmux('split-window', ...splitHolding)).resolves.toBe('%2\n')

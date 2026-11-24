@@ -8,6 +8,7 @@ import type {
   Worktree
 } from '../../shared/worktree/types'
 import type { TuiAgent } from '../../shared/tui-agent'
+import type { AgentPermissionPolicy } from '../../shared/agent-permission-policy'
 import type { WorkspaceSource as WorkspaceCreateTelemetrySource } from '../../shared/workspace-source'
 import type { WorktreeStartupLaunch } from '../../shared/worktree/launch-types'
 import type { TaskSourceContext } from '../../shared/task-source-context'
@@ -50,6 +51,8 @@ export type RuntimeManagedWorktreeCreateArgs = {
   createdWithAgent?: TuiAgent
   /** See CreateWorktreeArgs.agentAccountId. */
   agentAccountId?: string
+  /** See CreateWorktreeArgs.agentPermissionPolicy. */
+  agentPermissionPolicy?: AgentPermissionPolicy
   startupAgent?: TuiAgent
   startupLaunchPreferences?: AgentLaunchPreferences
   startupPrompt?: string

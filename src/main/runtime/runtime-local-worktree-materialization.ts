@@ -118,6 +118,9 @@ export async function materializeRuntimeLocalWorktree<T>(args: {
       : {}),
     ...(effectiveCreatedWithAgent ? { createdWithAgent: effectiveCreatedWithAgent } : {}),
     ...(request.agentAccountId ? { agentAccountId: request.agentAccountId } : {}),
+    ...(request.agentPermissionPolicy
+      ? { agentPermissionPolicy: request.agentPermissionPolicy }
+      : {}),
     ...(request.pendingFirstAgentMessageRename === true && effectiveCreatedWithAgent
       ? { pendingFirstAgentMessageRename: true }
       : {}),

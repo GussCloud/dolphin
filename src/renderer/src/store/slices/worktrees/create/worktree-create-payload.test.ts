@@ -37,4 +37,18 @@ describe('worktree create payload pinned agent account', () => {
     })
     expect(buildRuntimeWorktreeCreateParams(request, attempt)).not.toHaveProperty('agentAccountId')
   })
+
+  it('carries the permission policy on both transports and omits it when unset', () => {
+    const policy = { mode: 'catalog' as const, categories: ['variable-target' as const] }
+    const withPolicy = { ...request, options: { agentPermissionPolicy: policy } }
+    expect(buildLocalWorktreeCreateArgs(withPolicy, attempt)).toMatchObject({
+      agentPermissionPolicy: policy
+    })
+    expect(buildRuntimeWorktreeCreateParams(withPolicy, attempt)).toMatchObject({
+      agentPermissionPolicy: policy
+    })
+    expect(buildLocalWorktreeCreateArgs(request, attempt)).not.toHaveProperty(
+      'agentPermissionPolicy'
+    )
+  })
 })

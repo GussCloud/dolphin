@@ -30,6 +30,7 @@ import { logStartupMilestone } from './startup-diagnostics'
 import type { WindowsDesktopStartupServices } from './windows-desktop-shell-path-startup'
 import type { RuntimeWorktreeLifecycleEvent } from '../runtime/dolphin-runtime'
 import { mainProcessState as state } from './main-process-state'
+import { createBypassPermissionResolver } from '../agent-hooks/bypass-permission-resolver'
 
 export function emitPluginWorktreeLifecycle(event: RuntimeWorktreeLifecycleEvent): void {
   state.pluginService?.emitEvent(
@@ -173,6 +174,17 @@ export function startTerminalRuntimeStartupServices(): WindowsDesktopStartupServ
       agentHookServer.setTransportInterferenceListener((report) => {
         track('agent_hook_transport_blocked', { count: report.count })
       })
+      const hookStore = state.store
+      agentHookServer.setBypassPermissionResolver(
+        hookStore
+          ? createBypassPermissionResolver({
+              getWorktreeMeta: (worktreeId) => hookStore.getWorktreeMeta(worktreeId),
+              // Why lazy: the runtime may be constructed after the hook server starts.
+              getRuntime: () => state.runtime,
+              userDataPath: app.getPath('userData')
+            })
+          : null
+      )
       await agentHookServer.start({
         env: app.isPackaged ? 'production' : 'development',
         // Why: hooks source this endpoint file at invocation time so old PTY env reaches the current process after restart; dev namespaces it (worktrees share `dolphin-dev`).

@@ -43,7 +43,8 @@ export function registerTerminalPresentationIpcBridge(unsubs: (() => void)[]): v
         leafId,
         splitFromLeafId,
         splitDirection,
-        splitTelemetrySource
+        splitTelemetrySource,
+        agentTeamLeaderLeafId
       }) => {
         try {
           const store = useAppStore.getState()
@@ -179,7 +180,8 @@ export function registerTerminalPresentationIpcBridge(unsubs: (() => void)[]): v
                     sourcePtyId,
                     telemetrySource: splitTelemetrySource,
                     newLeafId: leafId,
-                    ptyId
+                    ptyId,
+                    ...(agentTeamLeaderLeafId ? { agentTeamLeaderLeafId } : {})
                   }
                 })
               )

@@ -18481,6 +18481,28 @@
           "open": "Open in new window",
           "focus": "Show the Design window"
         }
+      },
+      "ComposerAgentPermissionPolicyField": {
+        "workingDirectory": "Workspace folder",
+        "workingDirectoryDescription": "Delete the workspace folder",
+        "variableTarget": "Path from a variable",
+        "variableTargetDescription": "Delete a path built from a variable ($FOLDER)",
+        "commandSubstitution": "Command result",
+        "commandSubstitutionDescription": "Delete the result of a $(…) command",
+        "mountedDrive": "Mounted drive",
+        "mountedDriveDescription": "Delete a mounted drive (/Volumes/… on a Mac)",
+        "mostUsed": "Most used",
+        "all": "All",
+        "none": "None (clear)",
+        "selectedCount": "{{value0}} of {{value1}} selected",
+        "label": "Deletion prompts in bypass mode",
+        "ask": "Always ask",
+        "catalog": "Configurable list",
+        "approveAll": "Approve everything",
+        "askDescription": "Claude asks you before every risky deletion. Dolphin approves nothing on its own.",
+        "catalogDescription": "Dolphin approves only the kinds of deletion you check. Anything else still asks you.",
+        "approveAllWarning": "Dolphin approves every deletion Claude asks about in bypass mode, including deleting this workspace folder. Nothing asks you first.",
+        "unseenTargetCaution": "Dolphin can't see the target: this can delete any folder"
       }
     },
     "i18n": {

@@ -10,6 +10,7 @@ import type {
   WorkspaceStatus
 } from './types'
 import type { TuiAgent } from '../tui-agent'
+import type { AgentPermissionPolicy } from '../agent-permission-policy'
 import type { DolphinWorkspaceLayout } from '../global-settings-types'
 import type { DiffComment, MobileDiffReviewState } from '../diff-comment-types'
 
@@ -63,6 +64,8 @@ export type WorktreeMeta = {
   createdWithAgent?: TuiAgent
   /** See {@link Worktree.agentAccountId}. Persisted to dolphin-data.json. */
   agentAccountId?: string
+  /** See {@link Worktree.agentPermissionPolicy}. Persisted to dolphin-data.json. */
+  agentPermissionPolicy?: AgentPermissionPolicy
   /** See {@link Worktree.pendingFirstAgentMessageRename}. */
   pendingFirstAgentMessageRename?: boolean
   /** See {@link Worktree.firstAgentMessageRenameError}. */

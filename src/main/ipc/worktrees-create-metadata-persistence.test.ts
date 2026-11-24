@@ -432,6 +432,40 @@ describe('registerWorktreeHandlers', () => {
     })
   })
 
+  it('persists a valid permission policy and drops a renderer-forged one during local create', async () => {
+    listWorktreesMock.mockResolvedValue([
+      {
+        path: '/workspace/improve-dashboard',
+        head: 'abc123',
+        branch: 'improve-dashboard',
+        isBare: false,
+        isMainWorktree: false
+      }
+    ])
+    store.setWorktreeMeta.mockImplementation((_worktreeId, meta) => meta)
+
+    await handlers['worktrees:create'](null, {
+      repoId: 'repo-1',
+      name: 'improve-dashboard',
+      createdWithAgent: 'claude',
+      agentPermissionPolicy: { mode: 'catalog', categories: ['variable-target', 'rm -rf /'] }
+    })
+    expect(store.setWorktreeMeta).toHaveBeenLastCalledWith(
+      'repo-1::/workspace/improve-dashboard',
+      expect.objectContaining({
+        agentPermissionPolicy: { mode: 'catalog', categories: ['variable-target'] }
+      })
+    )
+
+    await handlers['worktrees:create'](null, {
+      repoId: 'repo-1',
+      name: 'improve-dashboard',
+      createdWithAgent: 'claude',
+      agentPermissionPolicy: { mode: 'everything' }
+    })
+    expect(store.setWorktreeMeta.mock.lastCall?.[1]).not.toHaveProperty('agentPermissionPolicy')
+  })
+
   // Was "configures a PR push target during local create": create used to mint the
   // fork remote up front. It now defers to first sync (#17828); the minting itself is
   // covered by worktree-remote-push-target-materialization.test.ts.

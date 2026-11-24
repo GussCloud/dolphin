@@ -3,6 +3,7 @@ import type { WorktreeCatalogVersion } from './catalog-version'
 import type { AutomationExecutionTargetType } from '../automations-types'
 import type { TaskSourceContext } from '../task-source-context'
 import type { TuiAgent } from '../tui-agent'
+import type { AgentPermissionPolicy } from '../agent-permission-policy'
 import type { DiffComment, MobileDiffReviewState } from '../diff-comment-types'
 import type { EphemeralVmCheckoutMode } from '../dolphin-yaml-hook-types'
 import type { BuiltInWorktreeVisibilitySourceId } from '../repo-types'
@@ -124,6 +125,9 @@ export type Worktree = {
   /** Managed account the worktree's agent launches with, chosen at creation.
    *  Absent means the runtime-wide active account. */
   agentAccountId?: string
+  /** How Dolphin answers the removal prompts Claude still raises in bypass, chosen at creation.
+   *  Absent means Dolphin answers none and the prompt reaches the user. */
+  agentPermissionPolicy?: AgentPermissionPolicy
   /** True while an auto-named workspace is waiting for the first agent message
    *  to drive the branch/title rename. */
   pendingFirstAgentMessageRename?: boolean

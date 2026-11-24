@@ -5,6 +5,7 @@ import type { WorkspaceSource } from '../workspace-source'
 import type { TaskSourceContext } from '../task-source-context'
 import type { WorkspaceKey } from '../folder-workspace-types'
 import type { TuiAgent } from '../tui-agent'
+import type { AgentPermissionPolicy } from '../agent-permission-policy'
 import type {
   AutomationWorkspaceProvenanceRequest,
   GitPushTarget,
@@ -133,6 +134,8 @@ export type CreateWorktreeArgs = {
   createdWithAgent?: TuiAgent
   /** Managed account pinned for the created agent; omitted keeps the active account. */
   agentAccountId?: string
+  /** See Worktree.agentPermissionPolicy; the host re-parses it, so a malformed value is dropped. */
+  agentPermissionPolicy?: AgentPermissionPolicy
   /** Set when the renderer knows this auto-generated branch should be renamed
    *  from the first agent message. */
   pendingFirstAgentMessageRename?: boolean

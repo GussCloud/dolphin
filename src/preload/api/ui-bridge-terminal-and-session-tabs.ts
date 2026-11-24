@@ -37,6 +37,7 @@ export const uiTerminalAndSessionTabsApi = {
       splitFromLeafId?: string
       splitDirection?: 'horizontal' | 'vertical'
       splitTelemetrySource?: TerminalPaneSplitSource
+      agentTeamLeaderLeafId?: string
     }) => void
   ): (() => void) => {
     const listener = (
@@ -63,6 +64,7 @@ export const uiTerminalAndSessionTabsApi = {
         splitFromLeafId?: string
         splitDirection?: 'horizontal' | 'vertical'
         splitTelemetrySource?: TerminalPaneSplitSource
+        agentTeamLeaderLeafId?: string
       }
     ) => callback(data)
     ipcRenderer.on('ui:createTerminal', listener)
@@ -101,6 +103,7 @@ export const uiTerminalAndSessionTabsApi = {
       sourceLeafId?: string
       telemetrySource?: TerminalPaneSplitSource
       newLeafId?: string
+      agentTeamLeaderLeafId?: string
     }) => void
   ): (() => void) => {
     const listener = (
@@ -114,6 +117,7 @@ export const uiTerminalAndSessionTabsApi = {
         sourceLeafId?: string
         telemetrySource?: TerminalPaneSplitSource
         newLeafId?: string
+        agentTeamLeaderLeafId?: string
       }
     ) => callback(data)
     ipcRenderer.on('ui:splitTerminal', listener)

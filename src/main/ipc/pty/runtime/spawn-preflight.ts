@@ -43,6 +43,7 @@ import {
   classifyRuntimeSpawnClaudeLaunch,
   prepareRuntimeSpawnAuth
 } from './spawn-preflight-auth'
+import { withClaudeDangerousRmNoTimeoutEnv } from '../../../claude/claude-dangerous-rm-launch-env'
 
 export async function prepareRuntimePtySpawn(
   ctx: RuntimePtySpawnState
@@ -165,7 +166,10 @@ export async function prepareRuntimePtySpawn(
     }
   }
   const sshScopedEnv = stripRemotePaneEnvWhenHooksDisabled(args.connectionId, args.env)
-  ctx.env = applyRuntimeSpawnAuthEnv(ctx, sshScopedEnv)
+  ctx.env = withClaudeDangerousRmNoTimeoutEnv(applyRuntimeSpawnAuthEnv(ctx, sshScopedEnv), {
+    launchAgent: args.launchAgent,
+    command: ctx.launchCommand
+  })
   ctx.requestedAgentTeamsPath = ctx.env?.DOLPHIN_AGENT_TEAMS_TEAM_ID
     ? ctx.env[resolvePathEnvKey(ctx.env, process.platform)]
     : undefined

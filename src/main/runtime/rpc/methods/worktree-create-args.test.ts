@@ -61,4 +61,26 @@ describe('buildManagedWorktreeCreateArgs', () => {
     ).toMatchObject({ agentAccountId: 'acct-pinned' })
     expect(build({ repo: 'id:repo-1', name: 'plain' })).not.toHaveProperty('agentAccountId')
   })
+
+  it('forwards a valid permission policy and drops a malformed one instead of failing', () => {
+    expect(
+      build({
+        repo: 'id:repo-1',
+        name: 'listed',
+        agentPermissionPolicy: { mode: 'catalog', categories: ['working-directory', 'bogus'] }
+      })
+    ).toMatchObject({
+      agentPermissionPolicy: { mode: 'catalog', categories: ['working-directory'] }
+    })
+    expect(
+      build({ repo: 'id:repo-1', name: 'all', agentPermissionPolicy: { mode: 'approve-all' } })
+    ).toMatchObject({ agentPermissionPolicy: { mode: 'approve-all' } })
+    // Why: an unknown shape must never widen to approve-all; it means no policy.
+    for (const malformed of [{ mode: 'approveAll' }, 'approve-all', { mode: 'catalog' }, null]) {
+      expect(
+        build({ repo: 'id:repo-1', name: 'bad', agentPermissionPolicy: malformed })
+      ).not.toHaveProperty('agentPermissionPolicy')
+    }
+    expect(build({ repo: 'id:repo-1', name: 'plain' })).not.toHaveProperty('agentPermissionPolicy')
+  })
 })

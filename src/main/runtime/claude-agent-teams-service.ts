@@ -9,6 +9,10 @@ import {
   DEEPSEEK_PROVIDER_ENV_VALUE,
   isDeepSeekTuiAgent
 } from '../../shared/deepseek-claude-provider'
+import {
+  CLAUDE_DANGEROUS_RM_NO_TIMEOUT_ENV,
+  resolveClaudeDangerousRmNoTimeoutValue
+} from '../claude/claude-dangerous-rm-prompt-env'
 import type { ClaudeAgentTeamsLeaderRegistry } from './claude-agent-teams-leader-registry'
 import type {
   AgentTeam,
@@ -87,6 +91,8 @@ export class ClaudeAgentTeamsService {
     if (args.deepSeekProvider) {
       env[DEEPSEEK_PROVIDER_ENV_KEY] = DEEPSEEK_PROVIDER_ENV_VALUE
     }
+    // Why: Claude does not forward this to tmux teammates; they only get it from the pane env.
+    env[CLAUDE_DANGEROUS_RM_NO_TIMEOUT_ENV] = resolveClaudeDangerousRmNoTimeoutValue(args.baseEnv)
     if (args.baseEnv.DOLPHIN_PAIRING_CODE) {
       env.DOLPHIN_PAIRING_CODE = args.baseEnv.DOLPHIN_PAIRING_CODE
     }

@@ -64,6 +64,9 @@ export function mergeFolderWorkspace(repo: Repo, worktreeId: string, meta: Workt
     ...(meta.createdAt !== undefined ? { createdAt: meta.createdAt } : {}),
     ...(meta.createdWithAgent !== undefined ? { createdWithAgent: meta.createdWithAgent } : {}),
     ...(meta.agentAccountId !== undefined ? { agentAccountId: meta.agentAccountId } : {}),
+    ...(meta.agentPermissionPolicy !== undefined
+      ? { agentPermissionPolicy: meta.agentPermissionPolicy }
+      : {}),
     ...(meta.automationProvenance !== undefined
       ? { automationProvenance: meta.automationProvenance }
       : {}),

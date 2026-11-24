@@ -31,6 +31,7 @@ import { selectShellStartupFeatures } from '../../shell-startup-features'
 import { parseWslPath } from '../../wsl'
 import { addWslEnvKeys } from '../../wsl-env'
 import { forwardDeepSeekEnvToWsl } from '../../deepseek/deepseek-wsl-env'
+import { forwardClaudeDangerousRmEnvToWsl } from '../../claude/claude-dangerous-rm-prompt-env'
 import {
   recognizeAgentProcessFromCommandLine,
   type RecognizedAgentProcess
@@ -179,6 +180,7 @@ export function createPtyShellLaunchPlan(
         addWslEnvKeys(env, ['CLAUDE_CONFIG_DIR'])
       }
       forwardDeepSeekEnvToWsl(env)
+      forwardClaudeDangerousRmEnvToWsl(env)
       if (env[DOLPHIN_HERMES_STARTUP_QUERY_ENV] !== undefined) {
         addWslEnvKeys(env, [DOLPHIN_HERMES_STARTUP_QUERY_ENV])
       }

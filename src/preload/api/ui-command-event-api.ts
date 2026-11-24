@@ -169,6 +169,7 @@ export type UiCommandEventApi = {
       splitFromLeafId?: string
       splitDirection?: 'horizontal' | 'vertical'
       splitTelemetrySource?: TerminalPaneSplitSource
+      agentTeamLeaderLeafId?: string
     }) => void
   ) => () => void
   onRequestTerminalCreate: (
@@ -188,6 +189,7 @@ export type UiCommandEventApi = {
       sourceLeafId?: string
       telemetrySource?: TerminalPaneSplitSource
       newLeafId?: string
+      agentTeamLeaderLeafId?: string
     }) => void
   ) => () => void
   onRenameTerminal: (

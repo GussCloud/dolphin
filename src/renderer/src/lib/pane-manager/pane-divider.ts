@@ -69,6 +69,8 @@ export function applyDividerStyles(root: HTMLElement, styleOptions: PaneStyleOpt
     // dividers so intersecting splits visually connect.
     el.style.setProperty('--divider-extension', `${hitSize / 2}px`)
   }
+  // Why: pane cards sit apart by the divider hit area, so the outer gutter matches it.
+  root.style.setProperty('--dolphin-pane-gap', `${hitSize}px`)
 }
 
 export function applyPaneOpacity(
@@ -84,6 +86,7 @@ export function applyPaneOpacity(
     const isActive = pane.id === activePaneId
     pane.container.style.opacity = String(isActive ? activePaneOpacity : inactivePaneOpacity)
     pane.container.style.transition = transition
+    pane.container.toggleAttribute('data-active-pane', isActive)
   }
 }
 

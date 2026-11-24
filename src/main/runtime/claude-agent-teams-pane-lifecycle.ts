@@ -117,6 +117,7 @@ export class ClaudeAgentTeamsPaneLifecycle {
         command: (script ? script.typedCommand : command) || undefined,
         ...(script ? { gitBashStartupCommandInArgs: true } : {}),
         ...teammatePaneSpawnOptions(team, hostShell, pane.fakePaneId),
+        agentTeamLeaderHandle: team.panes.get(team.leaderPane)?.handle ?? team.leaderHandle,
         activate: false
       })
       pane.handle = split.handle

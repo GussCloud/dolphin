@@ -82,7 +82,7 @@ export function splitManagedPane(args: SplitManagedPaneArgs): ManagedPane | null
   return toPublicPane(newPane)
 }
 
-function prepareMovedPanesForSplit(
+export function prepareMovedPanesForSplit(
   sourceContainer: HTMLElement,
   fallbackPane: ManagedPaneInternal,
   panes: Map<number, ManagedPaneInternal>

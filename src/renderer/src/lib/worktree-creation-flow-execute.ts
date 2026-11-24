@@ -101,6 +101,9 @@ export async function executeWorktreeCreation(
           ...(preparedRequest.autonomousGoalWorkspace ? { autonomousGoalWorkspace: true } : {}),
           ...(preparedRequest.agentAccountId
             ? { agentAccountId: preparedRequest.agentAccountId }
+            : {}),
+          ...(preparedRequest.agentPermissionPolicy
+            ? { agentPermissionPolicy: preparedRequest.agentPermissionPolicy }
             : {})
         }
       )

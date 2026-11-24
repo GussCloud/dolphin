@@ -33,6 +33,8 @@ export type DaemonFileLog = {
 export type DaemonFileLogOptions = {
   readonly maxBytes?: number
   readonly maxRotatedFiles?: number
+  /** The `src` field of every line; other main-process logs reuse this writer. */
+  readonly source?: string
 }
 
 /** No-op logger used when the daemon was launched without `--log-file` (adopted
@@ -50,6 +52,7 @@ export function createDaemonFileLog(
 ): DaemonFileLog {
   const maxBytes = opts.maxBytes ?? DEFAULT_MAX_BYTES
   const maxRotatedFiles = opts.maxRotatedFiles ?? DEFAULT_MAX_ROTATED_FILES
+  const source = opts.source ?? 'daemon'
 
   let disabled = false
   let currentBytes = 0
@@ -101,7 +104,7 @@ export function createDaemonFileLog(
     let line: string
     try {
       line = `${JSON.stringify({
-        src: 'daemon',
+        src: source,
         ts: new Date().toISOString(),
         pid: process.pid,
         event,

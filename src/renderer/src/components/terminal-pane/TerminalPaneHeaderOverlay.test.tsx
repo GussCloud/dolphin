@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ManagedPane, PaneManager } from '@/lib/pane-manager/pane-manager'
 import type { PtyTransport } from './pty-transport'
 import TerminalPaneHeaderOverlay from './TerminalPaneHeaderOverlay'
+import { isTerminalLeafId } from '../../../../shared/stable-pane-id'
 
 vi.mock('@/components/ui/tooltip', () => ({
   Tooltip: ({ children }: { children?: ReactNode }) => children,
@@ -22,10 +23,32 @@ vi.mock('@/i18n/i18n', () => ({
       fallback
     )
 }))
+
+vi.mock('@/lib/agent-catalog', () => ({
+  AgentIcon: ({ agent }: { agent: string }) => <i data-agent-icon={agent} />
+}))
+
+vi.mock('@/store', () => ({
+  useAppStore: (select: (state: unknown) => unknown) =>
+    select({
+      agentStatusByPaneKey: {
+        'tab-1:00000000-0000-4000-8000-000000000001': { agentType: 'claude' }
+      }
+    })
+}))
+
 const mounted: { container: HTMLDivElement; root: Root }[] = []
 
+function testLeafId(id: number): ManagedPane['leafId'] {
+  const leafId = `00000000-0000-4000-8000-00000000000${id}`
+  if (!isTerminalLeafId(leafId)) {
+    throw new Error(`invalid test leaf id ${leafId}`)
+  }
+  return leafId
+}
+
 function makePane(id: number): ManagedPane {
-  const leafId = `leaf-${id}` as ManagedPane['leafId']
+  const leafId = testLeafId(id)
   return {
     id,
     leafId,
@@ -270,5 +293,21 @@ describe('TerminalPaneHeaderOverlay', () => {
     expect(onContinueAgentSessionInNewSession).toHaveBeenCalledWith(
       expect.objectContaining({ id: 1 })
     )
+  })
+})
+
+describe('TerminalPaneHeaderOverlay agent identity', () => {
+  it('shows the live agent mark and the cwd beside a titled pane only', () => {
+    const { container } = renderOverlay({ paneTitles: { 1: 'Claude Code', 2: 'shell' } })
+    const bars = Array.from(container.querySelectorAll('.pane-title-bar'))
+
+    expect(bars[0]?.querySelector('[data-agent-icon]')?.getAttribute('data-agent-icon')).toBe(
+      'claude'
+    )
+    expect(bars[1]?.querySelector('[data-agent-icon]')).toBeNull()
+    expect(bars.map((bar) => bar.querySelector('.pane-title-cwd')?.textContent)).toEqual([
+      path.join(path.sep, 'tmp'),
+      path.join(path.sep, 'tmp')
+    ])
   })
 })

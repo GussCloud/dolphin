@@ -1,4 +1,5 @@
 import type { TuiAgent } from '../../../shared/tui-agent'
+import type { AgentPermissionPolicy } from '../../../shared/agent-permission-policy'
 import type { WorkspaceSource as WorkspaceCreateTelemetrySource } from '../../../shared/workspace-source'
 import type {
   CreateSparseCheckoutRequest,
@@ -119,6 +120,8 @@ export type WorktreeCreationRequest = {
   autonomousGoalWorkspace?: boolean
   /** Managed account the created agent launches with; omitted keeps the active account. */
   agentAccountId?: string
+  /** See CreateWorktreeArgs.agentPermissionPolicy. */
+  agentPermissionPolicy?: AgentPermissionPolicy
 }
 
 /** Renderer-only, session-ephemeral record of an in-flight (or failed) worktree

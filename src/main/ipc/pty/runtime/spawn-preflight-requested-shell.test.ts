@@ -6,6 +6,7 @@ import { prepareRuntimePtySpawn } from './spawn-preflight'
 import { buildRuntimePtySpawnOptions } from './spawn-options'
 import { createRuntimePtySpawnState, type RuntimePtySpawnArgs } from './spawn-state'
 import type { PtyRuntimeControllerDeps } from './controller-deps'
+import { CLAUDE_DANGEROUS_RM_NO_TIMEOUT_ENV } from '../../../claude/claude-dangerous-rm-prompt-env'
 
 const HOST_DEFAULT_SHELL = 'powershell.exe'
 const hostPlatform = process.platform
@@ -105,5 +106,25 @@ describe('runtime pty spawn options: Git Bash launch-arg delivery', () => {
     await expect(buildOptions({ shellOverride: 'git-bash', command })).resolves.not.toHaveProperty(
       'gitBashStartupCommandInArgs'
     )
+  })
+})
+
+describe('runtime pty spawn preflight: Claude dangerous-rm prompt env', () => {
+  async function preparedEnv(args: Partial<RuntimePtySpawnArgs>) {
+    const ctx = createRuntimePtySpawnState(makeDeps(), { cols: 120, rows: 40, ...args })
+    await prepareRuntimePtySpawn(ctx)
+    ctx.finishTerminalInstall()
+    return ctx.env
+  }
+
+  it('gives a runtime-created Claude launch the no-timeout env', async () => {
+    const env = await preparedEnv({ command: 'claude', launchAgent: 'claude' })
+    expect(env?.[CLAUDE_DANGEROUS_RM_NO_TIMEOUT_ENV]).toBe(
+      process.env[CLAUDE_DANGEROUS_RM_NO_TIMEOUT_ENV] ?? '1'
+    )
+  })
+
+  it('leaves a plain runtime shell alone', async () => {
+    expect((await preparedEnv({}))?.[CLAUDE_DANGEROUS_RM_NO_TIMEOUT_ENV]).toBeUndefined()
   })
 })

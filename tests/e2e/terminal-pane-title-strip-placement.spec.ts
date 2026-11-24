@@ -36,10 +36,11 @@ async function expectPaneTitleAttachedToLeaf(
             }
             const titleRect = titleBar.getBoundingClientRect()
             const paneRect = pane.getBoundingClientRect()
+            // The strip sits inside the pane card's border.
             return (
-              Math.abs(titleRect.left - paneRect.left) < 1 &&
-              Math.abs(titleRect.top - paneRect.top) < 1 &&
-              Math.abs(titleRect.width - paneRect.width) < 1
+              Math.abs(titleRect.left - (paneRect.left + pane.clientLeft)) < 1 &&
+              Math.abs(titleRect.top - (paneRect.top + pane.clientTop)) < 1 &&
+              Math.abs(titleRect.width - pane.clientWidth) < 1
             )
           },
           { title, leafId }
