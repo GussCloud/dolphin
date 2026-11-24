@@ -24,7 +24,13 @@ function createMockWebContents() {
     attached = false
   })
   dbg.sendCommand = vi.fn(async () => ({}))
-  return { isDestroyed: vi.fn(() => false), debugger: dbg }
+  return {
+    isDestroyed: vi.fn(() => false),
+    setBackgroundThrottling: vi.fn(),
+    once: vi.fn(),
+    removeListener: vi.fn(),
+    debugger: dbg
+  }
 }
 
 // Why: exercises the real E2EE channel so the oracle fails if an over-limit frame ever reaches
