@@ -99,3 +99,50 @@ describe('startProcessHeapHeartbeat', () => {
     stop()
   })
 })
+
+describe('heap pressure warning', () => {
+  const withHeapUsed = (heapUsedMb: number): ProcessHeapSample => ({
+    ...sample,
+    heapUsedBytes: heapUsedMb * MB,
+    heapLimitBytes: 1000 * MB
+  })
+
+  it('warns once per crossing of 80% of the V8 ceiling and re-arms after dropping below', () => {
+    vi.useFakeTimers()
+    const heapUsedSeries = [500, 800, 950, 750, 650, 850]
+    let tick = 0
+    const emitHeapPressure = vi.fn()
+    const stop = startProcessHeapHeartbeat({
+      emit: () => {},
+      emitHeapPressure,
+      intervalMs: 1000,
+      readSample: () => withHeapUsed(heapUsedSeries[tick++] ?? 0)
+    })
+
+    vi.advanceTimersByTime(1000 * heapUsedSeries.length)
+    stop()
+
+    expect(emitHeapPressure).toHaveBeenCalledTimes(2)
+    expect(emitHeapPressure.mock.calls[0][0]).toMatchObject({
+      heapUsedMb: 800,
+      heapLimitMb: 1000,
+      heapUsedPercent: 80
+    })
+    expect(emitHeapPressure.mock.calls[1][0]).toMatchObject({ heapUsedMb: 850 })
+  })
+
+  it('never warns without a known ceiling', () => {
+    vi.useFakeTimers()
+    const { heapLimitBytes: _omitted, ...withoutLimit } = sample
+    const emitHeapPressure = vi.fn()
+    const stop = startProcessHeapHeartbeat({
+      emit: () => {},
+      emitHeapPressure,
+      intervalMs: 1000,
+      readSample: () => ({ ...withoutLimit, heapUsedBytes: 4096 * MB })
+    })
+    vi.advanceTimersByTime(3000)
+    stop()
+    expect(emitHeapPressure).not.toHaveBeenCalled()
+  })
+})

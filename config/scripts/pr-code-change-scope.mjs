@@ -312,7 +312,23 @@ export const PERFORMANCE_CONTRACT_SOURCE_PREFIXES = [
   'src/main/ai-vault/session-scanner-service-entry',
   'src/main/ports/advertised-url-',
   'src/relay/context',
-  'src/relay/fs-path-metadata'
+  'src/relay/fs-path-metadata',
+  // Bundled by the cdp/daemon/claude audit reproductions.
+  'src/main/browser/cdp-client-response-writer',
+  'src/main/claude/claude-background-task-',
+  'src/main/claude/claude-settled-background-tasks',
+  'src/main/daemon/daemon-stream-',
+  'src/main/daemon/daemon-checkpoint-file',
+  'src/main/daemon/daemon-create-or-attach-',
+  'src/main/daemon/daemon-errors',
+  'src/main/daemon/daemon-foreground-process-protocol',
+  'src/main/daemon/daemon-hello-protocol',
+  'src/main/daemon/daemon-protocol-version',
+  'src/main/daemon/ndjson',
+  'src/main/daemon/terminal-history-seed-transfer-protocol',
+  'src/main/daemon/terminal-modes',
+  'src/main/daemon/terminal-snapshot',
+  'src/main/daemon/types'
 ]
 
 const PERFORMANCE_HARNESS_PREFIXES = [
@@ -334,7 +350,10 @@ const PERFORMANCE_HARNESS_PREFIXES = [
 export const PERFORMANCE_AUDIT_DIRS = [
   'docs/audits/scanner-late-cancel/',
   'docs/audits/pty-detector-retention/',
-  'docs/audits/retained-text-slices/'
+  'docs/audits/retained-text-slices/',
+  'docs/audits/cdp-stream-retention/',
+  'docs/audits/daemon-stream-retention/',
+  'docs/audits/claude-task-retention/'
 ]
 
 export function isPerformanceContractPath(file) {

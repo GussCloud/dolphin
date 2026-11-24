@@ -318,42 +318,39 @@ function prepareMacDevElectronApp() {
   // notification authorization (UNUserNotificationCenter has no Electron
   // API). It must live inside the bundle and carry the dev bundle id as its
   // embedded/code-sign identifier — macOS keys notification records to the
-  // signing identifier. Non-fatal: without swiftc the permission card falls
-  // back to delivery-probe heuristics.
-  try {
-    execFileSync(
-      process.execPath,
-      [
-        path.join(repoRoot, 'config', 'scripts', 'build-notification-status-macos.mjs'),
-        '--bundle-id',
-        bundleId,
-        '--single-arch',
-        '--output',
-        path.join(appPath, 'Contents', 'MacOS', 'dolphin-notification-status')
-      ],
-      { stdio: 'inherit' }
-    )
-  } catch (error) {
-    console.warn(
-      `[dolphin-dev] notification-status helper build failed (permission card falls back to probes): ${error?.message ?? error}`
-    )
-  }
-
-  try {
-    execFileSync(
-      process.execPath,
-      [
-        path.join(repoRoot, 'config', 'scripts', 'build-keyboard-layout-macos.mjs'),
-        '--single-arch',
-        '--output',
-        path.join(appPath, 'Contents', 'MacOS', 'dolphin-keyboard-layout')
-      ],
-      { stdio: 'inherit' }
-    )
-  } catch (error) {
-    console.warn(
-      `[dolphin-dev] keyboard-layout helper build failed (shifted Option composition stays conservative): ${error?.message ?? error}`
-    )
+  // signing identifier. Every helper build is non-fatal: without swiftc each
+  // feature degrades as its fallback note says.
+  const devMacHelpers = [
+    {
+      name: 'notification-status',
+      extraArgs: ['--bundle-id', bundleId],
+      fallback: 'permission card falls back to probes'
+    },
+    {
+      name: 'keyboard-layout',
+      extraArgs: [],
+      fallback: 'shifted Option composition stays conservative'
+    },
+    { name: 'process-footprint', extraArgs: [], fallback: 'memory dashboard falls back to RSS' }
+  ]
+  for (const helper of devMacHelpers) {
+    try {
+      execFileSync(
+        process.execPath,
+        [
+          path.join(repoRoot, 'config', 'scripts', `build-${helper.name}-macos.mjs`),
+          ...helper.extraArgs,
+          '--single-arch',
+          '--output',
+          path.join(appPath, 'Contents', 'MacOS', `dolphin-${helper.name}`)
+        ],
+        { stdio: 'inherit' }
+      )
+    } catch (error) {
+      console.warn(
+        `[dolphin-dev] ${helper.name} helper build failed (${helper.fallback}): ${error?.message ?? error}`
+      )
+    }
   }
 
   // Why: the plist edits above (and the copy itself) break the bundle's

@@ -11,12 +11,21 @@ import {
 } from './resource-memory-metric-copy'
 
 describe('resource memory metric copy', () => {
-  it('discloses that Unix RSS sums can repeat shared and aliased pages', () => {
+  it('discloses that Unix RSS sums repeat shared pages and miss compressed or swapped memory', () => {
     expect(getResourceMemoryMetricCopy('rss')).toEqual({
       columnLabel: 'RSS',
       summaryLabel: 'Σ RSS',
       description:
-        'Summed resident set size (RSS). Shared or aliased pages can appear in more than one process.'
+        'Summed resident set size (RSS): pages resident in RAM right now. Shared or aliased pages can appear in more than one process, and compressed or swapped memory is not counted here.'
+    })
+  })
+
+  it('names macOS footprint as the Activity Monitor figure, including compressed and GPU memory', () => {
+    expect(getResourceMemoryMetricCopy('footprint')).toEqual({
+      columnLabel: 'Mem',
+      summaryLabel: 'Σ Mem',
+      description:
+        'Summed physical footprint, the figure Activity Monitor shows as Memory: resident pages plus compressed, swapped and GPU memory each process owns.'
     })
   })
 

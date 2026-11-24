@@ -28,7 +28,8 @@ export class CdpDebuggerChannel {
       return
     }
     try {
-      this.debuggerLease = acquireElectronDebugger(this.webContents)
+      // Why: this lease lives as long as the proxy; CdpWsProxy holds rendering per connected client.
+      this.debuggerLease = acquireElectronDebugger(this.webContents, { holdRendering: false })
     } catch {
       throw new Error('Could not attach debugger. DevTools may already be open for this tab.')
     }

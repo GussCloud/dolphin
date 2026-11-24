@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const processMocks = vi.hoisted(() => ({ fork: vi.fn() }))
 vi.mock('node:child_process', () => ({ fork: processMocks.fork }))
 
-import { startPluginWorker } from './plugin-host-process'
+import { PLUGIN_WORKER_MAX_OLD_SPACE_MB, startPluginWorker } from './plugin-host-process'
 
 class FakeChild extends EventEmitter {
   connected = true
@@ -38,7 +38,7 @@ afterEach(() => {
 })
 
 describe('startPluginWorker', () => {
-  it('does not inherit Dolphin execArgv', async () => {
+  it('runs with only its own heap ceiling, never Dolphin execArgv', async () => {
     const child = new FakeChild()
     const pending = start(child)
     child.emit('message', { type: 'ready', commands: [] })
@@ -47,7 +47,40 @@ describe('startPluginWorker', () => {
     expect(processMocks.fork).toHaveBeenCalledWith(
       '/host.js',
       [],
-      expect.objectContaining({ execArgv: [] })
+      expect.objectContaining({
+        execArgv: [`--max-old-space-size=${PLUGIN_WORKER_MAX_OLD_SPACE_MB}`]
+      })
+    )
+  })
+
+  it('reports a heap-limit abort as this worker exiting, with the fatal line in its log', async () => {
+    const child = new FakeChild()
+    const log = vi.fn()
+    processMocks.fork.mockReturnValue(child)
+    const pending = startPluginWorker({
+      pluginId: 'dolphin-samples.demo',
+      rootDir: '/plugin',
+      mainEntry: 'worker.js',
+      entryPath: '/host.js',
+      grantedCapabilities: [],
+      executeHostCall: async () => ({ ok: true, value: null }),
+      log
+    })
+    child.emit('message', { type: 'ready', commands: ['run'] })
+    const handle = await pending
+    const onExit = vi.fn()
+    handle.onExit(onExit)
+    const command = handle.invokeCommand('run')
+
+    child.stderr.write(
+      'FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory\n'
+    )
+    child.emit('exit', null, 'SIGABRT')
+
+    await expect(command).rejects.toThrow('worker exited before responding')
+    expect(onExit).toHaveBeenCalledWith(null)
+    await vi.waitFor(() =>
+      expect(log).toHaveBeenCalledWith('error', expect.stringContaining('heap out of memory'))
     )
   })
 

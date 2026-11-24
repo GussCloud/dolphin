@@ -51,7 +51,9 @@ export function createViewportGuestFactory(
       setBackgroundThrottling: mocks.guestSetBackgroundThrottlingMock,
       setWindowOpenHandler: mocks.guestSetWindowOpenHandlerMock,
       on: mocks.guestOnMock,
+      once: vi.fn(),
       off: mocks.guestOffMock,
+      removeListener: vi.fn(),
       openDevTools: mocks.guestOpenDevToolsMock,
       executeJavaScriptInIsolatedWorld: vi.fn().mockResolvedValue(true),
       debugger: {

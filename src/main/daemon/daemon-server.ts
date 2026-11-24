@@ -228,6 +228,7 @@ export class DaemonServer {
     }))
     this.stopHeapHeartbeat = startProcessHeapHeartbeat({
       emit: (fields) => this.log.log('heap-heartbeat', fields),
+      emitHeapPressure: (fields) => this.log.log('heap-pressure', fields),
       readSessionCount: () => countLiveDaemonSessions(this.host.listSessions())
     })
   }

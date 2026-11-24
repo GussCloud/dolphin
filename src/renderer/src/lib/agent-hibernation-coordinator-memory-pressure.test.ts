@@ -20,7 +20,7 @@ function host(availableGiB: number): HostMemory {
     totalMemory: 16 * GIB,
     freeMemory: availableGiB * GIB,
     availableMemory: availableGiB * GIB,
-    availableMemorySource: 'free-memory',
+    availableMemorySource: 'memory-pressure',
     usedMemory: (16 - availableGiB) * GIB,
     memoryUsagePercent: ((16 - availableGiB) / 16) * 100,
     cpuCoreCount: 8,

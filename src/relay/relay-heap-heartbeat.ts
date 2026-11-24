@@ -8,6 +8,7 @@ export function startRelayHeapHeartbeat(
 ): () => void {
   return startProcessHeapHeartbeat({
     emit: (fields) => relayLogLine(`[relay] heap-heartbeat ${JSON.stringify(fields)}`),
+    emitHeapPressure: (fields) => relayLogLine(`[relay] heap-pressure ${JSON.stringify(fields)}`),
     readSessionCount,
     intervalMs
   })

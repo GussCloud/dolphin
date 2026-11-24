@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { appMetricsMock } = vi.hoisted(() => ({
-  appMetricsMock: vi.fn((): unknown[] => [])
+const { appMetricsMock, attachDarwinMemoryMock } = vi.hoisted(() => ({
+  appMetricsMock: vi.fn((): unknown[] => []),
+  attachDarwinMemoryMock: vi.fn(
+    async (
+      _attachDetails: (reportId: string, details: Record<string, unknown>) => Promise<unknown>,
+      _recorded: Promise<{ id: string }>
+    ) => {}
+  )
 }))
 
 vi.mock('electron', () => ({
@@ -9,6 +15,10 @@ vi.mock('electron', () => ({
     getVersion: () => '1.2.3-test',
     getAppMetrics: appMetricsMock
   }
+}))
+// Why: its macOS-only async attach is covered in process-gone-darwin-memory.test.ts.
+vi.mock('./process-gone-darwin-memory', () => ({
+  attachDarwinProcessGoneMemory: attachDarwinMemoryMock
 }))
 
 import {
@@ -592,6 +602,25 @@ describe('minidump signature attachment', () => {
       annotations: {}
     }
   }
+
+  it('hands the recorded report to the macOS gone-time memory attach', async () => {
+    attachDarwinMemoryMock.mockClear()
+    const record = vi.fn().mockResolvedValue({ id: 'report-1' })
+    const attach = vi.fn().mockResolvedValue(null)
+
+    recordProcessGoneCrash(
+      { record, attachDetails: attach } as never,
+      event({}),
+      new ProcessGoneDedupe(),
+      noMinidump
+    )
+
+    expect(attachDarwinMemoryMock).toHaveBeenCalledOnce()
+    const [attachDetails, recorded] = attachDarwinMemoryMock.mock.calls[0] ?? []
+    await expect(recorded).resolves.toEqual({ id: 'report-1' })
+    await attachDetails?.('report-1', { systemMemoryPressureAvailableMB: 1 })
+    expect(attach).toHaveBeenCalledWith('report-1', { systemMemoryPressureAvailableMB: 1 })
+  })
 
   it('names the failing CHECK on the report that only had an exit code', async () => {
     const record = vi.fn().mockResolvedValue({ id: 'report-1' })

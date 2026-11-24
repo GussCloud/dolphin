@@ -51,3 +51,7 @@ This is another reachable allocation mechanism within the app process group.
 #19831 does not establish an oversized transcript record. In the reported build
 normal scanning runs in a child, so this route does not explain #19768's isolated
 main-PID measurement. No affected-host attribution is claimed.
+
+## Regression coverage
+
+Regression coverage: `src/main/ai-vault/session-scanner-jsonl-reader.test.ts:140` (unit suite, oversized-record cases through line 262). The reproduction's baseline transform no longer matches current source (it expects three `assertSessionTranscriptRecordBytes` calls), so it is not in `node config/scripts/run-memory-audit-reproductions.mjs`.

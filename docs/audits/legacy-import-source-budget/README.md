@@ -66,3 +66,7 @@ resumable JSONL record limit.
 Validation: 50 targeted tests passed, including a regression that failed before
 the fix, UTF-8 and raw-byte limits, exact-boundary acceptance, and stream cleanup.
 Node typecheck, targeted lint, formatting, and diff checks passed.
+
+## Regression coverage
+
+Regression coverage: `src/main/native-chat/agent-session-journal/journal-legacy-import-source-bound.test.ts:28` (unit suite). The reproduction is not in `node config/scripts/run-memory-audit-reproductions.mjs`: its import closure reaches more than 100 native-chat files, which would route most native-chat PRs into the PR performance job for a behaviour the unit test already gates.

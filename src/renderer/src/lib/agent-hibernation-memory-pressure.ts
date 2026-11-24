@@ -16,8 +16,16 @@ const CRITICAL_AVAILABLE_CAP_BYTES = 2 * GIB
 const ELEVATED_IDLE_DIVISOR = 4
 
 export function classifyHostMemoryPressure(
-  host: Pick<HostMemory, 'totalMemory' | 'availableMemory'> | null | undefined
+  host:
+    | Pick<HostMemory, 'totalMemory' | 'availableMemory' | 'availableMemorySource'>
+    | null
+    | undefined,
+  hostPlatform: NodeJS.Platform
 ): HostMemoryPressureLevel {
+  // Why: off Windows, free pages exclude reclaimable cache, so a healthy host reads as pressured.
+  if (host?.availableMemorySource === 'free-memory' && hostPlatform !== 'win32') {
+    return 'none'
+  }
   const total = host?.totalMemory
   const available = host?.availableMemory
   if (

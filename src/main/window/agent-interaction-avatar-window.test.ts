@@ -77,6 +77,8 @@ describe('agent interaction avatar window', () => {
   beforeEach(() => {
     vi.resetModules()
     instances.length = 0
+    screenMock.on.mockClear()
+    screenMock.removeListener.mockClear()
     vi.unstubAllEnvs()
     vi.stubEnv('DOLPHIN_BACKGROUND_LAUNCH', '')
     vi.stubEnv('DOLPHIN_E2E_HEADLESS', '')
@@ -84,6 +86,7 @@ describe('agent interaction avatar window', () => {
   })
 
   afterEach(() => {
+    vi.useRealTimers()
     vi.unstubAllEnvs()
   })
 
@@ -150,5 +153,63 @@ describe('agent interaction avatar window', () => {
     avatar.closeAgentInteractionAvatar()
     expect(instances[0].destroy).toHaveBeenCalled()
     expect(avatar.isAgentInteractionAvatarRenderer(sender)).toBe(false)
+  })
+
+  it('destroys the window once it has stayed hidden for the idle timeout, then recreates it', async () => {
+    vi.useFakeTimers()
+    const avatar = await loadModule()
+    avatar.presentAgentInteractionAvatar(cueFrame)
+    avatar.takeAgentInteractionAvatarInitialFrame({ view: null })
+    avatar.presentAgentInteractionAvatar({ view: null })
+    const first = instances[0]
+
+    vi.advanceTimersByTime(avatar.AGENT_INTERACTION_AVATAR_HIDDEN_TEARDOWN_MS - 1)
+    expect(first.destroy).not.toHaveBeenCalled()
+    vi.advanceTimersByTime(1)
+    expect(first.destroy).toHaveBeenCalledTimes(1)
+    expect(screenMock.removeListener).toHaveBeenCalledTimes(1)
+
+    // The recreated renderer must still get the announcing frame, sound included.
+    avatar.presentAgentInteractionAvatar(cueFrame)
+    expect(instances).toHaveLength(2)
+    expect(instances[1].webContents.send).not.toHaveBeenCalled()
+    expect(avatar.takeAgentInteractionAvatarInitialFrame({ view: null })).toEqual(cueFrame)
+    expect(instances[1].showInactive).toHaveBeenCalledTimes(1)
+    expect(screenMock.on.mock.calls.length - screenMock.removeListener.mock.calls.length).toBe(1)
+  })
+
+  it('keeps a hidden window that is shown again before the idle timeout', async () => {
+    vi.useFakeTimers()
+    const avatar = await loadModule()
+    avatar.presentAgentInteractionAvatar(cueFrame)
+    avatar.takeAgentInteractionAvatarInitialFrame({ view: null })
+    avatar.presentAgentInteractionAvatar({ view: null })
+
+    vi.advanceTimersByTime(avatar.AGENT_INTERACTION_AVATAR_HIDDEN_TEARDOWN_MS - 1000)
+    avatar.presentAgentInteractionAvatar(cueFrame)
+    vi.advanceTimersByTime(avatar.AGENT_INTERACTION_AVATAR_HIDDEN_TEARDOWN_MS * 2)
+
+    expect(instances).toHaveLength(1)
+    expect(instances[0].destroy).not.toHaveBeenCalled()
+  })
+
+  it('does not let a torn-down window clear the state of its replacement', async () => {
+    vi.useFakeTimers()
+    const avatar = await loadModule()
+    avatar.presentAgentInteractionAvatar(cueFrame)
+    avatar.takeAgentInteractionAvatarInitialFrame({ view: null })
+    avatar.closeAgentInteractionAvatar()
+    avatar.presentAgentInteractionAvatar(cueFrame)
+    avatar.takeAgentInteractionAvatarInitialFrame({ view: null })
+
+    // A late 'closed' from the first window must not orphan the second.
+    instances[0].destroy()
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the fake only needs identity equality with the window it belongs to.
+    const sender = instances[1].webContents as unknown as Electron.WebContents
+    expect(avatar.isAgentInteractionAvatarRenderer(sender)).toBe(true)
+    avatar.presentAgentInteractionAvatar({ view: null })
+    expect(instances[1].webContents.send).toHaveBeenCalledWith('agentInteractionAvatar:frame', {
+      view: null
+    })
   })
 })

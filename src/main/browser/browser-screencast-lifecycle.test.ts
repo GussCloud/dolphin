@@ -21,7 +21,14 @@ function createWebContents() {
     attached = false
   })
   debuggerApi.sendCommand = vi.fn(async () => ({}))
-  return { isDestroyed: vi.fn(() => false), isCrashed: vi.fn(() => false), debugger: debuggerApi }
+  return {
+    isDestroyed: vi.fn(() => false),
+    isCrashed: vi.fn(() => false),
+    setBackgroundThrottling: vi.fn(),
+    once: vi.fn(),
+    removeListener: vi.fn(),
+    debugger: debuggerApi
+  }
 }
 
 describe('browser screencast lifecycle', () => {

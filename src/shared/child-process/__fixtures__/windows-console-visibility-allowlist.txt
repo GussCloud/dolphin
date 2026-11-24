@@ -29,7 +29,6 @@ main/ipc/notification-authorization-status.ts
 main/ipc/worktree-apfs-clone.ts
 main/local-builds/local-build-candidate.ts
 main/macos-tcc-prompt-watch.ts
-main/memory/collector.ts
 main/network/macos-system-resolver-health.ts
 main/network/macos-tailscale-dns-diagnostic.ts
 main/providers/macos-login-session-pty-probe.ts

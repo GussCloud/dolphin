@@ -109,7 +109,8 @@ describe('browserManager popup child policies', () => {
 
     didCreateWindowHandler?.({ webContents: childGuest })
 
-    expect(childSetBackgroundThrottlingMock).toHaveBeenCalledWith(false)
+    // Why: a popup child is a hidden-able guest too, so it starts throttled like any other.
+    expect(childSetBackgroundThrottlingMock).not.toHaveBeenCalled()
     expect(childSetWindowOpenHandlerMock).toHaveBeenCalledTimes(1)
     expect(childOnMock.mock.calls.filter(([event]) => event === 'did-create-window')).toHaveLength(
       1

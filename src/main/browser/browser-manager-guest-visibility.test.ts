@@ -55,6 +55,21 @@ const {
   webContentsFromIdMock
 } = browserMocks
 
+function createGuest(id: number) {
+  return {
+    id,
+    isDestroyed: vi.fn(() => false),
+    getType: vi.fn(() => 'webview'),
+    setBackgroundThrottling: guestSetBackgroundThrottlingMock,
+    setWindowOpenHandler: guestSetWindowOpenHandlerMock,
+    on: guestOnMock,
+    once: vi.fn(),
+    off: guestOffMock,
+    removeListener: vi.fn(),
+    openDevTools: guestOpenDevToolsMock
+  }
+}
+
 describe('browserManager', () => {
   beforeEach(() => {
     resetBrowserManagerMocks(browserMocks)
@@ -73,7 +88,9 @@ describe('browserManager', () => {
       setBackgroundThrottling: guestSetBackgroundThrottlingMock,
       setWindowOpenHandler: guestSetWindowOpenHandlerMock,
       on: guestOnMock,
+      once: vi.fn(),
       off: guestOffMock,
+      removeListener: vi.fn(),
       openDevTools: guestOpenDevToolsMock
     }
     const renderer = {
@@ -110,6 +127,7 @@ describe('browserManager', () => {
       ['browser:capturePaintHold', { browserPageId: 'page-capture', held: true }]
     ])
     expect(renderer.setBackgroundThrottling.mock.calls).toEqual([[false]])
+    expect(guestSetBackgroundThrottlingMock.mock.calls).toEqual([[false]])
 
     releaseFirst()
     releaseFirst()
@@ -122,6 +140,29 @@ describe('browserManager', () => {
       { browserPageId: 'page-capture', held: false }
     ])
     expect(renderer.setBackgroundThrottling.mock.calls).toEqual([[false], [true]])
+    expect(guestSetBackgroundThrottlingMock.mock.calls).toEqual([[false], [true]])
+  })
+
+  it('leaves a browsing guest throttled while hidden until something needs its frames', () => {
+    const guest = createGuest(1708)
+
+    browserManager.attachGuestPolicies(guest as never)
+
+    expect(guestSetBackgroundThrottlingMock).not.toHaveBeenCalled()
+  })
+
+  it('keeps an offscreen guest unthrottled until it is unregistered', () => {
+    const guest = createGuest(1709)
+    webContentsFromIdMock.mockImplementation((id: number) => (id === guest.id ? guest : null))
+
+    browserManager.registerOffscreenGuest({
+      browserPageId: 'page-offscreen',
+      webContentsId: guest.id
+    })
+    expect(guestSetBackgroundThrottlingMock.mock.calls).toEqual([[false]])
+
+    browserManager.unregisterGuest('page-offscreen')
+    expect(guestSetBackgroundThrottlingMock.mock.calls).toEqual([[false], [true]])
   })
 
   it('returns a no-op capture hold for a guest no page owns', () => {

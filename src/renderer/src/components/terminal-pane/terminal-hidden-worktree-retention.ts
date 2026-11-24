@@ -11,11 +11,11 @@ import {
 import type { TerminalTab } from '../../../../shared/terminal-tab-types'
 import { createWorktreeTabBucketProjection } from '@/lib/worktree-tab-bucket-projection'
 
-// Why these sizes: a retained hidden pane costs a measured ~2.5MB of V8 heap
-// at the 5k-row default scrollback and ~19MB at 50k (plus per-pane queues),
-// not the ~4-5MB per WORKTREE the warm cap assumed — so un-parkable worktrees
-// (pty classes parking can't restore) get a retention budget: at most 4 stay
-// mounted while hidden and none past 15 minutes, evicted least-recently-hidden
+// Why these sizes: a retained hidden pane holds a measured ~2.5MB of xterm
+// buffer (typed arrays, outside the V8 heap) at the 5k-row default scrollback
+// and ~19MB at 50k (plus per-pane queues), not the ~4-5MB per WORKTREE the
+// warm cap assumed — so un-parkable worktrees (pty classes parking can't
+// restore) get a retention budget: at most 4 stay mounted while hidden and none past 15 minutes, evicted least-recently-hidden
 // first via force-park. The TTL is absolute: the last-active exemption bounds
 // the cap, never the clock.
 // NOT covered by this bound: eviction-exempt TABS (isEvictionExemptTerminalPty
@@ -27,7 +27,8 @@ import { createWorktreeTabBucketProjection } from '@/lib/worktree-tab-bucket-pro
 // was intentionally removed — the bound is worktree count + TTL only, so a
 // spared worktree (last-active, exempt tabs) can hold full 50k-row scrollback
 // indefinitely. Accepted tradeoff: high-scrollback users rely on unmount
-// eviction, not demotion.
+// eviction, not demotion. Under memory pressure spared panes still drop their
+// hidden WebGL (use-terminal-memory-pressure-response.ts), never scrollback.
 export const TERMINAL_HIDDEN_WORKTREE_RETENTION_LIMIT = 4
 export const TERMINAL_HIDDEN_WORKTREE_RETENTION_TTL_MS = 15 * 60_000
 export const TERMINAL_HIDDEN_TAB_RETENTION_LIMIT = 4

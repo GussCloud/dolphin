@@ -7,7 +7,10 @@ import {
   PERFORMANCE_AUDIT_DIRS,
   PERFORMANCE_CONTRACT_TESTS
 } from './pr-code-change-scope.mjs'
-import { MEMORY_AUDIT_REPRODUCTIONS } from './run-memory-audit-reproductions.mjs'
+import {
+  MEMORY_AUDIT_REPRODUCTIONS,
+  reproductionScript
+} from './run-memory-audit-reproductions.mjs'
 
 const root = resolve(import.meta.dirname, '../..')
 
@@ -89,10 +92,7 @@ describe('performance contract PR routing', () => {
   })
 
   it('routes every file the contracts and reproductions import', () => {
-    const entries = [
-      ...readContracts(),
-      ...MEMORY_AUDIT_REPRODUCTIONS.map(({ audit }) => `docs/audits/${audit}/reproduce.mjs`)
-    ]
+    const entries = [...readContracts(), ...MEMORY_AUDIT_REPRODUCTIONS.map(reproductionScript)]
     const closure = localImportClosure(entries)
     // Guards the walker: a pattern that stopped matching would pass vacuously.
     expect(closure.length).toBeGreaterThan(entries.length * 10)

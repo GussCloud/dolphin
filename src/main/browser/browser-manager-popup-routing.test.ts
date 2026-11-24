@@ -629,7 +629,7 @@ describe('browserManager', () => {
     // the popup must get guest policies (nav guards, recursive popup handling)
     // attached directly here.
     expect(popupContents.setWindowOpenHandler).toHaveBeenCalledTimes(1)
-    expect(popupContents.setBackgroundThrottling).toHaveBeenCalledWith(false)
+    expect(popupContents.setBackgroundThrottling).not.toHaveBeenCalled()
     expect(popupContents.on.mock.calls.some(([event]) => event === 'dom-ready')).toBe(false)
     // The renderer notice carries only the sanitized origin, never the URL.
     expect(rendererSendMock).toHaveBeenCalledWith('browser:popup', {

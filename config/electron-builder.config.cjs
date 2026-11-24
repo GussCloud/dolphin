@@ -464,6 +464,11 @@ module.exports = {
         'dolphin-keyboard-layout',
         context.packager
       )
+      await signMacStandaloneHelper(
+        join(resourcesDir, '..', 'MacOS', 'dolphin-process-footprint'),
+        'dolphin-process-footprint',
+        context.packager
+      )
     }
   },
   win: {
@@ -621,6 +626,10 @@ module.exports = {
       {
         from: 'native/keyboard-layout-macos/.build/release/dolphin-keyboard-layout',
         to: 'MacOS/dolphin-keyboard-layout'
+      },
+      {
+        from: 'native/process-footprint-macos/.build/release/dolphin-process-footprint',
+        to: 'MacOS/dolphin-process-footprint'
       }
     ],
     target: [

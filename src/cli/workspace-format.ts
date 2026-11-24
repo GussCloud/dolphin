@@ -17,6 +17,9 @@ export function formatMemorySnapshot(snapshot: MemorySnapshot): string {
     `collectedAt: ${new Date(snapshot.collectedAt).toISOString()}`,
     `totalMemory: ${formatByteCount(snapshot.totalMemory)}`,
     `processMemoryMetric: ${formatProcessMemoryMetric(snapshot.processMemoryMetric)}`,
+    ...(snapshot.processScanFailed
+      ? ['processScanFailed: true; per-process figures are placeholders, not measurements']
+      : []),
     ...formatCommitLines(snapshot),
     `totalCpu: ${formatCpu(snapshot.totalCpu)}`,
     [
@@ -84,9 +87,13 @@ function formatCpu(cpu: number): string {
 }
 
 function formatProcessMemoryMetric(metric: MemorySnapshot['processMemoryMetric']): string {
-  return metric === 'working-set'
-    ? 'summed working set; shared pages may repeat'
-    : 'summed RSS; shared or aliased pages may repeat'
+  if (metric === 'working-set') {
+    return 'summed working set; shared pages may repeat'
+  }
+  if (metric === 'footprint') {
+    return 'summed physical footprint; includes compressed, swapped and GPU memory'
+  }
+  return 'summed RSS; shared or aliased pages may repeat; compressed or swapped memory not counted'
 }
 
 export function formatByteCount(bytes: number): string {

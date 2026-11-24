@@ -20,15 +20,55 @@ describe('host memory pressure', () => {
     [128 * GIB, 1 * GIB, 'critical'],
     [8 * GIB, 0.7 * GIB, 'critical']
   ] as const)('classifies %d total / %d available as %s', (totalMemory, availableMemory, level) => {
-    expect(classifyHostMemoryPressure({ totalMemory, availableMemory })).toBe(level)
+    expect(
+      classifyHostMemoryPressure(
+        { totalMemory, availableMemory, availableMemorySource: 'memory-pressure' },
+        'darwin'
+      )
+    ).toBe(level)
+  })
+
+  it('treats free pages on macOS and Linux as unknown, since they exclude reclaimable cache', () => {
+    const lowFreePages = {
+      totalMemory: 16 * GIB,
+      availableMemory: 1 * GIB,
+      availableMemorySource: 'free-memory'
+    } as const
+    expect(classifyHostMemoryPressure(lowFreePages, 'darwin')).toBe('none')
+    expect(classifyHostMemoryPressure(lowFreePages, 'linux')).toBe('none')
+  })
+
+  it('keeps classifying Windows free memory, which already counts the standby list', () => {
+    expect(
+      classifyHostMemoryPressure(
+        { totalMemory: 16 * GIB, availableMemory: 1 * GIB, availableMemorySource: 'free-memory' },
+        'win32'
+      )
+    ).toBe('critical')
   })
 
   it('treats unknown or malformed host memory as no pressure', () => {
-    expect(classifyHostMemoryPressure(null)).toBe('none')
-    expect(classifyHostMemoryPressure(undefined)).toBe('none')
-    expect(classifyHostMemoryPressure({ totalMemory: 0, availableMemory: 0 })).toBe('none')
-    expect(classifyHostMemoryPressure({ totalMemory: Number.NaN, availableMemory: 1 })).toBe('none')
-    expect(classifyHostMemoryPressure({ totalMemory: 16 * GIB, availableMemory: -1 })).toBe('none')
+    const source = 'proc-meminfo' as const
+    expect(classifyHostMemoryPressure(null, 'linux')).toBe('none')
+    expect(classifyHostMemoryPressure(undefined, 'linux')).toBe('none')
+    expect(
+      classifyHostMemoryPressure(
+        { totalMemory: 0, availableMemory: 0, availableMemorySource: source },
+        'linux'
+      )
+    ).toBe('none')
+    expect(
+      classifyHostMemoryPressure(
+        { totalMemory: Number.NaN, availableMemory: 1, availableMemorySource: source },
+        'linux'
+      )
+    ).toBe('none')
+    expect(
+      classifyHostMemoryPressure(
+        { totalMemory: 16 * GIB, availableMemory: -1, availableMemorySource: source },
+        'linux'
+      )
+    ).toBe('none')
   })
 
   it('shortens the idle window toward the floor without ever lengthening it', () => {

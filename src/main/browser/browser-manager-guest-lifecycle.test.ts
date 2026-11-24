@@ -182,7 +182,9 @@ describe('browserManager', () => {
       setBackgroundThrottling: guestSetBackgroundThrottlingMock,
       setWindowOpenHandler: guestSetWindowOpenHandlerMock,
       on: guestOnMock,
+      once: vi.fn(),
       off: guestOffMock,
+      removeListener: vi.fn(),
       openDevTools: guestOpenDevToolsMock
     }
     webContentsFromIdMock.mockReturnValue(guest)
@@ -366,7 +368,7 @@ describe('browserManager', () => {
     browserManager.attachGuestPolicies(guest as never)
     browserManager.attachGuestPolicies(guest as never)
 
-    expect(guestSetBackgroundThrottlingMock).toHaveBeenCalledTimes(1)
+    expect(guestSetBackgroundThrottlingMock).not.toHaveBeenCalled()
     expect(guestSetWindowOpenHandlerMock).toHaveBeenCalledTimes(1)
     expect(guestOnMock.mock.calls.filter(([event]) => event === 'will-navigate')).toHaveLength(1)
     expect(guestOnMock.mock.calls.filter(([event]) => event === 'will-redirect')).toHaveLength(1)

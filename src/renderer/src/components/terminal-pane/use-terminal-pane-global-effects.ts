@@ -156,6 +156,8 @@ export function useTerminalPaneGlobalEffects({
         isWorktreeActive &&
         hasCompletedVisibleResumeRef.current &&
         !renderingSuspendedByVisibilityRef.current &&
+        // Why: the memory-pressure sweep can dispose a tab-hidden manager's WebGL; only the heavy path reattaches it.
+        !manager.isRenderingSuspended?.() &&
         (wasVisible || hiddenReasonRef.current === 'tab')
       resumeTerminalVisibility({
         manager,

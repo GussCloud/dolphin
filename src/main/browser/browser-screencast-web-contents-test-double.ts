@@ -11,6 +11,9 @@ export type MockScreencastDebugger = EventEmitter & {
 export type MockScreencastWebContents = {
   isDestroyed: ReturnType<typeof vi.fn>
   isCrashed: ReturnType<typeof vi.fn>
+  setBackgroundThrottling: ReturnType<typeof vi.fn>
+  once: ReturnType<typeof vi.fn>
+  removeListener: ReturnType<typeof vi.fn>
   debugger: MockScreencastDebugger
 }
 
@@ -31,6 +34,9 @@ export function createMockScreencastWebContents(): MockScreencastWebContents {
   return {
     isDestroyed: vi.fn(() => false),
     isCrashed: vi.fn(() => false),
+    setBackgroundThrottling: vi.fn(),
+    once: vi.fn(),
+    removeListener: vi.fn(),
     debugger: dbg
   }
 }

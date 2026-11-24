@@ -5,6 +5,7 @@ import {
 } from './browser-manager-types'
 import { BrowserManagerGuestCleanup } from './browser-manager-guest-cleanup'
 import { installDocPreviewGuestPolicy } from './doc-preview-guest-policy'
+import { holdGuestRendering } from './guest-rendering-hold'
 
 export abstract class BrowserManagerGuestPolicy extends BrowserManagerGuestCleanup {
   attachGuestPolicies(
@@ -27,13 +28,17 @@ export abstract class BrowserManagerGuestPolicy extends BrowserManagerGuestClean
       this.popupOwnerContextByGuestId.set(guest.id, inheritedOwnerContext)
     }
     const disposeAuthDetachTracking = this.trackDebuggerDetachForAuthUserAgent(guest)
-    // Why: disable throttling so background screenshots still get frames; else the compositor stalls and capture returns empty.
-    guest.setBackgroundThrottling(false)
+    // Why: hidden guests stay throttled; CDP leases, agent clients and captures hold rendering while they run.
+    // Offscreen pages are headless serve's only surface and are never shown, so they hold it for life.
+    const releaseOffscreenRendering = this.offscreenGuestIds.has(guest.id)
+      ? holdGuestRendering(guest)
+      : () => {}
     const disposePopupPolicy = this.installGuestPopupPolicy(guest, !inheritedOwnerContext)
     const disposeNavigationPolicy = this.installGuestNavigationPolicy(guest)
 
     // Why: store cleanup so unregisterGuest can drop these listeners on teardown and let the WebContents wrapper GC.
     this.policyCleanupByGuestId.set(guest.id, () => {
+      releaseOffscreenRendering()
       disposeAuthDetachTracking()
       disposePopupPolicy()
       disposeNavigationPolicy()

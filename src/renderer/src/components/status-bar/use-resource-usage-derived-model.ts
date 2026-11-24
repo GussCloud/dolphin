@@ -151,13 +151,15 @@ export function useResourceUsageDerivedModel({
     : null
   const { totalMemory, totalCpu, memBadgeLabel, totalPrivateMemory, commitToneClass } =
     useMemo(() => {
-      const memory = resourceSnapshot?.totalMemory ?? 0
-      const cpu = resourceSnapshot?.totalCpu ?? 0
+      // Why null: a failed host scan reports 0 placeholders, which would read as "nothing running".
+      const scanFailed = resourceSnapshot?.processScanFailed === true
+      const memory = scanFailed ? null : (resourceSnapshot?.totalMemory ?? 0)
+      const cpu = scanFailed ? null : (resourceSnapshot?.totalCpu ?? 0)
       const privateMemory = resourceSnapshot?.totalPrivateMemory
       return {
         totalMemory: memory,
         totalCpu: cpu,
-        memBadgeLabel: resourceSnapshot ? formatMemory(memory) : '—',
+        memBadgeLabel: resourceSnapshot && memory !== null ? formatMemory(memory) : '—',
         totalPrivateMemory: privateMemory,
         commitToneClass: getCommitPressureToneClass({
           privateMemory,

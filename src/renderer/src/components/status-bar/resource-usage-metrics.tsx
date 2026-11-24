@@ -140,12 +140,24 @@ export function MetricPair({
   )
 }
 
-function AppSubRow({ label, values }: { label: string; values: UsageValues }): React.JSX.Element {
+function AppSubRow({
+  label,
+  values,
+  memoryUnavailable
+}: {
+  label: string
+  values: UsageValues
+  memoryUnavailable: boolean
+}): React.JSX.Element {
   return (
     <div className="px-3 py-1.5 pl-6 flex items-center justify-between gap-2">
       <span className="text-[11px] text-muted-foreground truncate">{label}</span>
       <div className="flex items-center gap-2 shrink-0">
-        <MetricPair cpu={values.cpu} memory={values.memory} size="small" />
+        <MetricPair
+          cpu={values.cpu}
+          memory={memoryUnavailable ? null : values.memory}
+          size="small"
+        />
         <span className={ROW_TRAILING_GUTTER_CLS} aria-hidden />
       </div>
     </div>
@@ -154,10 +166,13 @@ function AppSubRow({ label, values }: { label: string; values: UsageValues }): R
 
 export function AppSection({
   app,
+  memoryUnavailable = false,
   isCollapsed,
   onToggle
 }: {
   app: AppMemory
+  /** The host process scan failed, so app byte figures are placeholders. */
+  memoryUnavailable?: boolean
   isCollapsed: boolean
   onToggle: () => void
 }): React.JSX.Element {
@@ -196,7 +211,7 @@ export function AppSection({
           </span>
           <div className="flex items-center gap-2 shrink-0">
             <Sparkline samples={app.history} />
-            <MetricPair cpu={app.cpu} memory={app.memory} />
+            <MetricPair cpu={app.cpu} memory={memoryUnavailable ? null : app.memory} />
             <span className={ROW_TRAILING_GUTTER_CLS} aria-hidden />
           </div>
         </div>
@@ -209,6 +224,7 @@ export function AppSection({
               'Main'
             )}
             values={app.main}
+            memoryUnavailable={memoryUnavailable}
           />
           <AppSubRow
             label={translate(
@@ -216,6 +232,7 @@ export function AppSection({
               'Renderer'
             )}
             values={app.renderer}
+            memoryUnavailable={memoryUnavailable}
           />
           {(app.other.cpu > 0 || app.other.memory > 0) && (
             <AppSubRow
@@ -224,6 +241,7 @@ export function AppSection({
                 'Other'
               )}
               values={app.other}
+              memoryUnavailable={memoryUnavailable}
             />
           )}
         </div>

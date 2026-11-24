@@ -192,6 +192,8 @@ export function mergeSnapshotAndSessions(
 
   // ── Step 1: ingest snapshot worktrees as the local-truth foundation.
   if (snapshot) {
+    // Why null: a failed host scan leaves 0 placeholders that must not render as idle sessions.
+    const scanFailed = snapshot.processScanFailed === true
     for (const wt of snapshot.worktrees as readonly WorktreeMemory[]) {
       const worktree = resolveResourceFolderWorkspace(ctx, wt.worktreeId)
       const repoId = worktree?.repoId ?? wt.repoId
@@ -214,8 +216,8 @@ export function mergeSnapshotAndSessions(
           bound: ctx.workspaceSessionReady && boundPtyIds.has(s.sessionId),
           agentOwnership: ownershipBySessionId.get(s.sessionId) ?? 'unknown',
           tabId,
-          cpu: s.cpu,
-          memory: s.memory,
+          cpu: scanFailed ? null : s.cpu,
+          memory: scanFailed ? null : s.memory,
           hasLocalSamples: true
         }
       })
@@ -224,8 +226,8 @@ export function mergeSnapshotAndSessions(
         worktreeName: worktree?.displayName?.trim() || wt.worktreeName,
         repoId,
         repoName,
-        cpu: wt.cpu,
-        memory: wt.memory,
+        cpu: scanFailed ? null : wt.cpu,
+        memory: scanFailed ? null : wt.memory,
         history: wt.history,
         hasLocalSamples: true,
         isRemote,

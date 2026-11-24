@@ -1,6 +1,7 @@
 import { recordTerminalWebglDiagnostic } from '../../../../shared/terminal-webgl-diagnostics'
 import { registerRendererMemoryProfileContributor } from '../renderer-memory-profile'
 import type { PaneRenderingDiagnostics } from './pane-manager-types'
+import { measureInlineImageStorageBytes } from './pane-inline-images'
 
 type RegisteredPaneManager = {
   resetWebglTextureAtlases(): void
@@ -12,6 +13,8 @@ type RegisteredPaneManager = {
   getPanes?: (limit?: number) => { id: number; terminal: unknown }[]
   getPaneCount?: () => number
   isVisibleForAtlasRecovery?: () => boolean
+  isRenderingSuspended?: () => boolean
+  suspendRendering?: () => void
 }
 
 const liveManagers = new Set<RegisteredPaneManager>()
@@ -75,6 +78,32 @@ export function resetAndRefreshAllTerminalWebglAtlases(reason?: string): void {
       // managers still need to repaint from their xterm buffers.
     }
   }
+}
+
+/**
+ * Memory pressure: suspend hidden managers that hide left rendering (intra-worktree tab
+ * switch, incl. eviction-exempt tabs that never park) so their live WebGL joins the retained
+ * LRU. Call before releaseAllRetainedHiddenWebgl, which then disposes it; scrollback and PTY
+ * stay, and reveal takes the heavy resume because the manager reports suspended.
+ */
+export function suspendUnsuspendedHiddenTerminalRendering(): number {
+  let suspended = 0
+  for (const manager of liveManagers) {
+    try {
+      if (
+        manager.isVisibleForAtlasRecovery?.() !== false ||
+        manager.isRenderingSuspended?.() !== false ||
+        !manager.getRenderingDiagnostics?.().some((pane) => pane.hasWebgl)
+      ) {
+        continue
+      }
+      manager.suspendRendering?.()
+      suspended += 1
+    } catch {
+      // Why: a manager mid-teardown must not keep siblings' contexts alive under pressure.
+    }
+  }
+  return suspended
 }
 
 /**
@@ -159,8 +188,8 @@ export function refitAndRefreshAllTerminalPanes(): void {
   }
 }
 
-// Rough xterm BufferLine cost (3 uint32 per cell + object overhead); ranking
-// matters, not accuracy.
+// Rough xterm BufferLine cost: 12 B of cell data (3 uint32) + per-line object overhead; ranking
+// matters, not accuracy. The e2e cell gate counts the raw 12.
 const BYTES_PER_TERMINAL_CELL = 16
 const BYTES_PER_KILOBYTE = 1024
 const MANAGER_SAMPLE_LIMIT = 64
@@ -223,7 +252,9 @@ export function getMountedTerminalTabBufferEstimates(
       bytes += (normalRows + alternateRows) * cols * BYTES_PER_TERMINAL_CELL
     }
     if (complete) {
-      estimates.set(tabId, bytes)
+      // Why: decoded inline images (up to the addon's per-pane storageLimit) live outside the
+      // cell grid, so a cells-only estimate let image-heavy hidden tabs dodge the retention budget.
+      estimates.set(tabId, bytes + measureInlineImageStorageBytes(panes.map((p) => p.terminal)))
     }
   }
   return estimates

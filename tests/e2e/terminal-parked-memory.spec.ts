@@ -31,8 +31,8 @@ test.use({
   dolphinAppExtraArgs: ['--enable-precise-memory-info']
 })
 
-// Why: 8 hidden tabs is below the 12-tab hot-retain limit, but that limit
-// never retains anything here — the DOLPHIN_E2E_TERMINAL_PARKING_DELAY_MS
+// Why: 8 hidden tabs exceeds the 6-tab hot-retain limit, but that limit
+// decides nothing here — the DOLPHIN_E2E_TERMINAL_PARKING_DELAY_MS
 // collapse (terminal-parking-e2e-overrides.ts) shrinks hotRetainMs to the
 // same delay as coldParkDelayMs, and the policy cold-parks any tab hidden
 // past hotRetainMs before the retain-count limit is even consulted. The one
@@ -394,7 +394,8 @@ test.describe('Terminal parked memory', () => {
 const RETENTION_TAB_COUNT = 4
 const RETENTION_FILL_LINE_COUNT = 12_000
 const RETENTION_SCROLLBACK_ROWS = 25_000
-// Why 12: xterm packs each cell as 3 uint32s in the BufferLine typed array.
+// Why 12: xterm packs each cell as 3 uint32s in the BufferLine typed array. The renderer's
+// retention estimate (pane-manager-registry.ts) uses 16 to add per-line object overhead.
 const XTERM_BYTES_PER_CELL = 12
 // Why 40: this staging measures ~87 MB of retained buffer, so half of that is a
 // floor that fails loudly if the fill silently stops producing scrollback.

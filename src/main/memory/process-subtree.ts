@@ -7,7 +7,7 @@ export type ProcRow = {
   ppid: number
   /** Percent of one core (may exceed 100 on multi-core). */
   cpu: number
-  /** Resident memory in bytes. */
+  /** Bytes in the sweep's metric: RSS, working set, or macOS physical footprint. */
   memory: number
   /** Committed bytes, resident or paged out. Absent when the host cannot report it. */
   privateMemory?: number

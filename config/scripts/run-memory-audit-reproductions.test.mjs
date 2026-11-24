@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   evaluateReproduction,
   MEMORY_AUDIT_REPRODUCTIONS,
+  reproductionScript,
   runMemoryAuditReproductions
 } from './run-memory-audit-reproductions.mjs'
 
@@ -26,8 +27,8 @@ function heapCase(fixed, heapDelta, extra = {}) {
 
 describe('run-memory-audit-reproductions', () => {
   it('points every selected reproduction at an existing audit script', () => {
-    for (const { audit } of MEMORY_AUDIT_REPRODUCTIONS) {
-      expect(existsSync(`docs/audits/${audit}/reproduce.mjs`), audit).toBe(true)
+    for (const entry of MEMORY_AUDIT_REPRODUCTIONS) {
+      expect(existsSync(reproductionScript(entry)), entry.audit).toBe(true)
     }
   })
 
@@ -91,6 +92,60 @@ describe('run-memory-audit-reproductions', () => {
     ).toEqual(['after.cancelled is 3, expected 0'])
   })
 
+  it('bounds the stalled CDP socket buffer', () => {
+    const check = reproduction('cdp-stream-retention')
+    const sample = (bufferedBytes) => ({ samples: [{ bufferedBytes: 0 }, { bufferedBytes }] })
+    expect(evaluateReproduction(check, succeeded(sample(8 * MIB)))).toEqual([])
+    expect(evaluateReproduction(check, succeeded(sample(128 * MIB))).join('\n')).toContain(
+      'over the 16 MiB ceiling'
+    )
+  })
+
+  it('requires visible daemon producers to pause and every queue to drain', () => {
+    const check = reproduction('daemon-stream-retention')
+    const entry = (hidden, producedChars, batcherQueuedChars = 0) => ({
+      chunkSize: 1024,
+      hidden,
+      stalled: { producedChars },
+      afterDrain: { producerPaused: false, socketBufferedBytes: 0, batcherQueuedChars }
+    })
+    expect(
+      evaluateReproduction(check, succeeded({ cases: [entry(false, MIB), entry(true, 8 * MIB)] }))
+    ).toEqual([])
+    const failures = evaluateReproduction(
+      check,
+      succeeded({ cases: [entry(false, 8 * MIB), entry(true, 8 * MIB, 10)] })
+    ).join('\n')
+    expect(failures).toContain('consumed the whole input')
+    expect(failures).toContain('did not drain')
+  })
+
+  it('caps fixed Claude task text and requires its baseline', () => {
+    const check = reproduction('claude-task-retention')
+    const result = (phase, retainedHeapBytes) => ({
+      ingress: 'json',
+      retention: 'live',
+      size: 65536,
+      phase,
+      retainedHeapBytes
+    })
+    expect(
+      evaluateReproduction(
+        check,
+        succeeded({ results: [result('before', 2 * MIB), result('after', 40_000)] })
+      )
+    ).toEqual([])
+    expect(
+      evaluateReproduction(
+        check,
+        succeeded({ results: [result('before', 2 * MIB), result('after', 2 * MIB)] })
+      ).join('\n')
+    ).toContain('ceiling 1048576 B')
+    expect(evaluateReproduction(check, succeeded({ results: [result('after', 10)] }))).toEqual([
+      'no baseline case to prove the defect is exercised'
+    ])
+  })
+
   it('reports script failures, signals and unreadable output', () => {
     const check = reproduction('scanner-late-cancel')
     expect(
@@ -110,7 +165,7 @@ describe('run-memory-audit-reproductions', () => {
     const exitCode = runMemoryAuditReproductions({
       reproductions: [
         { audit: 'a', nodeFlags: ['--expose-gc'], check: () => [] },
-        { audit: 'b', nodeFlags: [], check: () => ['too big'] }
+        { audit: 'b', script: 'reproduce.cjs', nodeFlags: [], check: () => ['too big'] }
       ],
       spawnSyncImpl: (command, args, options) => {
         calls.push({ command, args, launch: options.env.DOLPHIN_BACKGROUND_LAUNCH })
@@ -127,7 +182,7 @@ describe('run-memory-audit-reproductions', () => {
         args: ['--expose-gc', 'docs/audits/a/reproduce.mjs'],
         launch: '1'
       },
-      { command: process.execPath, args: ['docs/audits/b/reproduce.mjs'], launch: '1' }
+      { command: process.execPath, args: ['docs/audits/b/reproduce.cjs'], launch: '1' }
     ])
     expect(errors.join('\n')).toMatch(/FAIL b .*\n {2}- too big/)
   })

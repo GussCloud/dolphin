@@ -32,3 +32,7 @@ Two additional handoff regressions cover a TUI launch returning after cancellati
 ## Version and attribution
 
 Named-path reads confirm the same setup gaps, unguarded forward launch, and stop-before-drain ordering in `v1.4.198`. In that tag the teardown phases are inline in `structured-agent-session-host.ts:254`; current source extracts them into `structured-agent-session-host-teardown.ts`. The executable proof compares current source before/after this fix. It establishes an execution-host watcher retaining path present in the reported version, without proving that #19831 or #19768 exercised this teardown race or explaining either report's memory magnitude.
+
+## Regression coverage
+
+Regression coverage: none — the TUI handoff and `structured-tui-transcript-catchup.ts` were removed in #22783 (`d443320af2`), so neither the reproduction nor a test has code to run against.

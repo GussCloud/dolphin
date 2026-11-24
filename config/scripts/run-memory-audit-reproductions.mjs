@@ -68,8 +68,64 @@ export const MEMORY_AUDIT_REPRODUCTIONS = [
     // Owned copies may cost the returned bytes plus allocator slack, never the parent input.
     check: (output) =>
       heapRetentionFailures(output, (after) => Math.ceil(after.logicalBytes * 1.5) + 64 * 1024)
+  },
+  {
+    audit: 'cdp-stream-retention',
+    nodeFlags: [],
+    // The unbounded writer buffered all 128 MiB; the fixed one stops near its 8 MiB threshold.
+    check: (output) => {
+      const samples = output.samples ?? []
+      if (samples.length === 0) {
+        return ['no socket samples reported']
+      }
+      const peak = Math.max(...samples.map((sample) => sample.bufferedBytes))
+      return peak > 16 * MIB ? [`socket buffered ${peak} B, over the 16 MiB ceiling`] : []
+    }
+  },
+  {
+    audit: 'daemon-stream-retention',
+    nodeFlags: [],
+    check: (output) => {
+      const cases = output.cases ?? []
+      if (cases.length === 0) {
+        return ['no stream cases reported']
+      }
+      const failures = []
+      for (const entry of cases) {
+        const label = `${entry.hidden ? 'hidden' : 'visible'} ${entry.chunkSize} B chunks`
+        if (!entry.hidden && entry.stalled?.producedChars >= 8 * MIB) {
+          failures.push(`${label}: producer consumed the whole input before pausing`)
+        }
+        const drained = entry.afterDrain ?? {}
+        if (drained.producerPaused || drained.socketBufferedBytes || drained.batcherQueuedChars) {
+          failures.push(`${label}: queues did not drain after the reader resumed`)
+        }
+      }
+      return failures
+    }
+  },
+  {
+    audit: 'claude-task-retention',
+    script: 'reproduce.cjs',
+    nodeFlags: ['--expose-gc'],
+    check: (output) => {
+      const results = output.results ?? []
+      if (!results.some((result) => result.phase === 'before')) {
+        return ['no baseline case to prove the defect is exercised']
+      }
+      return results
+        .filter((result) => result.phase === 'after' && result.retainedHeapBytes >= MIB)
+        .map(
+          (result) =>
+            `${result.ingress} ${result.retention} ${result.size} chars: retained ${result.retainedHeapBytes} B, ceiling ${MIB} B`
+        )
+    }
   }
 ]
+
+export function reproductionScript(reproduction) {
+  return `docs/audits/${reproduction.audit}/${reproduction.script ?? 'reproduce.mjs'}`
+}
 
 export function parseReproductionOutput(stdout) {
   const start = stdout.indexOf('{')
@@ -112,7 +168,7 @@ export function runMemoryAuditReproductions({
 } = {}) {
   let failureCount = 0
   for (const reproduction of reproductions) {
-    const script = `docs/audits/${reproduction.audit}/reproduce.mjs`
+    const script = reproductionScript(reproduction)
     const startedAt = Date.now()
     const result = spawnSyncImpl(process.execPath, [...reproduction.nodeFlags, script], {
       cwd: process.cwd(),

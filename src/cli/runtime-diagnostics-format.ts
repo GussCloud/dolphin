@@ -45,16 +45,21 @@ export function formatRuntimeDiagnostics(d: RuntimeDiagnostics): string {
       : []),
     '',
     'Processes',
-    `  In session trees:     ${memory.trackedProcessCount ?? sessionProcessCount}`,
+    `  In session trees:     ${memory.processScanFailed ? 'unknown (process scan failed)' : (memory.trackedProcessCount ?? sessionProcessCount)}`,
     `  Untracked under daemon: ${memory.daemon ? memory.daemon.untrackedDescendantCount : 'unknown'}`,
     '',
     'Memory',
+    ...(memory.processScanFailed
+      ? ['  Process scan failed: per-process figures below are placeholders, not measurements']
+      : []),
     `  Dolphin main:            ${formatByteCount(memory.app.main.memory)}`,
     `  Dolphin renderer:        ${formatByteCount(memory.app.renderer.memory)}`,
     `  Dolphin other:           ${formatByteCount(memory.app.other.memory)}`,
     `  Terminal daemon:      ${memory.daemon ? formatByteCount(memory.daemon.memory) : 'unknown'}`,
     `  Session trees:        ${formatByteCount(memory.totalMemory - memory.app.memory)}`,
-    `  Total Dolphin tree:      ${formatByteCount(memory.totalMemory + (memory.daemon?.memory ?? 0))}`,
+    // Why two totals: the UI's total is app + sessions; the daemon is reported beside it, not in it.
+    `  App + sessions (UI):  ${formatByteCount(memory.totalMemory)}`,
+    `  Total incl. daemon:   ${formatByteCount(memory.totalMemory + (memory.daemon?.memory ?? 0))}`,
     ...(typeof memory.totalPrivateMemory === 'number'
       ? [`  Committed (private):  ${formatByteCount(memory.totalPrivateMemory)}`]
       : []),

@@ -22,7 +22,12 @@ export type UsageValues = {
   privateMemory?: number
 }
 
-export type ProcessMemoryMetric = 'rss' | 'working-set'
+/**
+ * `footprint` is macOS physical footprint (Activity Monitor's "Memory"): resident plus
+ * compressed, swapped and GPU memory. A snapshot never mixes metrics; old clients
+ * render an unknown value with their RSS copy.
+ */
+export type ProcessMemoryMetric = 'rss' | 'working-set' | 'footprint'
 
 /**
  * Unit of every `privateMemory` field in a snapshot.
@@ -126,8 +131,13 @@ export type MemorySnapshot = {
    * Not included in totalMemory, which keeps its existing app + sessions meaning.
    */
   daemon?: DaemonMemory
-  /** Processes in every registered session subtree. Absent from older hosts. */
+  /** Processes in every registered session subtree. Absent from older hosts and failed scans. */
   trackedProcessCount?: number
+  /**
+   * The host process scan failed, so every per-process cpu/memory figure is a 0
+   * placeholder kept for older readers, not a measurement. Absent on success.
+   */
+  processScanFailed?: true
   /** Owners over their memory budget at collection time. Absent from older hosts and when none are over. */
   budgetWarnings?: MemoryBudgetWarning[]
   collectedAt: number

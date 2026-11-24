@@ -16,7 +16,8 @@ import { collectRendererMemoryProfileCounts } from './renderer-memory-profile'
 import {
   RENDERER_MEMORY_PRESSURE_HEAP_RATIO,
   RENDERER_MEMORY_PRESSURE_PRIVATE_MB,
-  noteRendererMemoryPressureSample
+  noteRendererMemoryPressureSample,
+  type GpuMemoryPressureReading
 } from './renderer-memory-pressure'
 
 const BYTES_PER_KILOBYTE = 1024
@@ -100,7 +101,7 @@ export function recordRendererMemorySample(reason: string): void {
       ...describeProcessFootprint(memory, footprint),
       browserWebviews: browserWebviews.browserWebviewCount,
       registeredBrowserGuests: browserWebviews.registeredBrowserGuestCount,
-      gpuPrivateMB: gpuPrivateMegabytes(gpuFootprint) ?? undefined
+      ...gpuBreadcrumbFields(readGpuPressure(gpuFootprint))
     })
   )
   recordRendererMemoryHighwater(memory, browserWebviews, footprint)
@@ -113,11 +114,8 @@ function noteRendererMemoryPressure(
   footprint: RendererProcessMemory | null,
   gpuFootprint: GpuProcessMemory | null
 ): void {
-  const gpuPrivateMB = gpuPrivateMegabytes(gpuFootprint)
-  const sample = {
-    ...readPressureSample(memory, footprint),
-    ...(gpuPrivateMB === null ? {} : { gpuPrivateMB })
-  }
+  const gpu = readGpuPressure(gpuFootprint)
+  const sample = { ...readPressureSample(memory, footprint), ...(gpu === null ? {} : { gpu }) }
   const signal = noteRendererMemoryPressureSample(sample, Date.now())
   if (signal) {
     recordRendererCrashBreadcrumb(
@@ -127,7 +125,7 @@ function noteRendererMemoryPressure(
         trigger: signal.trigger,
         heapPct: signal.heapRatio === null ? undefined : Math.round(signal.heapRatio * 100),
         privateMB: signal.privateMB ?? undefined,
-        gpuPrivateMB: signal.gpuPrivateMB ?? undefined
+        ...gpuBreadcrumbFields(signal.gpu ?? null)
       })
     )
   }
@@ -147,13 +145,24 @@ function readPressureSample(
   return { heapRatio, privateMB }
 }
 
-function gpuPrivateMegabytes(gpuFootprint: GpuProcessMemory | null): number | null {
-  return gpuFootprint === null
-    ? null
-    : (toMegabytes(gpuFootprint.privateKB * BYTES_PER_KILOBYTE) ?? null)
+function readGpuPressure(gpuFootprint: GpuProcessMemory | null): GpuMemoryPressureReading | null {
+  const mb =
+    gpuFootprint === null ? undefined : toMegabytes(gpuFootprint.kilobytes * BYTES_PER_KILOBYTE)
+  return gpuFootprint === null || mb === undefined ? null : { metric: gpuFootprint.metric, mb }
 }
 
-/** Same staleness contract as the renderer footprint; null on web and where only Windows reports it. */
+// Why two fields: breadcrumbs before macOS support carry gpuPrivateMB, so a footprint must not reuse it.
+function gpuBreadcrumbFields(gpu: GpuMemoryPressureReading | null): {
+  gpuPrivateMB?: number
+  gpuFootprintMB?: number
+} {
+  if (gpu === null) {
+    return {}
+  }
+  return gpu.metric === 'private-bytes' ? { gpuPrivateMB: gpu.mb } : { gpuFootprintMB: gpu.mb }
+}
+
+/** Same staleness contract as the renderer footprint; null on web and Linux. */
 function refreshGpuFootprint(): void {
   const read = window.api?.crashReports?.readGpuProcessMemory
   if (!read || gpuFootprintReadInFlight) {

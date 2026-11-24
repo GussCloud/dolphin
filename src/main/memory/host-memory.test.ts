@@ -62,22 +62,111 @@ describe('host memory', () => {
     })
   })
 
-  it('falls back once when macOS availability cannot be read', async () => {
+  it('retries macOS availability after a transient failure instead of disabling it', async () => {
     vi.spyOn(os, 'platform').mockReturnValue('darwin')
-    runProcessMock.mockRejectedValue(new Error('unsupported'))
+    const now = vi.spyOn(performance, 'now').mockReturnValue(1_000)
+    runProcessMock.mockResolvedValueOnce({
+      code: null,
+      signal: 'SIGTERM',
+      stdout: '',
+      stderr: '',
+      timedOut: true
+    })
+    runProcessMock.mockResolvedValue({
+      code: 0,
+      signal: null,
+      stdout: 'System-wide memory free percentage: 47%',
+      stderr: '',
+      timedOut: false
+    })
     const { collectHostMemory } = await loadHostMemory()
 
     const first = await collectHostMemory()
-    const second = await collectHostMemory()
+    const duringBackoff = await collectHostMemory()
+    now.mockReturnValue(1_000 + 30_000)
+    const recovered = await collectHostMemory()
 
     expect(first).toMatchObject({
       availableMemory: 100,
       availableMemorySource: 'free-memory',
-      usedMemory: 900,
       memoryUsagePercent: 90
     })
+    expect(duringBackoff.availableMemorySource).toBe('free-memory')
+    expect(recovered).toMatchObject({
+      availableMemory: 470,
+      availableMemorySource: 'memory-pressure'
+    })
+    expect(runProcessMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('retries after a non-zero exit or unparsable output', async () => {
+    vi.spyOn(os, 'platform').mockReturnValue('darwin')
+    const now = vi.spyOn(performance, 'now').mockReturnValue(0)
+    runProcessMock.mockResolvedValueOnce({
+      code: 1,
+      signal: null,
+      stdout: '',
+      stderr: 'boom',
+      timedOut: false
+    })
+    runProcessMock.mockResolvedValueOnce({
+      code: 0,
+      signal: null,
+      stdout: 'garbage',
+      stderr: '',
+      timedOut: false
+    })
+    const { collectHostMemory } = await loadHostMemory()
+
+    await collectHostMemory()
+    now.mockReturnValue(30_000)
+    await collectHostMemory()
+    now.mockReturnValue(60_000)
+    await collectHostMemory()
+
+    expect(runProcessMock).toHaveBeenCalledTimes(3)
+  })
+
+  it('stops asking macOS once the memory_pressure binary is missing', async () => {
+    vi.spyOn(os, 'platform').mockReturnValue('darwin')
+    const now = vi.spyOn(performance, 'now').mockReturnValue(0)
+    runProcessMock.mockRejectedValue(
+      Object.assign(new Error('spawn /usr/bin/memory_pressure ENOENT'), { code: 'ENOENT' })
+    )
+    const { collectHostMemory } = await loadHostMemory()
+
+    const first = await collectHostMemory()
+    now.mockReturnValue(10 * 60_000)
+    const second = await collectHostMemory()
+
+    expect(first.availableMemorySource).toBe('free-memory')
     expect(second.availableMemorySource).toBe('free-memory')
     expect(runProcessMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('retries Linux MemAvailable after a transient read failure', async () => {
+    vi.spyOn(os, 'platform').mockReturnValue('linux')
+    const now = vi.spyOn(performance, 'now').mockReturnValue(0)
+    readFileMock.mockRejectedValueOnce(Object.assign(new Error('busy'), { code: 'EIO' }))
+    readFileMock.mockResolvedValue('MemAvailable: 0 kB\n')
+    const { collectHostMemory } = await loadHostMemory()
+
+    expect((await collectHostMemory()).availableMemorySource).toBe('free-memory')
+    now.mockReturnValue(30_000)
+    expect((await collectHostMemory()).availableMemorySource).toBe('proc-meminfo')
+  })
+
+  it('stops reading Linux MemAvailable once /proc/meminfo is missing', async () => {
+    vi.spyOn(os, 'platform').mockReturnValue('linux')
+    const now = vi.spyOn(performance, 'now').mockReturnValue(0)
+    readFileMock.mockRejectedValue(Object.assign(new Error('missing'), { code: 'ENOENT' }))
+    const { collectHostMemory } = await loadHostMemory()
+
+    await collectHostMemory()
+    now.mockReturnValue(10 * 60_000)
+    await collectHostMemory()
+
+    expect(readFileMock).toHaveBeenCalledTimes(1)
   })
 
   it('uses Linux MemAvailable and keeps the value within physical RAM', async () => {

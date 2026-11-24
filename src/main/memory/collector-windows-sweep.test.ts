@@ -10,16 +10,10 @@ type AppMetricFixture = {
   memory: { workingSetSize: number }
 }
 
-const { appMetricsMock, runProcessMock, execMock, listRegisteredPtysMock } = vi.hoisted(() => ({
+const { appMetricsMock, runProcessMock, listRegisteredPtysMock } = vi.hoisted(() => ({
   appMetricsMock: vi.fn<() => AppMetricFixture[]>(() => []),
   runProcessMock: vi.fn(),
-  execMock: vi.fn(),
   listRegisteredPtysMock: vi.fn()
-}))
-
-vi.mock('child_process', () => ({
-  exec: (cmd: string, opts: unknown, cb: (err: Error | null, out: { stdout: string }) => void) =>
-    execMock(cmd, opts, cb)
 }))
 
 // Why mock the chokepoint for the Windows sweep: maxBuffer, timeout and the
@@ -35,6 +29,10 @@ vi.mock('../windows/windows-process-table', () => ({
   isWindowsProcessResourceUsageAvailable: () => false,
   isWindowsProcessTableAvailable: () => false,
   readWindowsProcessResourceTable: () => Promise.reject(new Error('not under test'))
+}))
+
+vi.mock('./darwin-process-footprint', () => ({
+  readDarwinProcessFootprints: () => Promise.resolve(null)
 }))
 
 vi.mock('./pty-registry', () => ({
@@ -74,21 +72,21 @@ describe('collectMemorySnapshot on Windows', () => {
     appMetricsMock.mockReset()
     appMetricsMock.mockReturnValue([])
     runProcessMock.mockReset()
-    execMock.mockReset()
     listRegisteredPtysMock.mockReset()
     listRegisteredPtysMock.mockReturnValue([])
   })
 
   function mockPsResponse(stdout: string) {
-    execMock.mockImplementation((_cmd, _opts, cb) => cb(null, { stdout, stderr: '' }))
     runProcessMock.mockImplementation((spec: { program: string }) =>
       Promise.resolve({
         code: 0,
         signal: null,
         stdout:
-          spec.program === 'typeperf.exe'
-            ? psFixtureToTypeperfOutput(stdout)
-            : psFixtureToWindowsProcessOutput(stdout),
+          spec.program === '/bin/ps' || spec.program === 'ps'
+            ? stdout
+            : spec.program === 'typeperf.exe'
+              ? psFixtureToTypeperfOutput(stdout)
+              : psFixtureToWindowsProcessOutput(stdout),
         stderr: '',
         timedOut: false
       })
@@ -155,7 +153,6 @@ describe('collectMemorySnapshot on Windows', () => {
 
     await collectMemorySnapshot(emptyStore)
 
-    expect(execMock).not.toHaveBeenCalled()
     expect(runProcessMock).toHaveBeenCalledTimes(1)
     const spec = runProcessMock.mock.calls[0][0]
     expect(spec.program).toBe('powershell.exe')

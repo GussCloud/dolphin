@@ -12,10 +12,28 @@ import { installPrivilegedWindowNavigationPolicy } from './privileged-window-nav
 export const AGENT_INTERACTION_AVATAR_SIZE = { width: 120, height: 120 } as const
 const SCREEN_EDGE_GAP = 8
 const AVATAR_PARTITION = 'dolphin-agent-interaction-avatar'
+// Why: a hidden avatar is a whole resident renderer; recreating it on the next cue costs one load.
+export const AGENT_INTERACTION_AVATAR_HIDDEN_TEARDOWN_MS = 5 * 60 * 1000
 
 let avatarWindow: BrowserWindow | null = null
 let rendererReady = false
 let pendingFrame: AgentInteractionAvatarFrame | null = null
+let hiddenTeardownTimer: ReturnType<typeof setTimeout> | null = null
+
+function cancelHiddenTeardown(): void {
+  if (hiddenTeardownTimer) {
+    clearTimeout(hiddenTeardownTimer)
+    hiddenTeardownTimer = null
+  }
+}
+
+function scheduleHiddenTeardown(): void {
+  cancelHiddenTeardown()
+  hiddenTeardownTimer = setTimeout(() => {
+    hiddenTeardownTimer = null
+    closeAgentInteractionAvatar()
+  }, AGENT_INTERACTION_AVATAR_HIDDEN_TEARDOWN_MS)
+}
 
 function liveAvatarWindow(): BrowserWindow | null {
   return avatarWindow && !avatarWindow.isDestroyed() ? avatarWindow : null
@@ -26,7 +44,9 @@ export function isAgentInteractionAvatarRenderer(sender: WebContents): boolean {
 }
 
 /** Right edge of the primary display's work area, vertically centered. */
-export function resolveAgentInteractionAvatarBounds(workArea: Electron.Rectangle): Electron.Rectangle {
+export function resolveAgentInteractionAvatarBounds(
+  workArea: Electron.Rectangle
+): Electron.Rectangle {
   const { width, height } = AGENT_INTERACTION_AVATAR_SIZE
   return {
     x: workArea.x + workArea.width - width - SCREEN_EDGE_GAP,
@@ -97,12 +117,17 @@ function createAvatarWindow(): BrowserWindow {
   window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
   // Why: a reload remounts the renderer, which must ask for its frame again before receiving pushes.
   window.webContents.on('did-start-loading', () => {
-    rendererReady = false
+    if (avatarWindow === window) {
+      rendererReady = false
+    }
   })
   window.on('closed', () => {
     screen.removeListener('display-metrics-changed', onDisplayMetricsChanged)
-    avatarWindow = null
-    rendererReady = false
+    // Why: a torn-down window's late 'closed' must not orphan the one that replaced it.
+    if (avatarWindow === window) {
+      avatarWindow = null
+      rendererReady = false
+    }
   })
   screen.on('display-metrics-changed', onDisplayMetricsChanged)
   loadAvatar(window)
@@ -117,8 +142,10 @@ function deliverFrame(window: BrowserWindow, frame: AgentInteractionAvatarFrame)
 function revealForFrame(window: BrowserWindow, frame: AgentInteractionAvatarFrame): void {
   if (!frame.view) {
     window.hide()
+    scheduleHiddenTeardown()
     return
   }
+  cancelHiddenTeardown()
   // Why: background/test launches still load the renderer (CDP screenshots) but never present it.
   if (isWindowlessLaunch() || isBackgroundLaunch()) {
     return
@@ -164,6 +191,7 @@ export function takeAgentInteractionAvatarInitialFrame(
 
 /** Tears the window down with the main window so it cannot keep the app alive. */
 export function closeAgentInteractionAvatar(): void {
+  cancelHiddenTeardown()
   liveAvatarWindow()?.destroy()
   avatarWindow = null
   rendererReady = false

@@ -39,7 +39,7 @@ export function getTerminalParkingPolicyOverrides(): TerminalColdParkPolicyOverr
     ...(typeof delayMs === 'number' && Number.isFinite(delayMs) && delayMs > 0
       ? { coldParkDelayMs: delayMs, hotRetainMs: delayMs }
       : {}),
-    // Why: limit=1 lets a spec force-park with only two hidden un-parkable worktrees (production floor is 12).
+    // Why: limit=1 lets a spec force-park with only two hidden un-parkable worktrees (production limit is 4).
     ...(typeof retentionLimit === 'number' && Number.isInteger(retentionLimit) && retentionLimit > 0
       ? { retentionLimit }
       : {})
