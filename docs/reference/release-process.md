@@ -52,13 +52,15 @@ The `resolve` job checks four things before anything is built:
 - the rc tag's commit is on `develop`;
 - the pull request that landed that commit has a successful `verify` check, which is `pr.yml`'s aggregate (`verify-release-commit.mjs`).
 
-Alongside the approval, the `e2e` and `e2e_wsl` jobs run the **whole** e2e suite (`e2e.yml` with no spec list: 14 shards plus the Docker-SSH lanes, and the real-WSL lane) on that commit. No build starts, and `main` does not move, unless both pass. This adds about 30 minutes to a promote. Pull requests run only the e2e they wrote or edited, and [E2E develop](../../.github/workflows/e2e-develop.yml) runs the same full suite on `develop` at 03:13 and 13:13 (Brasília) when `develop` changed, opening or updating one issue that names the PRs merged since the last green run, so a red suite is usually known before a promote. GitHub fires schedules only from the default branch, so the schedule starts after the first promote brings this workflow to `main`; until then, runs start when a merge to `develop` edits the workflow.
+Alongside the approval, the `e2e` and `e2e_wsl` jobs run the **whole** e2e suite (`e2e.yml` with no spec list: 14 shards plus the Docker-SSH lanes, and the real-WSL lane) on that commit. The builds run beside the suite, but they only stage: a draft desktop release, the APK as a run artifact and an iOS build in internal TestFlight. Nothing is published, and `main` does not move, unless both pass. A promote takes about as long as its slowest build (the iOS one, ~35 minutes). Pull requests run only the e2e they wrote or edited, and [E2E develop](../../.github/workflows/e2e-develop.yml) runs the same full suite on `develop` at 03:13 and 13:13 (Brasília) when `develop` changed, opening or updating one issue that names the PRs merged since the last green run, so a red suite is usually known before a promote. GitHub fires schedules only from the default branch, so the schedule starts after the first promote brings this workflow to `main`; until then, runs start when a merge to `develop` edits the workflow.
 
-The owner's approval is the dispatch itself: only someone who can run workflows starts a promote (agents cannot). If the `production` environment has required reviewers, the run also waits there for one. It then rebuilds **the commit the rc tag points at**, versioned `X.Y.Z`:
+The owner's approval is the dispatch itself: only someone who can run workflows starts a promote (agents cannot). If the `production` environment has required reviewers, the run also waits there for one. It then rebuilds **the commit the rc tag points at**, versioned `X.Y.Z`. Once the suite and the build pass, one job per app publishes it:
 
-- **Desktop:** published as the latest stable release `vX.Y.Z`.
-- **Android:** `mobile-android-vX.Y.Z`, and `mobile-android-latest` is refreshed.
-- **iOS:** the fastlane `release` lane uploads a new build of `X.Y.Z` and distributes it to the external TestFlight group `peeps`.
+- **Desktop:** `desktop-publish` undrafts `vX.Y.Z` as the latest stable release.
+- **Android:** `android-publish` creates `mobile-android-vX.Y.Z` from the build's APK artifact and refreshes `mobile-android-latest`.
+- **iOS:** the `ios` job uploads a new build of `X.Y.Z` with `build_and_upload`; `ios-distribute` then runs the `distribute_testflight` lane, which hands that build to the external TestFlight group `peeps`.
+
+If the suite fails, the staged builds stay unpublished: the next run for the same version replaces the desktop draft, and the internal TestFlight build is simply superseded.
 
 Last, the `fast-forward-main` job moves `main` to the promoted commit (with both apps, the newer of the two rc commits), never by force: a fast-forward when `main` is behind it, otherwise a merge commit on `main` (after a sync PR left one there). If `main` already contains it, nothing moves.
 
@@ -72,9 +74,9 @@ Last, the `fast-forward-main` job moves `main` to the promoted commit (with both
 
 The desktop release is assembled as a **draft**:
 
-1. `build-win` runs `create-draft-release.mjs` and uploads the Windows x64 files.
-2. The arm64 and macOS jobs upload into the same draft.
-3. The `publish` job runs `verify-release-required-assets.mjs --platforms=mac,win,win-arm64`, then undrafts the release.
+1. The `draft` job checks the version and runs `create-draft-release.mjs`.
+2. The Windows x64, Windows arm64 and macOS jobs build in parallel and upload into that draft.
+3. The `publish` action (`.github/actions/publish-desktop-release`) runs `verify-release-required-assets.mjs --platforms=mac,win,win-arm64`, then undrafts the release. A beta runs it inside the desktop workflow; a promote calls the workflow with `publish: false` and runs it in `desktop-publish` after the e2e suite.
 
 The updater never sees a release that is missing a platform's manifest. If a leg fails, nothing is published: re-run the failed jobs. A later run for the same version deletes the stale draft before it starts.
 

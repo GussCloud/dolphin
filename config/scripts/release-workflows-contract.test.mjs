@@ -25,18 +25,26 @@ describe('release workflows', () => {
     expect(workflow('dolphin-windows-release').on.workflow_dispatch).toBeUndefined()
   })
 
-  it('publishes the desktop release only after every leg uploaded', () => {
-    const { jobs } = workflow('dolphin-windows-release')
-    expect(jobs.publish.needs).toEqual(['build-win', 'build-win-arm64', 'build-mac'])
-    const steps = jobs.publish.steps.map((step) => step.run ?? '').join('\n')
+  it('builds every desktop leg in parallel into one draft, published only after all uploaded', () => {
+    const { jobs, on } = workflow('dolphin-windows-release')
+    const createDraft = jobs.draft.steps.find(
+      (step) => step.name === 'Create the draft GitHub release'
+    )
+    expect(createDraft.run).toContain('create-draft-release.mjs')
+    for (const leg of ['build-win', 'build-win-arm64', 'build-mac']) {
+      expect(jobs[leg].needs, leg).toBe('draft')
+      expect(jobs[leg].env.TAG, leg).toBe('${{ needs.draft.outputs.tag }}')
+    }
+    expect(jobs.publish.needs).toEqual(['draft', 'build-win', 'build-win-arm64', 'build-mac'])
+    expect(jobs.publish.if).toContain('inputs.publish')
+    expect(on.workflow_call.inputs.publish.default).toBe(true)
+    expect(jobs.publish.steps.at(-1).uses).toBe('./.github/actions/publish-desktop-release')
+    const action = parse(readFileSync('.github/actions/publish-desktop-release/action.yml', 'utf8'))
+    const steps = action.runs.steps.map((step) => step.run ?? '').join('\n')
     expect(steps).toContain(
       'verify-release-required-assets.mjs "$TAG" --platforms=mac,win,win-arm64'
     )
     expect(steps).toContain('--prerelease --latest=false')
-    const createDraft = jobs['build-win'].steps.find(
-      (step) => step.name === 'Create the draft GitHub release'
-    )
-    expect(createDraft.run).toContain('create-draft-release.mjs')
   })
 
   it.each([
@@ -66,7 +74,6 @@ describe('release workflows', () => {
     expect(
       resolve.match(/verify-release-commit\.mjs "\$sha" --branch develop --require-checks/g)
     ).toHaveLength(2)
-    expect(jobs.ios.with.distribute_external).toBe(true)
   })
 
   it('passes every input a called workflow requires', () => {
@@ -113,14 +120,39 @@ describe('release workflows', () => {
     ])
   })
 
-  it('runs the whole e2e suite on the promoted commit before any build', () => {
+  it('publishes nothing from a promote until the whole e2e suite passed on the promoted commit', () => {
     const { jobs } = workflow('release-promote')
     expect(jobs.e2e.uses).toBe('./.github/workflows/e2e.yml')
     expect(jobs.e2e.with).toEqual({ ref: '${{ needs.resolve.outputs.target_sha }}' })
     expect(jobs.e2e_wsl.uses).toBe('./.github/workflows/windows-wsl-e2e.yml')
-    for (const build of ['desktop', 'android', 'ios']) {
-      expect(jobs[build].needs).toEqual(expect.arrayContaining(['approve', 'e2e', 'e2e_wsl']))
+    // Why the builds may run beside the suite: they only stage, never publish.
+    expect(jobs.desktop.with.publish).toBe(false)
+    expect(jobs.android.with.publish_github_release).toBe(false)
+    expect(jobs.ios.with).not.toHaveProperty('distribute_external')
+    const publishers = {
+      'desktop-publish': 'desktop',
+      'android-publish': 'android',
+      'ios-distribute': 'ios'
     }
+    for (const [job, build] of Object.entries(publishers)) {
+      expect(jobs[job].needs, job).toEqual(expect.arrayContaining(['e2e', 'e2e_wsl', build]))
+      // Why no condition: always() or !failure() would run it after a failed suite or build.
+      expect(jobs[job].if, job).toBeUndefined()
+    }
+    const distribute = jobs['ios-distribute'].steps.map((step) => step.run ?? '').join('\n')
+    expect(distribute).toContain('fastlane ios distribute_testflight')
+    const androidPublish = jobs['android-publish'].steps.map((step) => step.uses ?? '')
+    expect(androidPublish).toContain('./.github/actions/publish-android-release')
+  })
+
+  it('beta still publishes inside the platform workflows', () => {
+    const { jobs } = workflow('release-beta')
+    expect(jobs.desktop.with).not.toHaveProperty('publish')
+    expect(jobs.android.with).not.toHaveProperty('publish_github_release')
+    const android = workflow('dolphin-android-release').jobs['build-android'].steps
+    expect(android.find((step) => step.name === 'Publish GitHub release').uses).toBe(
+      './.github/actions/publish-android-release'
+    )
   })
 
   it('runs the whole suite on develop twice a day and reports failures in one issue', () => {
@@ -143,8 +175,15 @@ describe('release workflows', () => {
   it('moves main after a promote, never by force', () => {
     const { jobs } = workflow('release-promote')
     const job = jobs['fast-forward-main']
-    // Why e2e in needs: a failed suite skips the builds, and a skipped build is not a failure.
-    expect(job.needs).toEqual(['resolve', 'e2e', 'e2e_wsl', 'desktop', 'android', 'ios'])
+    // Why e2e in needs: a failed suite skips the publish jobs, and a skipped job is not a failure.
+    expect(job.needs).toEqual([
+      'resolve',
+      'e2e',
+      'e2e_wsl',
+      'desktop-publish',
+      'android-publish',
+      'ios-distribute'
+    ])
     expect(job.permissions).toEqual({ contents: 'write' })
     const run = job.steps.map((step) => step.run ?? '').join('\n')
     expect(run).toContain('git push origin "$new_main:refs/heads/main"')
