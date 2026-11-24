@@ -1,4 +1,5 @@
 import type { WebContents } from 'electron'
+import { holdGuestRendering } from './guest-rendering-hold'
 
 type DebuggerLeaseState = {
   attachedByLease: boolean
@@ -9,9 +10,17 @@ export type ElectronDebuggerLease = {
   release: () => void
 }
 
+export type ElectronDebuggerLeaseOptions = {
+  // Why: CDP work on a hidden guest needs frames and timers; only a lease that outlives its work opts out.
+  holdRendering?: boolean
+}
+
 const debuggerLeases = new WeakMap<WebContents, DebuggerLeaseState>()
 
-export function acquireElectronDebugger(webContents: WebContents): ElectronDebuggerLease {
+export function acquireElectronDebugger(
+  webContents: WebContents,
+  { holdRendering = true }: ElectronDebuggerLeaseOptions = {}
+): ElectronDebuggerLease {
   if (webContents.isDestroyed()) {
     throw new Error('Browser tab is no longer available')
   }
@@ -30,6 +39,7 @@ export function acquireElectronDebugger(webContents: WebContents): ElectronDebug
 
   const owner = Symbol('electron-debugger-lease')
   state.owners.add(owner)
+  const releaseRendering = holdRendering ? holdGuestRendering(webContents) : () => {}
   let released = false
 
   return {
@@ -38,6 +48,7 @@ export function acquireElectronDebugger(webContents: WebContents): ElectronDebug
         return
       }
       released = true
+      releaseRendering()
       state.owners.delete(owner)
       if (state.owners.size > 0) {
         return

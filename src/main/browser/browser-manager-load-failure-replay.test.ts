@@ -82,7 +82,9 @@ describe('browserManager', () => {
       setBackgroundThrottling: vi.fn(),
       setWindowOpenHandler: vi.fn(),
       on: vi.fn(),
+      once: vi.fn(),
       off: vi.fn(),
+      removeListener: vi.fn(),
       getURL: vi.fn(() => 'https://localhost:3443/')
     }
     webContentsFromIdMock.mockReturnValue(offscreenGuest)

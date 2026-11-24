@@ -19,6 +19,9 @@ import { pipePluginWorkerOutput } from './plugin-worker-output-buffer'
 const PLUGIN_WORKER_SHUTDOWN_GRACE_MS = 2_000
 const PLUGIN_WORKER_EVENT_TIMEOUT_MS = 5 * 60_000
 const PLUGIN_WORKER_MAX_PENDING_EVENTS = 64
+// Why 512 MB: third-party code gets headroom over the AI vault scanner's 384 MB, yet a leak aborts
+// this worker (an exit the supervisor restarts with backoff) long before V8's multi-GB default swaps the host.
+export const PLUGIN_WORKER_MAX_OLD_SPACE_MB = 512
 
 export type PluginWorkerLogSink = (level: 'info' | 'warn' | 'error', line: string) => void
 
@@ -92,8 +95,8 @@ export async function startPluginWorker(
     // which can carry shell-exported secrets into third-party code.
     env: withInheritedCompileCache(buildPluginWorkerEnv()),
     // Why: inspector/loader flags from Dolphin's own launch must never execute
-    // inside third-party plugin workers.
-    execArgv: [],
+    // inside third-party plugin workers; only the heap ceiling is passed.
+    execArgv: [`--max-old-space-size=${PLUGIN_WORKER_MAX_OLD_SPACE_MB}`],
     // Why: the protocol permits structured-clone values. Node's default JSON
     // fork serialization rejects BigInt, cycles, maps, and typed arrays.
     serialization: 'advanced',

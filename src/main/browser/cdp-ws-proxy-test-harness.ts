@@ -32,6 +32,9 @@ export type MockWebContents = {
     reloadIgnoringCache: Mock<() => void>
     getTitle: Mock<() => string>
     getURL: Mock<() => string>
+    setBackgroundThrottling: Mock<(allowed: boolean) => void>
+    once: Mock<(event: string, handler: DebuggerListener) => void>
+    removeListener: Mock<(event: string, handler: DebuggerListener) => void>
   }
   listeners: Map<string, DebuggerListener[]>
   destroy: () => void
@@ -79,7 +82,10 @@ export function createMockWebContents(): MockWebContents {
       reload: vi.fn(),
       reloadIgnoringCache: vi.fn(),
       getTitle: vi.fn(() => 'Example'),
-      getURL: vi.fn(() => 'https://example.com')
+      getURL: vi.fn(() => 'https://example.com'),
+      setBackgroundThrottling: vi.fn(),
+      once: vi.fn(),
+      removeListener: vi.fn()
     },
     listeners,
     destroy() {

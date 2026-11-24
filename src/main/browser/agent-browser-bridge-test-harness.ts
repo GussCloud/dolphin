@@ -54,7 +54,9 @@ export type MockWebContents = {
   loadURL: Mock<(nextUrl: string) => Promise<void>>
   isLoading: Mock<() => boolean>
   on: Mock<(event: string, listener: MockEmitterListener) => void>
+  once: Mock<(event: string, listener: MockEmitterListener) => void>
   removeListener: Mock<(event: string, listener: MockEmitterListener) => void>
+  setBackgroundThrottling: Mock<(allowed: boolean) => void>
   isDestroyed: () => boolean
   isCrashed: () => boolean
   invalidate: Mock<() => void>
@@ -77,7 +79,9 @@ export function mockWebContents(
     }),
     isLoading: vi.fn(() => false),
     on: vi.fn(),
+    once: vi.fn(),
     removeListener: vi.fn(),
+    setBackgroundThrottling: vi.fn(),
     isDestroyed: () => false,
     isCrashed: () => false,
     invalidate: vi.fn(),

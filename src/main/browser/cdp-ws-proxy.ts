@@ -10,12 +10,15 @@ import { CdpDomFocusReplay } from './cdp-dom-focus-replay'
 import { CdpPageCaptureCommands } from './cdp-page-capture-commands'
 import type { CapturePaintHold } from './cdp-screenshot'
 import { parseCdpClientCommand } from './cdp-client-command'
+import { holdGuestRendering } from './guest-rendering-hold'
 
 export class CdpWsProxy {
   private httpServer: Server | null = null
   private wss: WebSocketServer | null = null
   private client: WebSocket | null = null
   private detachClientListeners: (() => void) | null = null
+  // Why: the agent daemon stays connected only while it is in use (it idles out), unlike the proxy.
+  private releaseClientRendering: (() => void) | null = null
   private port = 0
   private readonly responder = new CdpClientResponseWriter(() => this.client)
   private readonly sessions = new CdpSyntheticSessionRegistry()
@@ -72,8 +75,11 @@ export class CdpWsProxy {
         failStart(error)
       }
       this.wss.on('connection', (ws) => {
+        // Why: take the new hold before closeClient drops the old one, so a replacement never re-throttles.
+        const releaseRendering = holdGuestRendering(this.webContents)
         this.closeClient()
         this.client = ws
+        this.releaseClientRendering = releaseRendering
         // Why: an unhandled 'error' (bad UTF-8, bad opcode) crashes main; it must survive listener detach.
         ws.on('error', () => ws.terminate())
         const onMessage = (data: WebSocket.RawData): void => {
@@ -84,6 +90,7 @@ export class CdpWsProxy {
           if (this.client === ws) {
             this.clearClientState()
             this.client = null
+            this.releaseRenderingHold()
           }
         }
         const detach = (): void => {
@@ -133,11 +140,18 @@ export class CdpWsProxy {
     this.detachClientListeners?.()
     this.detachClientListeners = null
     this.client = null
+    this.releaseRenderingHold()
     this.clearClientState()
     if (client) {
       this.responder.forgetClient(client)
     }
     client?.close()
+  }
+
+  private releaseRenderingHold(): void {
+    const release = this.releaseClientRendering
+    this.releaseClientRendering = null
+    release?.()
   }
 
   private clearClientState(): void {
