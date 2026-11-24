@@ -141,6 +141,7 @@ describe('Claude dangerous-rm no-timeout env on PTY spawn', () => {
     const sshSpawn = vi.fn(async (_options: { env?: Record<string, string> }) => ({
       id: 'remote-pty'
     }))
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: spawn is the only provider call this test reaches.
     registerSshPtyProvider('ssh-rm', {
       spawn: sshSpawn,
       write: vi.fn(),
@@ -162,7 +163,6 @@ describe('Claude dangerous-rm no-timeout env on PTY spawn', () => {
       attach: vi.fn(),
       getDefaultShell: vi.fn(),
       getProfiles: vi.fn()
-      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: spawn is the only provider call this test reaches.
     } as never)
     handlers.clear()
     // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the shared pty IPC harness window implements only the webContents calls spawn uses.
