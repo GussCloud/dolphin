@@ -154,9 +154,9 @@ describe('PR E2E gate contract', () => {
     expect(e2eWorkflow.jobs['changed-e2e'].if).toBe("inputs.test_files != ''")
     expect(e2eWorkflow.jobs['changed-e2e'].strategy).toBeUndefined()
     expect(e2eWorkflow.jobs.e2e.strategy.matrix.include).toEqual(
-      Array.from({ length: 14 }, (_, index) => ({
-        shard: `${index + 1}/14`,
-        shard_name: `${index + 1}-of-14`
+      Array.from({ length: 10 }, (_, index) => ({
+        shard: `${index + 1}/10`,
+        shard_name: `${index + 1}-of-10`
       }))
     )
     const changedRun = e2eWorkflow.jobs['changed-e2e'].steps.find(
@@ -188,7 +188,7 @@ describe('PR E2E gate contract', () => {
       step.run?.includes('tests/e2e/worktree-switch-first-paint.spec.ts')
     )
     expect(steps).toHaveLength(1)
-    expect(steps[0].if).toBe("matrix.shard == '1/14'")
+    expect(steps[0].if).toBe("matrix.shard == '1/10'")
     expect(steps[0].run).toContain('xvfb-run --auto-servernum')
     expect(steps[0].run).toContain('--project=electron-headful --workers=1')
   })

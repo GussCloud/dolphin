@@ -37,11 +37,11 @@ it('gives every removed SSH spec a dedicated owner even for test-only edits', ()
   ])
 })
 
-it('runs all four isolated shards and the special SSH suites exactly once', () => {
-  expect(job.strategy.matrix.shard).toEqual([1, 2, 3, 4])
+it('runs all three isolated shards and the special SSH suites exactly once', () => {
+  expect(job.strategy.matrix.shard).toEqual([1, 2, 3])
   expect(job.strategy['fail-fast']).toBe(false)
   const remaining = job.steps.find((step) => step.name === 'Run remaining Docker SSH E2E')
-  expect(remaining.run).toContain('pnpm run test:e2e:ssh-docker --shard=${{ matrix.shard }}/4')
+  expect(remaining.run).toContain('pnpm run test:e2e:ssh-docker --shard=${{ matrix.shard }}/3')
   expect(remaining.if).toBe('always()')
   expect(remaining['continue-on-error']).toBeUndefined()
   expect(readRunner(runners[0])).toContain("'--workers=1'")
@@ -109,7 +109,7 @@ it('native Playwright shards preserve every SSH test and project exactly once', 
   const full = await discover()
   const sharded = []
   for (const index of job.strategy.matrix.shard) {
-    const selected = await discover([`--shard=${index}/4`])
+    const selected = await discover([`--shard=${index}/3`])
     expect(selected.length).toBeGreaterThan(0)
     sharded.push(...selected)
   }
