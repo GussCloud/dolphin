@@ -257,9 +257,12 @@ function readDaemonPidFiles(userDataDir: string): number[] {
     }
     try {
       const raw = readFileSync(path.join(daemonDir, entry), 'utf8').trim()
-      const parsed = JSON.parse(raw) as { pid?: unknown }
-      if (typeof parsed.pid === 'number' && Number.isInteger(parsed.pid)) {
-        pids.push(parsed.pid)
+      const parsed: unknown = JSON.parse(raw)
+      // Why both: a bare number is valid JSON, so the legacy plain-pid format never reaches the catch.
+      const pid =
+        typeof parsed === 'object' && parsed !== null && 'pid' in parsed ? parsed.pid : parsed
+      if (typeof pid === 'number' && Number.isInteger(pid)) {
+        pids.push(pid)
       }
     } catch {
       const pid = Number(readFileSync(path.join(daemonDir, entry), 'utf8').trim())
