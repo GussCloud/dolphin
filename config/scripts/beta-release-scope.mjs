@@ -75,6 +75,22 @@ export function changedFilesSince(tag, sha, { cwd = process.cwd() } = {}) {
   return output.split('\0').filter(Boolean)
 }
 
+/**
+ * The commit a promote should build: develop head when nothing the app ships changed since its rc
+ * (only tests, CI or docs), so the promote runs today's tests on the same app; otherwise the rc.
+ */
+export function promotionCommit(app, rcSha, headSha, { cwd = process.cwd() } = {}) {
+  if (rcSha === headSha) {
+    return rcSha
+  }
+  try {
+    git(['merge-base', '--is-ancestor', rcSha, headSha], cwd)
+  } catch {
+    return rcSha
+  }
+  return changedFilesSince(rcSha, headSha, { cwd }).some(DETECTORS[app]) ? rcSha : headSha
+}
+
 export function detectBetaScope(sha, { cwd = process.cwd(), log = console.log } = {}) {
   // Why first: describe reports "No names found" before it resolves the commit.
   git(['rev-parse', '--verify', '--quiet', `${sha}^{commit}`], cwd)
@@ -95,6 +111,19 @@ function main() {
   let scope
   if (appIndex !== -1) {
     scope = scopeForApp(args[appIndex + 1])
+  } else if (args[0] === '--promotion-commit') {
+    const [, app, rcSha, headSha] = args
+    if (!DETECTORS[app] || !rcSha || !headSha) {
+      throw new Error(
+        'Usage: beta-release-scope.mjs --promotion-commit <desktop|mobile> <rc-sha> <head-sha>'
+      )
+    }
+    const sha = promotionCommit(app, rcSha, headSha)
+    console.log(`sha=${sha}`)
+    if (process.env.GITHUB_OUTPUT) {
+      appendFileSync(process.env.GITHUB_OUTPUT, `sha=${sha}\n`)
+    }
+    return
   } else if (args[0] && !args[0].startsWith('--')) {
     scope = detectBetaScope(args[0])
   } else {

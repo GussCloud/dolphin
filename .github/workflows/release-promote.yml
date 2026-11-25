@@ -54,10 +54,12 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
+      # Why full history: promotion-commit diffs the rc commit against develop head.
       - name: Checkout develop
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           ref: develop
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Resolve the desktop release
@@ -75,7 +77,11 @@ jobs:
           RC_TAG: ${{ steps.desktop.outputs.rc_tag }}
         run: |
           set -euo pipefail
-          sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$RC_TAG" --jq .sha)"
+          rc_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$RC_TAG" --jq .sha)"
+          # Why develop head when allowed: a tests- or CI-only merge cuts no rc, so the rc commit would
+          # run stale tests against the same app.
+          sha="$(GITHUB_OUTPUT=/dev/null node config/scripts/beta-release-scope.mjs --promotion-commit desktop "$rc_sha" "$(git rev-parse HEAD)" | sed -n 's/^sha=//p')"
+          [[ "$sha" != "$rc_sha" ]] && echo "Nothing desktop ships changed since $RC_TAG; promoting develop head $sha."
           node config/scripts/verify-release-commit.mjs "$sha" --branch develop --require-checks
           echo "sha=$sha" >>"$GITHUB_OUTPUT"
 
@@ -93,7 +99,11 @@ jobs:
           RC_TAG: ${{ steps.mobile.outputs.rc_tag }}
         run: |
           set -euo pipefail
-          sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$RC_TAG" --jq .sha)"
+          rc_sha="$(gh api "repos/$GITHUB_REPOSITORY/commits/$RC_TAG" --jq .sha)"
+          # Why develop head when allowed: a tests- or CI-only merge cuts no rc, so the rc commit would
+          # run stale tests against the same app.
+          sha="$(GITHUB_OUTPUT=/dev/null node config/scripts/beta-release-scope.mjs --promotion-commit mobile "$rc_sha" "$(git rev-parse HEAD)" | sed -n 's/^sha=//p')"
+          [[ "$sha" != "$rc_sha" ]] && echo "Nothing mobile ships changed since $RC_TAG; promoting develop head $sha."
           node config/scripts/verify-release-commit.mjs "$sha" --branch develop --require-checks
           echo "sha=$sha" >>"$GITHUB_OUTPUT"
 

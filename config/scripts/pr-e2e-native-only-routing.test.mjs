@@ -2,6 +2,8 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
 import {
+  MAX_CHANGED_SPECS_ON_ONE_RUNNER,
+  changedE2eTestFiles,
   hasNativeImeSourceChange,
   selectChangedE2eSpecs,
   shouldRunChangedE2e,
@@ -51,6 +53,21 @@ describe('native-only PR E2E routing', () => {
       'tests/e2e/uses.spec.ts'
     ])
     expect(selectChangedE2eSpecs(['src/main/x.ts'], specs)).toEqual([])
+  })
+
+  it('sends a helper change that reaches most specs to the sharded suite, not one runner', () => {
+    const many = () =>
+      Array.from({ length: MAX_CHANGED_SPECS_ON_ONE_RUNNER + 1 }, (_, index) => ({
+        path: `tests/e2e/s${index}.spec.ts`,
+        source: "import { test } from './helpers/dolphin-app'"
+      }))
+    // Why empty: e2e.yml runs the full sharded suite when test_files is empty.
+    expect(changedE2eTestFiles(['tests/e2e/helpers/dolphin-app.ts'], many)).toBe('')
+    const few = () => many().slice(0, 2)
+    expect(changedE2eTestFiles(['tests/e2e/helpers/dolphin-app.ts'], few)).toBe(
+      JSON.stringify(['tests/e2e/s0.spec.ts', 'tests/e2e/s1.spec.ts'])
+    )
+    expect(filterStep.run).toContain('pr-e2e-source-routing.mjs --changed-specs')
   })
 
   it('selects only the e2e files the PR changed, ignoring the source they cover', () => {

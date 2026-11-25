@@ -74,6 +74,11 @@ describe('release workflows', () => {
     expect(
       resolve.match(/verify-release-commit\.mjs "\$sha" --branch develop --require-checks/g)
     ).toHaveLength(2)
+    // Why: a tests- or CI-only merge cuts no rc; the promote must still run develop's tests.
+    expect(
+      resolve.match(/beta-release-scope\.mjs --promotion-commit (desktop|mobile)/g)
+    ).toHaveLength(2)
+    expect(jobs.resolve.steps[0].with['fetch-depth']).toBe(0)
   })
 
   it('passes every input a called workflow requires', () => {

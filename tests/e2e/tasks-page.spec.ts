@@ -446,5 +446,20 @@ test.describe('Tasks page', () => {
     })
     await expect(input).toHaveValue('is:issue ratex')
     await expect(existingIssue).toBeVisible()
+
+    // Enter after the idle commit already ran (a pause, or a stalled runner) must not fetch again.
+    await resetTaskSearchRequestProbe(appPage)
+    await input.pressSequentially('y')
+    await expect
+      .poll(async () => readTaskSearchRequestProbe(appPage), {
+        timeout: TASK_SEARCH_PROBE_TIMEOUT_MS
+      })
+      .toEqual({ countQueries: ['is:issue ratexy'], fetchQueries: ['is:issue ratexy'] })
+    await input.press('Enter')
+    await appPage.waitForTimeout(TASK_SEARCH_SETTLE_MS)
+    expect(await readTaskSearchRequestProbe(appPage)).toEqual({
+      countQueries: ['is:issue ratexy'],
+      fetchQueries: ['is:issue ratexy']
+    })
   })
 })

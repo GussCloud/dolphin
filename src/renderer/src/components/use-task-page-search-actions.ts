@@ -21,6 +21,7 @@ export function useTaskPageSearchActions(model: TaskPageGitHubQuietRefreshModel)
     githubMode,
     taskSearchInput,
     setTaskSearchInput,
+    appliedTaskSearch,
     setAppliedTaskSearch,
     taskSearchInputRef,
     setActiveTaskPreset,
@@ -100,10 +101,15 @@ export function useTaskPageSearchActions(model: TaskPageGitHubQuietRefreshModel)
       githubItemsPreset: null,
       githubItemsQuery: scoped
     })
-    setTasksFiltering(true)
-    setTaskRefreshNonce((current) => current + 1)
+    // Why only for a new query: the idle commit may already have fetched this exact query, and a
+    // forced refresh on Enter would fetch it a second time.
+    if (scoped !== appliedTaskSearch) {
+      setTasksFiltering(true)
+      setTaskRefreshNonce((current) => current + 1)
+    }
   }, [
     activeGithubTaskKind,
+    appliedTaskSearch,
     setTaskResumeState,
     taskSearchInput,
     setTasksFiltering,

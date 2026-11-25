@@ -122,9 +122,9 @@ jobs:
           BASE="${{ github.event.pull_request.base.sha }}"
           HEAD="${{ github.event.pull_request.head.sha }}"
           CHANGED="$(git diff --name-only --diff-filter=AMCR --merge-base "$BASE" "$HEAD")"
-          # Why only the PR's own specs: the whole suite, area routes included, runs on develop
-          # twice a day and before every promote (e2e-develop.yml), so a PR waits only on the
-          # e2e its change wrote or edited.
+          # Why only the PR's own specs: the whole suite runs on develop after every merge and before
+          # every promote (e2e-develop.yml), so a PR waits only on the e2e it wrote or edited. An
+          # empty list (a shared helper reaching most specs) runs the sharded suite instead.
           TEST_FILES_JSON="$(printf '%s\n' "$CHANGED" | node config/scripts/pr-e2e-source-routing.mjs --changed-specs)"
           echo "test_files=$TEST_FILES_JSON" >> "$GITHUB_OUTPUT"
           WSL_LANE_CHANGED="$(printf '%s\n' "$CHANGED" | node config/scripts/pr-e2e-source-routing.mjs --changed-wsl)"
