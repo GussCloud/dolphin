@@ -155,3 +155,31 @@ jobs:
       ref: ${{ needs.resolve.outputs.sha }}
       release_version: ${{ needs.resolve.outputs.mobile_version }}
     secrets: inherit
+
+  # Why: a promote of this rc hands this exact TestFlight build to external testers instead of
+  # compiling the same commit again (release-promote.yml, ios-reuse).
+  ios-record:
+    needs: [resolve, android, ios]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+          persist-credentials: false
+
+      - name: Record the TestFlight build on the mobile rc release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.resolve.outputs.mobile_tag }}
+          VERSION: ${{ needs.ios.outputs.version }}
+          BUILD_NUMBER: ${{ needs.ios.outputs.build_number }}
+          SHA: ${{ needs.resolve.outputs.sha }}
+        run: |
+          set -euo pipefail
+          record="$RUNNER_TEMP/ios-testflight-build.json"
+          node config/scripts/ios-beta-build-record.mjs write "$VERSION" "$BUILD_NUMBER" "$SHA" "$record"
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" "$record"

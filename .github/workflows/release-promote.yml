@@ -2,10 +2,12 @@ name: Release Promote
 
 # Promotes a published beta to the official release; docs/reference/release-process.md is the
 # operator guide. After approval in the `production` environment it rebuilds THE SAME COMMIT the rc
-# tag points at, versioned X.Y.Z, while the full e2e suite runs; nothing is published until it passes:
+# tag points at, versioned X.Y.Z. Nothing is published until the full e2e suite is green on that
+# commit: the run E2E develop already made of it counts, otherwise the suite runs here.
 # Desktop: vX.Y.Z, the latest stable GitHub release the in-app updater serves.
-# Mobile: APK as mobile-android-vX.Y.Z (and mobile-android-latest), and an iOS build distributed to
-# the external TestFlight group. App Store review submission stays manual.
+# Mobile: APK as mobile-android-vX.Y.Z (and mobile-android-latest), and the iOS build the beta
+# uploaded (compiled again only when that one cannot be used) distributed to the external
+# TestFlight group. App Store review submission stays manual.
 # Once published, main is moved to the promoted commit: main is what was released.
 
 on:
@@ -30,6 +32,16 @@ on:
         required: false
         default: latest
         type: string
+      force_e2e:
+        description: Run the e2e suite here even when E2E develop already passed on this commit
+        required: false
+        default: false
+        type: boolean
+      rebuild_ios:
+        description: Compile the iOS build again instead of distributing the one the beta uploaded
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -43,7 +55,13 @@ jobs:
     if: github.repository == 'GussCloud/dolphin'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Why actions: the green-run lookup reads E2E develop's runs and their record artifact.
+    permissions:
+      contents: read
+      actions: read
     outputs:
+      e2e_green_run: ${{ steps.e2e_green.outputs.url }}
+      ios_beta_build: ${{ steps.ios_build.outputs.build_number }}
       desktop_version: ${{ steps.desktop.outputs.version }}
       desktop_sha: ${{ steps.desktop_commit.outputs.sha }}
       mobile_version: ${{ steps.mobile.outputs.marketing_version }}
@@ -106,6 +124,26 @@ jobs:
           [[ "$sha" != "$rc_sha" ]] && echo "Nothing mobile ships changed since $RC_TAG; promoting develop head $sha."
           node config/scripts/verify-release-commit.mjs "$sha" --branch develop --require-checks
           echo "sha=$sha" >>"$GITHUB_OUTPUT"
+          echo "rc_sha=$rc_sha" >>"$GITHUB_OUTPUT"
+
+      # Why the rc's build even when develop head is promoted: head is only promoted when nothing
+      # mobile ships changed since the rc, so the rc's binary is the same app.
+      # Why a missing record is not an error: the ios job then compiles the build as before.
+      - name: Find the TestFlight build the beta uploaded
+        id: ios_build
+        if: ${{ inputs.app != 'desktop' && !inputs.rebuild_ios }}
+        env:
+          RC_TAG: ${{ steps.mobile.outputs.rc_tag }}
+          RC_SHA: ${{ steps.mobile_commit.outputs.rc_sha }}
+          VERSION: ${{ steps.mobile.outputs.marketing_version }}
+        run: |
+          set -euo pipefail
+          record="$RUNNER_TEMP/ios-record/ios-testflight-build.json"
+          if gh release download "$RC_TAG" --repo "$GITHUB_REPOSITORY" --pattern ios-testflight-build.json --dir "$RUNNER_TEMP/ios-record" 2>/dev/null; then
+            node config/scripts/ios-beta-build-record.mjs read "$record" --version "$VERSION" --sha "$RC_SHA"
+          else
+            echo "$RC_TAG carries no TestFlight build record; the iOS build will be compiled."
+          fi
 
       # Why the newer of the two: both rc commits are on develop, so it contains the other; the full
       # e2e suite runs on it and main moves to it.
@@ -123,8 +161,19 @@ jobs:
           fi
           echo "sha=$target" >>"$GITHUB_OUTPUT"
 
+      # Why reuse it: E2E develop runs this same suite, with the same retry, on every merge, so a
+      # second run on the same commit proves nothing new and holds 14 runners for ~15 minutes.
+      - name: Look for an E2E develop run that already passed on this commit
+        id: e2e_green
+        if: ${{ !inputs.force_e2e }}
+        env:
+          SHA: ${{ steps.target.outputs.sha }}
+        run: node config/scripts/green-e2e-develop-run.mjs "$SHA"
+
       - name: Summary
         env:
+          E2E_GREEN_RUN: ${{ steps.e2e_green.outputs.url }}
+          IOS_BETA_BUILD: ${{ steps.ios_build.outputs.build_number }}
           DESKTOP_RC: ${{ steps.desktop.outputs.rc_tag }}
           DESKTOP: ${{ steps.desktop.outputs.tag }}
           DESKTOP_SHA: ${{ steps.desktop_commit.outputs.sha }}
@@ -136,6 +185,12 @@ jobs:
             echo "### Promotion awaiting approval"
             [[ -n "$DESKTOP" ]] && echo "- Desktop: \`$DESKTOP_RC\` → \`$DESKTOP\` at \`$DESKTOP_SHA\`"
             [[ -n "$MOBILE" ]] && echo "- Mobile: \`$MOBILE_RC\` → \`$MOBILE\` at \`$MOBILE_SHA\`"
+            [[ -n "$IOS_BETA_BUILD" ]] && echo "- iOS: distributing the beta's TestFlight build $IOS_BETA_BUILD if it is still available"
+            if [[ -n "$E2E_GREEN_RUN" ]]; then
+              echo "- e2e: already green on this commit ($E2E_GREEN_RUN); not run again"
+            else
+              echo "- e2e: the full suite runs in this promote"
+            fi
             true
           } >>"$GITHUB_STEP_SUMMARY"
 
@@ -151,9 +206,11 @@ jobs:
         run: echo "Promotion approved by $GITHUB_TRIGGERING_ACTOR."
 
   # Why in parallel with the builds: they only stage (desktop draft, APK artifact, internal
-  # TestFlight upload), and every *-publish job below waits for this suite to pass.
+  # TestFlight upload), and every *-publish job below waits for e2e-gate.
+  # Why skipped with a green run: resolve found E2E develop's passing run of this exact commit.
   e2e:
     needs: resolve
+    if: needs.resolve.outputs.e2e_green_run == ''
     permissions:
       contents: read
     uses: ./.github/workflows/e2e.yml
@@ -164,12 +221,37 @@ jobs:
 
   e2e_wsl:
     needs: resolve
+    if: needs.resolve.outputs.e2e_green_run == ''
     permissions:
       contents: read
     uses: ./.github/workflows/windows-wsl-e2e.yml
     with:
       ref: ${{ needs.resolve.outputs.target_sha }}
       retries: '1'
+
+  # Why a job of its own: the suite is either run here or already proven, and a skipped job makes
+  # every job that needs it skip too, so the publish jobs read this one verdict instead.
+  e2e-gate:
+    needs: [resolve, e2e, e2e_wsl]
+    if: ${{ !cancelled() && needs.resolve.result == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require a green e2e suite on the promoted commit
+        env:
+          GREEN_RUN: ${{ needs.resolve.outputs.e2e_green_run }}
+          SUITE: ${{ needs.e2e.result }}
+          WSL: ${{ needs.e2e_wsl.result }}
+        run: |
+          set -euo pipefail
+          if [[ "$SUITE" == success && "$WSL" == success ]]; then
+            echo "The full suite passed in this run."
+          elif [[ -n "$GREEN_RUN" && "$SUITE" == skipped && "$WSL" == skipped ]]; then
+            echo "The full suite already passed on this commit: $GREEN_RUN"
+          else
+            echo "::error::No green e2e suite for the promoted commit (suite $SUITE, WSL $WSL)."
+            exit 1
+          fi
 
   desktop:
     needs: [resolve, approve]
@@ -199,18 +281,64 @@ jobs:
       publish_github_release: false
     secrets: inherit
 
-  ios:
+  # Why before the build: the beta's build may have expired or failed processing since; only a
+  # build TestFlight still holds is distributed, anything else falls back to compiling one.
+  ios-reuse:
     needs: [resolve, approve]
-    if: inputs.app != 'desktop'
+    if: inputs.app != 'desktop' && needs.resolve.outputs.ios_beta_build != ''
+    runs-on: macos-15
+    timeout-minutes: 15
+    outputs:
+      build_number: ${{ steps.verify.outcome == 'success' && needs.resolve.outputs.ios_beta_build || '' }}
+    env:
+      BUNDLE_FROZEN: 'true'
+      FASTLANE_SKIP_UPDATE_CHECK: '1'
+      FASTLANE_HIDE_CHANGELOG: '1'
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.resolve.outputs.mobile_sha }}
+          persist-credentials: false
+
+      - name: Setup Ruby and fastlane
+        uses: ruby/setup-ruby@be3c7df29b3349ec6bcfc6b4792f1cf9f5237d18 # v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: mobile
+
+      # Why continue-on-error: a build that cannot be reused is not a failed promote.
+      - name: Check the beta's build is still in TestFlight
+        id: verify
+        continue-on-error: true
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+          VERSION: ${{ needs.resolve.outputs.mobile_version }}
+          BUILD_NUMBER: ${{ needs.resolve.outputs.ios_beta_build }}
+        run: bundle exec fastlane ios verify_testflight_build version:"$VERSION" build_number:"$BUILD_NUMBER"
+
+  # Why !cancelled(): ios-reuse is skipped when the beta left no record, and a skipped need would
+  # otherwise skip this build too.
+  ios:
+    needs: [resolve, approve, ios-reuse]
+    if: ${{ !cancelled() && needs.approve.result == 'success' && inputs.app != 'desktop' && needs.ios-reuse.outputs.build_number == '' }}
     uses: ./.github/workflows/dolphin-ios-release.yml
     with:
       ref: ${{ needs.resolve.outputs.mobile_sha }}
       release_version: ${{ needs.resolve.outputs.mobile_version }}
     secrets: inherit
 
-  # Why no always()/!failure() on the three publish jobs: a failed e2e or build must skip them.
+  # Why each publish job names every result it depends on: e2e and ios may be skipped on purpose, so
+  # the default "every need succeeded" no longer holds, and a failed gate or build must still skip.
   desktop-publish:
-    needs: [resolve, e2e, e2e_wsl, desktop]
+    needs: [resolve, approve, e2e-gate, desktop]
+    if: ${{ !cancelled() && needs.approve.result == 'success' && needs.e2e-gate.result == 'success' && needs.desktop.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -229,7 +357,8 @@ jobs:
           github-token: ${{ github.token }}
 
   android-publish:
-    needs: [resolve, e2e, e2e_wsl, android]
+    needs: [resolve, approve, e2e-gate, android]
+    if: ${{ !cancelled() && needs.approve.result == 'success' && needs.e2e-gate.result == 'success' && needs.android.result == 'success' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -257,10 +386,14 @@ jobs:
           target-sha: ${{ needs.resolve.outputs.mobile_sha }}
           github-token: ${{ github.token }}
 
-  # Why distribute_only: the ios job already uploaded this build; this only waits for processing and
-  # hands that exact build to the external TestFlight group.
+  # Why distribute_only: the build is already uploaded, by the beta (ios-reuse) or by the ios job;
+  # this only waits for processing and hands that exact build to the external TestFlight group.
   ios-distribute:
-    needs: [resolve, e2e, e2e_wsl, ios]
+    needs: [resolve, approve, e2e-gate, ios-reuse, ios]
+    if: >-
+      ${{ !cancelled() && needs.approve.result == 'success' && needs.e2e-gate.result == 'success' &&
+      (needs.ios.result == 'success' ||
+      (needs.ios.result == 'skipped' && needs.ios-reuse.outputs.build_number != '')) }}
     runs-on: macos-15
     timeout-minutes: 90
     env:
@@ -289,15 +422,20 @@ jobs:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
-          VERSION: ${{ needs.ios.outputs.version }}
-          BUILD_NUMBER: ${{ needs.ios.outputs.build_number }}
+          VERSION: ${{ needs.ios.outputs.version || needs.resolve.outputs.mobile_version }}
+          BUILD_NUMBER: ${{ needs.ios.outputs.build_number || needs.ios-reuse.outputs.build_number }}
         run: bundle exec fastlane ios distribute_testflight version:"$VERSION" build_number:"$BUILD_NUMBER"
 
   # Why after every publish: main must only ever point at something that was actually published.
-  # Why e2e in needs: a failed suite skips the publish jobs, and a skipped job is not a failure.
+  # Why each app's publish result is named: a publish job skipped for any reason is not a failure,
+  # so "nothing failed" alone would move main past an app that was never published.
   fast-forward-main:
-    needs: [resolve, e2e, e2e_wsl, desktop-publish, android-publish, ios-distribute]
-    if: ${{ !cancelled() && !failure() }}
+    needs: [resolve, e2e-gate, desktop-publish, android-publish, ios-distribute]
+    if: >-
+      ${{ !cancelled() && needs.e2e-gate.result == 'success' &&
+      (inputs.app == 'mobile' || needs.desktop-publish.result == 'success') &&
+      (inputs.app == 'desktop' ||
+      (needs.android-publish.result == 'success' && needs.ios-distribute.result == 'success')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

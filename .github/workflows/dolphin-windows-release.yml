@@ -43,7 +43,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Why its own job: every leg uploads into this draft, so with it created up front the three
+  # Why its own job: every leg uploads into this draft, so with it created up front the four
   # builds run in parallel instead of arm64 and mac waiting on build-win.
   draft:
     if: github.repository == 'GussCloud/dolphin'
@@ -178,6 +178,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
         env:
           DOLPHIN_BUILD_COMMIT: ${{ inputs.ref }}
+          # Why: ensure-native-runtime just prepared these modules for this host's Electron, so the
+          # beforeBuild hook probes them instead of compiling them again (as pr.yml's package job does).
+          DOLPHIN_REUSE_PREPARED_NATIVE_RUNTIME: '1'
 
       # Why assert before publishing: the updater resolves a tag, then fetches latest.yml from it;
       # a release with the installer but no manifest is one updates 404 on.
@@ -242,6 +245,7 @@ jobs:
           install: false
 
       - name: Setup Node.js
+        id: node
         uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version-file: package.json
@@ -259,6 +263,39 @@ jobs:
           key: electron-builder-win-arm64-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
             electron-builder-win-arm64-
+
+      # Why: this job runs node-gyp about nine times and each run spent ~47 s finding Visual Studio
+      # through PowerShell on this runner. With VCINSTALLDIR set node-gyp takes the install from the
+      # environment, as in a Developer Command Prompt; the values are the ones vcvars would export.
+      # Why only a warning: without them node-gyp falls back to its own, slower, detection.
+      - name: Tell node-gyp where Visual Studio is
+        shell: pwsh
+        run: |
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+          $vs = $null
+          if (Test-Path $vswhere) {
+            $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.ARM64 -format json |
+              ConvertFrom-Json | Select-Object -First 1
+          }
+          $sdk = Get-ChildItem (Join-Path ${env:ProgramFiles(x86)} 'Windows Kits\10\Include') -Directory -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^10\.0\.\d+\.\d+$' } |
+            Sort-Object { [version]$_.Name } | Select-Object -Last 1
+          if (-not $vs -or -not $sdk) {
+            Write-Host '::warning::Visual Studio or the Windows SDK was not found where expected; node-gyp will detect them itself.'
+            exit 0
+          }
+          "VCINSTALLDIR=$($vs.installationPath)\VC\" >> $env:GITHUB_ENV
+          "VSCMD_VER=$($vs.installationVersion)" >> $env:GITHUB_ENV
+          "WindowsSDKVersion=$($sdk.Name)\" >> $env:GITHUB_ENV
+          Write-Host "Visual Studio $($vs.installationVersion) at $($vs.installationPath), Windows SDK $($sdk.Name)"
+
+      # Why: node-gyp otherwise downloads and unpacks the Node headers on every run (~1 min here).
+      # Why not hashFiles('package.json'): the version stamp above rewrites it for every release.
+      - name: Cache node-gyp headers
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: ~\AppData\Local\node-gyp\Cache
+          key: node-gyp-headers-win-arm64-${{ steps.node.outputs.node-version }}
 
       # Why retried: electron's postinstall pulls its binary from GitHub release assets, which
       # returns transient 504s.
@@ -294,6 +331,8 @@ jobs:
         env:
           DOLPHIN_BUILD_COMMIT: ${{ inputs.ref }}
           DOLPHIN_WIN_ARM64_RELEASE: '1'
+          # Why: same as the x64 leg; on this runner each skipped node-gyp run is ~1 min.
+          DOLPHIN_REUSE_PREPARED_NATIVE_RUNTIME: '1'
 
       # Why refuse latest.yml: uploading it would replace x64's manifest and move x64 users onto arm64.
       - name: Collect release assets
@@ -328,12 +367,26 @@ jobs:
   # Why Developer ID + notarization: Squirrel.Mac installs an update only when its signature satisfies
   # the running app's designated requirement, so every build must carry the same team identity.
   # Installs from earlier ad-hoc releases carry the unsigned marker and still need one manual .dmg.
+  # Why one slice per runner: each slice waits ~5 min on Apple's notary, and a single run notarizes
+  # them one after the other; mac-update-manifest joins the two latest-mac.yml files afterwards.
   build-mac:
+    name: build-mac (${{ matrix.arch }})
     needs: draft
     if: github.repository == 'GussCloud/dolphin'
-    # Why an Arm runner: it packages both slices, and afterPack boots the daemon on the host-arch one.
+    # Why an Arm runner for both: afterPack boots the daemon only on the host-arch slice, and the
+    # x64 slice has always been cross-packaged from this runner.
     runs-on: macos-15
     timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            app_dir: mac
+            zip_suffix: mac.zip
+          - arch: arm64
+            app_dir: mac-arm64
+            zip_suffix: arm64-mac.zip
     permissions:
       contents: write
     env:
@@ -407,20 +460,27 @@ jobs:
         env:
           DOLPHIN_BUILD_COMMIT: ${{ inputs.ref }}
           DOLPHIN_MAC_RELEASE: '1'
+          DOLPHIN_MAC_ARCH: ${{ matrix.arch }}
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
           APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
 
-      # Why the zips and latest-mac.yml too: the updater reads the manifest to offer the release.
+      # Why not latest-mac.yml: this slice's copy names only its own files, and uploading it would
+      # hide the other slice from the updater; mac-update-manifest uploads the merged one.
       - name: Verify and upload release assets
         env:
           GH_TOKEN: ${{ github.token }}
+          ARCH: ${{ matrix.arch }}
+          APP_DIR: ${{ matrix.app_dir }}
+          ZIP_SUFFIX: ${{ matrix.zip_suffix }}
         run: |
           set -euo pipefail
           shopt -s nullglob
-          for required in dist/dolphin-macos-x64.dmg dist/dolphin-macos-arm64.dmg dist/latest-mac.yml; do
+          dmg="dist/dolphin-macos-$ARCH.dmg"
+          zip="dist/Dolphin-${TAG#v}-$ZIP_SUFFIX"
+          for required in "$dmg" "$dmg.blockmap" "$zip" "$zip.blockmap" dist/latest-mac.yml; do
             if [[ ! -f "$required" ]]; then
               echo "::error::missing $required"
               ls -la dist
@@ -428,35 +488,86 @@ jobs:
             fi
           done
           zips=(dist/*-mac.zip)
-          apps=(dist/mac/*.app dist/mac-arm64/*.app)
-          if (( ${#zips[@]} != 2 || ${#apps[@]} != 2 )); then
-            echo "::error::expected x64 and arm64 builds, found ${#zips[@]} zips and ${#apps[@]} apps"
+          apps=(dist/mac*/*.app)
+          if (( ${#zips[@]} != 1 || ${#apps[@]} != 1 )) || [[ "${apps[0]}" != "dist/$APP_DIR/"* ]]; then
+            echo "::error::expected only the $ARCH build, found ${zips[*]} and ${apps[*]}"
             ls -la dist
             exit 1
           fi
           # Why check notarization here: electron-builder only warns when it skips notarizing, and an
           # unnotarized or ad-hoc build would strand every install on its first auto-update.
-          for app in "${apps[@]}"; do
-            codesign --verify --deep --strict "$app"
-            if ! codesign -dvv "$app" 2>&1 | grep -q '^Authority=Developer ID Application:'; then
-              echo "::error::$app is not signed with a Developer ID Application certificate"
-              exit 1
-            fi
-            xcrun stapler validate "$app"
-            spctl --assess --type execute --verbose=2 "$app"
-            if [[ -f "$app/Contents/Resources/dolphin-unsigned-mac-release" ]]; then
-              echo "::error::$app carries the unsigned-release marker and would refuse updates"
-              exit 1
-            fi
-          done
-          files=(dist/dolphin-macos-x64.dmg dist/dolphin-macos-arm64.dmg dist/latest-mac.yml "${zips[@]}" dist/*.blockmap)
+          app="${apps[0]}"
+          codesign --verify --deep --strict "$app"
+          if ! codesign -dvv "$app" 2>&1 | grep -q '^Authority=Developer ID Application:'; then
+            echo "::error::$app is not signed with a Developer ID Application certificate"
+            exit 1
+          fi
+          xcrun stapler validate "$app"
+          spctl --assess --type execute --verbose=2 "$app"
+          if [[ -f "$app/Contents/Resources/dolphin-unsigned-mac-release" ]]; then
+            echo "::error::$app carries the unsigned-release marker and would refuse updates"
+            exit 1
+          fi
+          files=("$dmg" "$dmg.blockmap" "$zip" "$zip.blockmap")
           ls -la "${files[@]}"
           gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" "${files[@]}"
+
+      - name: Hand this slice's update manifest to the merge job
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: mac-update-manifest-${{ matrix.arch }}
+          path: dist/latest-mac.yml
+          retention-days: 1
+          if-no-files-found: error
+
+  # Why the updater needs this: it reads one latest-mac.yml and picks its slice from it.
+  mac-update-manifest:
+    needs: [draft, build-mac]
+    if: github.repository == 'GussCloud/dolphin'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    env:
+      TAG: ${{ needs.draft.outputs.tag }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+
+      # Why: the merge script parses the manifests with the repository's yaml package.
+      - uses: ./.github/actions/install-node-dependencies
+
+      - name: Download the x64 manifest
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: mac-update-manifest-x64
+          path: ${{ runner.temp }}/mac-x64
+
+      - name: Download the arm64 manifest
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: mac-update-manifest-arm64
+          path: ${{ runner.temp }}/mac-arm64
+
+      - name: Merge and upload latest-mac.yml
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          node config/scripts/merge-mac-update-manifests.mjs \
+            "$RUNNER_TEMP/mac-x64/latest-mac.yml" "$RUNNER_TEMP/mac-arm64/latest-mac.yml" dist/latest-mac.yml
+          cat dist/latest-mac.yml
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" dist/latest-mac.yml
 
   # Why one publish step for every leg: a release the updater can see must already carry each
   # platform's manifest and installers (verify-release-required-assets), or that platform 404s.
   publish:
-    needs: [draft, build-win, build-win-arm64, build-mac]
+    needs: [draft, build-win, build-win-arm64, build-mac, mac-update-manifest]
     if: github.repository == 'GussCloud/dolphin' && inputs.publish
     runs-on: ubuntu-latest
     timeout-minutes: 10

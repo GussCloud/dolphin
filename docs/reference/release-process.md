@@ -36,7 +36,7 @@ What gets published:
 
 - **Desktop:** a GitHub **prerelease** `vX.Y.Z-rc.N` in this repository, with `latest.yml`, `latest-arm64.yml`, `latest-mac.yml`, the Windows x64/arm64 installers, the macOS dmgs and zips, and their blockmaps. The in-app updater treats any version with a `-` as the RC channel (`src/shared/release-channel.ts`). Users who opted into prereleases, or who already run an rc, find it through the releases atom feed (`src/main/updater-prerelease-feed.ts`). Stable users never see it, and it is never marked latest.
 - **Android:** a GitHub prerelease `mobile-android-vX.Y.Z-rc.N` carrying `dolphin-android.apk`. `mobile-android-latest`, the desktop's "Download APK" link, stays on the last stable release.
-- **iOS:** a TestFlight build of `X.Y.Z` with the next build number. Only the internal group `dolphin-internal` gets it. iOS marketing versions cannot carry `-rc`, so every rc of a line is another build number of the same `X.Y.Z`.
+- **iOS:** a TestFlight build of `X.Y.Z` with the next build number. Only the internal group `dolphin-internal` gets it. Its build number is recorded on the Android rc release as `ios-testflight-build.json`, which is how a promote finds the build again. iOS marketing versions cannot carry `-rc`, so every rc of a line is another build number of the same `X.Y.Z`.
 
 ## Promoting to an official release
 
@@ -52,7 +52,7 @@ The `resolve` job checks four things before anything is built:
 - the rc tag's commit is on `develop`;
 - the pull request that landed that commit has a successful `verify` check, which is `pr.yml`'s aggregate (`verify-release-commit.mjs`).
 
-Alongside the approval, the `e2e` and `e2e_wsl` jobs run the **whole** e2e suite (`e2e.yml` with no spec list: 14 shards plus the Docker-SSH lanes, and the real-WSL lane) on that commit. The builds run beside the suite, but they only stage: a draft desktop release, the APK as a run artifact and an iOS build in internal TestFlight. Nothing is published, and `main` does not move, unless both pass. A promote takes about as long as its slowest build (the iOS one, ~35 minutes). Pull requests run only the e2e they wrote or edited, and [E2E develop](../../.github/workflows/e2e-develop.yml) runs the same full suite after every merge to `develop` (and at 03:13 and 13:13 Brasília when `develop` changed), opening or updating one issue that names the PRs merged since the last green run, so a red suite is known before a promote.
+Nothing is published, and `main` does not move, unless the **whole** e2e suite (`e2e.yml` with no spec list: 10 shards plus the Docker-SSH lanes, and the real-WSL lane) is green on that commit. E2E develop runs exactly that suite, with the same retry, after every merge and records the commit it passed on (the `e2e-develop-green` artifact). When `resolve` finds such a record for the promoted commit (`green-e2e-develop-run.mjs`), the `e2e` and `e2e_wsl` jobs are skipped; otherwise they run the suite beside the builds. Either way the `e2e-gate` job gives the one verdict every publish job waits for. Set `force_e2e` to run the suite in the promote regardless. The builds only stage: a draft desktop release, the APK as a run artifact and, when it has to be compiled, an iOS build in internal TestFlight. A promote takes about as long as its slowest build. Pull requests run only the e2e they wrote or edited, and [E2E develop](../../.github/workflows/e2e-develop.yml) runs the same full suite after every merge to `develop` (and at 03:13 and 13:13 Brasília when `develop` changed), opening or updating one issue that names the PRs merged since the last green run, so a red suite is known before a promote.
 
 The full-suite runs (E2E develop and the promote) give each failed test one retry (`DOLPHIN_E2E_RETRIES=1`, read by `tests/playwright.config.ts`). A test that fails twice fails the run; one that passes on its retry is annotated `Flaky e2e`, and E2E develop collects those into the issue "Flaky e2e tests on develop". The first attempt's trace is kept. Pull requests run with no retry, so a spec a PR writes or edits must pass on its first attempt.
 
@@ -60,7 +60,7 @@ The owner's approval is the dispatch itself: only someone who can run workflows 
 
 - **Desktop:** `desktop-publish` undrafts `vX.Y.Z` as the latest stable release.
 - **Android:** `android-publish` creates `mobile-android-vX.Y.Z` from the build's APK artifact and refreshes `mobile-android-latest`.
-- **iOS:** the `ios` job uploads a new build of `X.Y.Z` with `build_and_upload`; `ios-distribute` then runs the `distribute_testflight` lane, which hands that build to the external TestFlight group `dolphin-testers`.
+- **iOS:** the beta already uploaded a build of `X.Y.Z` from the rc's commit and recorded its build number on the mobile rc release (`ios-testflight-build.json`, written by Release Beta's `ios-record` job). `ios-reuse` checks that TestFlight still holds that build (`verify_testflight_build` lane), and `ios-distribute` runs the `distribute_testflight` lane, which hands it to the external TestFlight group `dolphin-testers`. If the rc has no record, the build expired or failed processing, or `rebuild_ios` is set, the `ios` job compiles and uploads a new build with `build_and_upload` first, as every promote did before.
 
 If the suite fails, the staged builds stay unpublished: the next run for the same version replaces the desktop draft, and the internal TestFlight build is simply superseded.
 
@@ -77,7 +77,7 @@ Last, the `fast-forward-main` job moves `main` to the promoted commit (with both
 The desktop release is assembled as a **draft**:
 
 1. The `draft` job checks the version and runs `create-draft-release.mjs`.
-2. The Windows x64, Windows arm64 and macOS jobs build in parallel and upload into that draft.
+2. The Windows x64, Windows arm64 and the two macOS jobs (one per slice, so their notarizations overlap) build in parallel and upload into that draft. Each macOS job writes a `latest-mac.yml` naming only its own slice; `mac-update-manifest` joins the two with `merge-mac-update-manifests.mjs` and uploads the single manifest the updater reads.
 3. The `publish` action (`.github/actions/publish-desktop-release`) runs `verify-release-required-assets.mjs --platforms=mac,win,win-arm64`, then undrafts the release. A beta runs it inside the desktop workflow; a promote calls the workflow with `publish: false` and runs it in `desktop-publish` after the e2e suite.
 
 The updater never sees a release that is missing a platform's manifest. If a leg fails, nothing is published: re-run the failed jobs. A later run for the same version deletes the stale draft before it starts.

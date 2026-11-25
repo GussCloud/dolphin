@@ -33,7 +33,7 @@ O check obrigatório `verify` bloqueia só três coisas: **código quebrado** (t
 # Versão e Release
 
 - PR nunca altera versão (`package.json`, `mobile/app.json`).
-- Beta sai do workflow `release-beta` a cada merge em `develop` (só do app que mudou); versão oficial sai do `release-promote`, sempre manual e aprovada pelo dono. Ele roda a suíte e2e completa no commit promovido e só publica e avança `main` com ela verde. Veja [`docs/reference/release-process.md`](./docs/reference/release-process.md).
+- Beta sai do workflow `release-beta` a cada merge em `develop` (só do app que mudou); versão oficial sai do `release-promote`, sempre manual e aprovada pelo dono. Ele só publica e avança `main` com a suíte e2e completa verde no commit promovido: vale a execução que o `e2e-develop` já fez desse mesmo commit; sem ela, a suíte roda no próprio promote. Veja [`docs/reference/release-process.md`](./docs/reference/release-process.md).
 
 # Encerramento de Demanda
 

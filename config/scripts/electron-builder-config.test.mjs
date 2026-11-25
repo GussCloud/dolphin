@@ -432,6 +432,43 @@ describe('electron-builder config', () => {
     }
   })
 
+  it('packages both mac slices by default and one slice when release CI names it', () => {
+    const configPath = require.resolve('../electron-builder.config.cjs')
+    const original = process.env.DOLPHIN_MAC_ARCH
+    const macArchs = () => {
+      delete require.cache[configPath]
+      return require('../electron-builder.config.cjs').mac.target.map(({ target, arch }) => [
+        target,
+        arch
+      ])
+    }
+    try {
+      delete process.env.DOLPHIN_MAC_ARCH
+      expect(macArchs()).toEqual([
+        ['dmg', ['x64', 'arm64']],
+        ['zip', ['x64', 'arm64']]
+      ])
+      for (const arch of ['x64', 'arm64']) {
+        process.env.DOLPHIN_MAC_ARCH = arch
+        expect(macArchs()).toEqual([
+          ['dmg', [arch]],
+          ['zip', [arch]]
+        ])
+      }
+      // Why it throws: a typo must not silently package both slices on a one-slice runner.
+      process.env.DOLPHIN_MAC_ARCH = 'universal'
+      expect(macArchs).toThrow(/DOLPHIN_MAC_ARCH must be one of x64, arm64/)
+    } finally {
+      if (original === undefined) {
+        delete process.env.DOLPHIN_MAC_ARCH
+      } else {
+        process.env.DOLPHIN_MAC_ARCH = original
+      }
+      delete require.cache[configPath]
+      require('../electron-builder.config.cjs')
+    }
+  })
+
   it('names Windows arm64 release uploads and their update manifest apart from x64', () => {
     const configPath = require.resolve('../electron-builder.config.cjs')
     const original = process.env.DOLPHIN_WIN_ARM64_RELEASE

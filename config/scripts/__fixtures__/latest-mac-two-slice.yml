@@ -1,0 +1,17 @@
+version: 0.2.58-rc.1
+files:
+  - url: Dolphin-0.2.58-rc.1-mac.zip
+    sha512: IS8YXeRQ7WlUalortsrFIUL52/pxYhPPukPlBC7a5wonpYLRZSKQpA73443gDT9IeAKLreXoMdiP6yrNudkGsQ==
+    size: 220706570
+  - url: Dolphin-0.2.58-rc.1-arm64-mac.zip
+    sha512: 1Nm8rXlxH7vF46iLuJ2OjbCrSAvID+OtRpMkmAnxaFTrHhBMRXDrflLamBBPwO4h32PfBVAYCSyUinBUFuF2kQ==
+    size: 212377665
+  - url: dolphin-macos-x64.dmg
+    sha512: SNDmB8H6oazuEZrNtI5Tm1VWgYCYS4O0ToLLEZQobVxoaLQrC0H8cqTvUeQc562AMxBilT0qAvpLSmKpAiEOAA==
+    size: 219368844
+  - url: dolphin-macos-arm64.dmg
+    sha512: wP0ELQUXZRzm2v/P0BSzPD6ept6OFLz7WNJFfCil2iBMLTxKLOvOgD6kQjf62r9uSvjz73KZtaoN0F0Fa4RIlw==
+    size: 211128359
+path: Dolphin-0.2.58-rc.1-mac.zip
+sha512: IS8YXeRQ7WlUalortsrFIUL52/pxYhPPukPlBC7a5wonpYLRZSKQpA73443gDT9IeAKLreXoMdiP6yrNudkGsQ==
+releaseDate: '2026-11-25T08:47:57.471Z'

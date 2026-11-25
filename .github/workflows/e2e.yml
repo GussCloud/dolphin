@@ -134,37 +134,29 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Fourteen scheduled runs averaged 24.6 minutes per shard; shards 4
-          # and 9 repeatedly hit the 30-minute cap. A 12-way trial still left
-          # one 30-minute shard, so 14 gives the suite enough failure headroom.
-          - shard: '1/14'
-            shard_name: 1-of-14
-          - shard: '2/14'
-            shard_name: 2-of-14
-          - shard: '3/14'
-            shard_name: 3-of-14
-          - shard: '4/14'
-            shard_name: 4-of-14
-          - shard: '5/14'
-            shard_name: 5-of-14
-          - shard: '6/14'
-            shard_name: 6-of-14
-          - shard: '7/14'
-            shard_name: 7-of-14
-          - shard: '8/14'
-            shard_name: 8-of-14
-          - shard: '9/14'
-            shard_name: 9-of-14
-          - shard: '10/14'
-            shard_name: 10-of-14
-          - shard: '11/14'
-            shard_name: 11-of-14
-          - shard: '12/14'
-            shard_name: 12-of-14
-          - shard: '13/14'
-            shard_name: 13-of-14
-          - shard: '14/14'
-            shard_name: 14-of-14
+          # Why 10: the suite, the Docker-SSH lanes and the release builds that run beside them must
+          # fit the 20 concurrent jobs a free account gets; with 14, three or four shards waited up
+          # to 8 minutes for a runner. At two workers a shard runs ~12 minutes of the 30-minute cap.
+          - shard: '1/10'
+            shard_name: 1-of-10
+          - shard: '2/10'
+            shard_name: 2-of-10
+          - shard: '3/10'
+            shard_name: 3-of-10
+          - shard: '4/10'
+            shard_name: 4-of-10
+          - shard: '5/10'
+            shard_name: 5-of-10
+          - shard: '6/10'
+            shard_name: 6-of-10
+          - shard: '7/10'
+            shard_name: 7-of-10
+          - shard: '8/10'
+            shard_name: 8-of-10
+          - shard: '9/10'
+            shard_name: 9-of-10
+          - shard: '10/10'
+            shard_name: 10-of-10
 
     steps:
       - name: Checkout
@@ -231,7 +223,7 @@ jobs:
 
       # The frame benchmark needs a mapped window, which the headless shards exclude.
       - name: Run worktree first-paint benchmark
-        if: matrix.shard == '1/14'
+        if: matrix.shard == '1/10'
         run: xvfb-run --auto-servernum bash .github/scripts/e2e-with-window-manager.sh env SKIP_BUILD=1 DOLPHIN_E2E_FORWARD_APP_LOGS=1 pnpm exec playwright test tests/e2e/worktree-switch-first-paint.spec.ts --config tests/playwright.config.ts --project=electron-headful --workers=1
 
       # Why: Playwright retains traces/screenshots only on failure. Uploading
@@ -349,7 +341,7 @@ jobs:
           if-no-files-found: ignore
 
   ssh-docker-watcher-isolation:
-    name: ssh docker watcher isolation (${{ matrix.shard }}/4)
+    name: ssh docker watcher isolation (${{ matrix.shard }}/3)
     needs: [build, prepare-native-cache]
     # Each excluded changed spec must trigger its dedicated owner.
     if: >-
@@ -389,7 +381,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3]
     timeout-minutes: 60
 
     steps:
@@ -447,7 +439,7 @@ jobs:
       # Separate VMs isolate destructive SSH fixtures while keeping one worker per shard.
       - name: Run remaining Docker SSH E2E
         if: always()
-        run: xvfb-run --auto-servernum bash .github/scripts/e2e-with-window-manager.sh env SKIP_BUILD=1 DOLPHIN_E2E_FORWARD_APP_LOGS=1 pnpm run test:e2e:ssh-docker --shard=${{ matrix.shard }}/4
+        run: xvfb-run --auto-servernum bash .github/scripts/e2e-with-window-manager.sh env SKIP_BUILD=1 DOLPHIN_E2E_FORWARD_APP_LOGS=1 pnpm run test:e2e:ssh-docker --shard=${{ matrix.shard }}/3
 
       - name: Keep remaining-ssh-docker traces
         if: always()

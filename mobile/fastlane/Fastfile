@@ -280,6 +280,33 @@ platform :ios do
     )
   end
 
+  desc "Fail unless an uploaded build is still usable in TestFlight"
+  lane :verify_testflight_build do |options|
+    version = options[:version].to_s.strip
+    build_number = options[:build_number].to_s.strip
+    UI.user_error!("version is required") if version.empty?
+    UI.user_error!("build_number is required") if build_number.empty?
+
+    app_store_connect_api_key_from_env
+    app = Spaceship::ConnectAPI::App.find(BUNDLE_ID)
+    UI.user_error!("Could not find App Store Connect app #{BUNDLE_ID}") unless app
+
+    build = Spaceship::ConnectAPI::Build.all(
+      app_id: app.id,
+      version: version,
+      build_number: build_number,
+    ).first
+    UI.user_error!("TestFlight has no build #{version} (#{build_number})") unless build
+    UI.user_error!("TestFlight build #{version} (#{build_number}) has expired") if build.expired
+
+    # Still PROCESSING is fine: distribute_testflight waits for it.
+    state = build.processing_state
+    if %w[FAILED INVALID].include?(state)
+      UI.user_error!("TestFlight build #{version} (#{build_number}) is #{state}")
+    end
+    UI.success("TestFlight build #{version} (#{build_number}) is #{state} and can be distributed")
+  end
+
   desc "Build, upload, and distribute Dolphin Mobile to external TestFlight testers"
   lane :release do
     build_and_upload

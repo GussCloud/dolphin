@@ -13,7 +13,7 @@ name: E2E develop
 on:
   schedule:
     # 03:13 and 13:13 in Brasília (UTC-3): outside working hours, because the suite holds 14 of
-    # the 20 concurrent jobs a free account gets.
+    # the 20 concurrent jobs a free account gets (10 shards, 3 Docker-SSH lanes and localhost SSH).
     - cron: '13 6,16 * * *'
   # Why every merge: a regression surfaces right after the PR that caused it. The concurrency
   # group keeps one run going and only the newest merge waiting, so a burst of merges is one queue.
