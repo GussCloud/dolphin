@@ -316,6 +316,30 @@ describe('release workflows', () => {
     )
   })
 
+  it('builds the Android native code through ccache and skips release lint', () => {
+    const steps = workflow('dolphin-android-release').jobs['build-android'].steps
+    const names = steps.map((step) => step.name)
+    const enable = steps.find((step) => step.name === 'Enable ccache for the native build')
+    for (const line of [
+      'CMAKE_C_COMPILER_LAUNCHER=ccache',
+      'CMAKE_CXX_COMPILER_LAUNCHER=ccache',
+      // Why: the default check is the compiler's mtime, which changes with every runner image.
+      'CCACHE_COMPILERCHECK=%compiler% --version'
+    ]) {
+      expect(enable.run).toContain(`echo "${line}"`)
+    }
+    const cache = steps.find((step) => step.name === 'Restore the native build cache')
+    expect(cache.with.path).toBe('~/.ccache-dolphin-android')
+    // Why run_id: actions/cache never overwrites a key, so each run saves its own and restores the newest.
+    expect(cache.with.key).toMatch(/^ccache-android-.*-\$\{\{ github\.run_id \}\}$/)
+    const build = steps.find((step) => step.name === 'Build Android release APK')
+    expect(names.indexOf(cache.name)).toBeLessThan(names.indexOf(build.name))
+    expect(build.run).toContain('-PreactNativeArchitectures=armeabi-v7a,arm64-v8a')
+    expect(build.run).toContain(
+      '-x lintVitalAnalyzeRelease -x lintVitalReportRelease -x lintVitalRelease'
+    )
+  })
+
   it('beta still publishes inside the platform workflows', () => {
     const { jobs } = workflow('release-beta')
     expect(jobs.desktop.with).not.toHaveProperty('publish')
