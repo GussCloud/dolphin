@@ -5,8 +5,8 @@ name: Dolphin iOS Release
 # a build reaches its testers as soon as App Store Connect finishes processing it; no beta review.
 #
 # Releases come only from release-beta.yml (internal TestFlight build) and release-promote.yml
-# (same commit rebuilt; promote distributes it to the external TestFlight group once its e2e passes); see
-# docs/reference/release-process.md. fastlane stamps the version and build number into the
+# (which distributes the beta's build to the external TestFlight group once e2e is green, and calls
+# this workflow only when that build cannot be reused); see docs/reference/release-process.md. fastlane stamps the version and build number into the
 # checkout, so no app.json bump is committed. A manual dispatch still uploads an internal build.
 #
 # Signing: IOS_DIST_CERT_P12 is the team's Apple Distribution certificate; fastlane fetches the App
