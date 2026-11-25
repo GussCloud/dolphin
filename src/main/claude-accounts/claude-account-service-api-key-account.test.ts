@@ -203,4 +203,18 @@ describe('ClaudeAccountService API key accounts', () => {
     expect(existsSync(join(paths.userData, 'claude-accounts', id))).toBe(false)
     expect(service.listAccounts().accounts.map((entry) => entry.id)).toEqual(['plan'])
   })
+
+  it('keeps the account and its profile when its key cannot be deleted', async () => {
+    const { service } = await createService()
+    const state = await service.addApiKeyAccount({ label: 'Work', apiKey: FAKE_KEY })
+    const id = state.accounts.find((entry) => entry.authMethod === 'api-key')!.id
+    // A non-empty folder where the key file was makes the key delete throw.
+    rmSync(keyPath(id))
+    mkdirSync(join(keyPath(id), 'stuck'), { recursive: true })
+
+    await expect(service.removeAccount(id)).rejects.toThrow()
+
+    expect(service.listAccounts().accounts.map((entry) => entry.id)).toContain(id)
+    expect(existsSync(join(profileDir(id), '.dolphin-claude-profile.json'))).toBe(true)
+  })
 })

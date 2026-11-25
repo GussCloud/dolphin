@@ -9,15 +9,40 @@ import { isDefaultClaudeConfigDir } from '../claude-account-config-dir'
 import { importIntoClaudeProfile, listClaudeProfileImportItems } from './claude-profile-import'
 import { asJsonObject, updateJsonObjectFile, type JsonObject } from './claude-profile-json'
 
-/** Settings that pick credentials or provider; a copied one would bill elsewhere than the key. */
-const CREDENTIAL_SETTINGS_KEYS = ['apiKeyHelper', 'forceLoginMethod', 'forceLoginOrgUUID'] as const
+/** Top-level settings that pick credentials, a login or a cloud provider for Claude Code. */
+const CREDENTIAL_SETTINGS_KEYS = [
+  'apiKeyHelper',
+  'forceLoginMethod',
+  'forceLoginOrgUUID',
+  'awsAuthRefresh',
+  'awsCredentialExport',
+  'gcpAuthRefresh'
+] as const
+
+const CREDENTIAL_ENV_PREFIXES = [
+  'ANTHROPIC_',
+  'CLAUDE_CODE_USE_',
+  'AWS_',
+  'GOOGLE_',
+  'VERTEX_',
+  'CLOUD_ML_'
+] as const
 
 function isCredentialEnvKey(key: string): boolean {
   const upper = key.toUpperCase()
-  return upper.startsWith('ANTHROPIC_') || upper.startsWith('CLAUDE_CODE_USE_')
+  return (
+    upper === 'CLAUDE_CODE_OAUTH_TOKEN' ||
+    CREDENTIAL_ENV_PREFIXES.some((prefix) => upper.startsWith(prefix))
+  )
 }
 
-/** Settings without anything that would route an API account's launch to other credentials. */
+/**
+ * Copied settings minus a denylist, so the API account's launch cannot reach other credentials:
+ * top-level apiKeyHelper, forceLoginMethod, forceLoginOrgUUID, awsAuthRefresh,
+ * awsCredentialExport, gcpAuthRefresh; env CLAUDE_CODE_OAUTH_TOKEN and every env key starting
+ * with ANTHROPIC_, CLAUDE_CODE_USE_, AWS_, GOOGLE_, VERTEX_ or CLOUD_ML_ (case-insensitive).
+ * Every other setting and env key is kept.
+ */
 export function stripClaudeCredentialSettings(settings: JsonObject): JsonObject {
   const next: JsonObject = { ...settings }
   for (const key of CREDENTIAL_SETTINGS_KEYS) {

@@ -25,7 +25,15 @@ function controller(): RuntimeAccountController {
     codexAccounts: {
       listAccounts: () => ({ accounts: [], activeAccountId: null })
     },
-    rateLimits: { getState: () => ({}) }
+    rateLimits: {
+      getState: () => ({
+        claude: null,
+        inactiveClaudeAccounts: [
+          { accountId: 'other-plan', rateLimits: null, updatedAt: 1, isFetching: false },
+          { accountId: 'api', rateLimits: null, updatedAt: 1, isFetching: false }
+        ]
+      })
+    }
   }
   // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the fakes implement every service member the controller calls here.
   result.setServices(services as never)
@@ -36,7 +44,11 @@ describe('RuntimeAccountController and Claude API accounts', () => {
   it('keeps API accounts out of what remote clients receive', async () => {
     const accounts = controller()
 
-    expect(accounts.getSnapshot().claude.accounts.map((account) => account.id)).toEqual(['plan'])
+    const snapshot = accounts.getSnapshot()
+    expect(snapshot.claude.accounts.map((account) => account.id)).toEqual(['plan'])
+    expect(snapshot.rateLimits.inactiveClaudeAccounts.map((entry) => entry.accountId)).toEqual([
+      'other-plan'
+    ])
     expect((await accounts.selectClaude('plan')).accounts.map((account) => account.id)).toEqual([
       'plan'
     ])

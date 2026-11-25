@@ -152,17 +152,23 @@ export function StatusBarSurface({
                               footerClaudeAccount.fromProject ? 'project' : 'active'
                             }
                             title={
-                              footerClaudeAccount.fromProject
+                              footerClaudeAccount.launchRefused
                                 ? translate(
-                                    'auto.components.status.bar.footerClaudeAccount.project',
-                                    'Claude account of this project: {{value0}}',
+                                    'auto.components.status.bar.footerClaudeAccount.apiKeyRefused',
+                                    'This project is pinned to the Claude API account {{value0}}. Plain Claude launches here are refused.',
                                     { value0: footerClaudeAccount.email }
                                   )
-                                : translate(
-                                    'auto.components.status.bar.footerClaudeAccount.active',
-                                    'Active Claude account: {{value0}}',
-                                    { value0: footerClaudeAccount.email }
-                                  )
+                                : footerClaudeAccount.fromProject
+                                  ? translate(
+                                      'auto.components.status.bar.footerClaudeAccount.project',
+                                      'Claude account of this project: {{value0}}',
+                                      { value0: footerClaudeAccount.email }
+                                    )
+                                  : translate(
+                                      'auto.components.status.bar.footerClaudeAccount.active',
+                                      'Active Claude account: {{value0}}',
+                                      { value0: footerClaudeAccount.email }
+                                    )
                             }
                           >
                             {footerClaudeAccount.email}

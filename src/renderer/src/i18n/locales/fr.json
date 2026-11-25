@@ -4123,6 +4123,9 @@
             "checkAriaOne": "1 chat à vérifier après la reprise. Cliquez pour plus de détails.",
             "checkAria": "{{value0}} chats à vérifier après la reprise. Cliquez pour plus de détails.",
             "checkTooltip": "Chats qu'Dolphin n'a pas pu reprendre, ou dont il n'a pas pu confirmer la reprise, après le redémarrage. Cliquez pour plus de détails."
+          },
+          "footerClaudeAccount": {
+            "apiKeyRefused": "Ce projet est épinglé au compte API Claude {{value0}}. Les lancements Claude ordinaires y sont refusés."
           }
         }
       },
@@ -6478,6 +6481,10 @@
           "browse": "Parcourir Azure DevOps",
           "filter": "Filtrer les dépôts",
           "empty": "Aucun dépôt trouvé."
+        },
+        "WorktreeAgentAccountBadge": {
+          "apiKeyRefused": "Lancement refusé",
+          "apiKeyRefusedDetail": "Cet espace de travail est épinglé à un compte API Claude. Les lancements Claude ordinaires y sont refusés, car ils n'utilisent jamais un compte API."
         }
       },
       "shared": {
@@ -12488,7 +12495,7 @@
           "keyPlaceholder": "Collez votre clé API Anthropic",
           "copyFrom": "Copier le profil de",
           "copyNone": "Commencer avec un profil vide",
-          "copyHint": "Copie les instructions, réglages, skills, agents, commandes, serveurs MCP et plugins. Les connexions et les clés ne sont jamais copiées.",
+          "copyHint": "Copie les instructions, réglages, skills, agents, commandes, serveurs MCP et plugins. Les connexions Claude et les identifiants Anthropic ou cloud ne sont pas copiés ; les serveurs MCP et les plugins sont copiés tels quels, y compris leurs propres jetons.",
           "cancel": "Annuler",
           "save": "Ajouter le compte",
           "replaced": "Clé API remplacée.",

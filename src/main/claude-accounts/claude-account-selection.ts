@@ -61,12 +61,13 @@ export class ClaudeAccountSelection {
         })
         await this.syncRuntimeAuth(target)
       }
+      // Why first: a throw here rolls the account back while its profile still exists.
+      if (isClaudeApiKeyAccount(account)) {
+        clearClaudeApiKey(accountId)
+      }
       // Why: a linked folder is the user's own; unlinking must never touch it.
       if (!account.linkedConfigDir) {
         await this.removeManagedAuth(accountId, account.managedAuthPath)
-      }
-      if (isClaudeApiKeyAccount(account)) {
-        clearClaudeApiKey(accountId)
       }
       this.rateLimits.evictInactiveClaudeCache(accountId)
       await this.rateLimits.refreshForClaudeAccountChange(

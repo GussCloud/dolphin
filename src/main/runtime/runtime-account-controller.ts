@@ -47,6 +47,34 @@ function remoteClaudeAccounts(state: ClaudeRateLimitAccountsState): ClaudeRateLi
   return { ...state, accounts: state.accounts.filter((account) => !isClaudeApiKeyAccount(account)) }
 }
 
+/** Usage as remote clients see it: no rows for the API accounts they do not receive. */
+function remoteRateLimits(
+  rateLimits: RateLimitState,
+  claude: ClaudeRateLimitAccountsState
+): RateLimitState {
+  const hidden = new Set(
+    claude.accounts.filter((account) => isClaudeApiKeyAccount(account)).map((account) => account.id)
+  )
+  return {
+    ...rateLimits,
+    inactiveClaudeAccounts: rateLimits.inactiveClaudeAccounts.filter(
+      (entry) => !hidden.has(entry.accountId)
+    )
+  }
+}
+
+function remoteSnapshot(
+  claude: ClaudeRateLimitAccountsState,
+  codex: CodexRateLimitAccountsState,
+  rateLimits: RateLimitState
+): AccountsSnapshot {
+  return {
+    claude: remoteClaudeAccounts(claude),
+    codex,
+    rateLimits: remoteRateLimits(rateLimits, claude)
+  }
+}
+
 export class RuntimeAccountController {
   private services: RuntimeAccountServices | null = null
   private commitMessageAgentEnvironment: CommitMessageAgentEnvironmentResolvers | null = null
@@ -69,11 +97,11 @@ export class RuntimeAccountController {
 
   getSnapshot(): AccountsSnapshot {
     const { claudeAccounts, codexAccounts, rateLimits } = this.requireServices()
-    return {
-      claude: remoteClaudeAccounts(claudeAccounts.listAccounts()),
-      codex: codexAccounts.listAccounts(),
-      rateLimits: rateLimits.getState()
-    }
+    return remoteSnapshot(
+      claudeAccounts.listAccounts(),
+      codexAccounts.listAccounts(),
+      rateLimits.getState()
+    )
   }
 
   async refreshForMobile(): Promise<void> {
@@ -115,11 +143,7 @@ export class RuntimeAccountController {
   ): Promise<CodexRateLimitResetRpcResult> {
     const { claudeAccounts, codexAccounts } = this.requireServices()
     const result = await codexAccounts.consumeRateLimitResetCredit(idempotencyKey, expectedScope)
-    const snapshot = {
-      claude: remoteClaudeAccounts(claudeAccounts.listAccounts()),
-      codex: result.codex,
-      rateLimits: result.rateLimits
-    }
+    const snapshot = remoteSnapshot(claudeAccounts.listAccounts(), result.codex, result.rateLimits)
     if ('status' in result) {
       return {
         status: result.status,
@@ -163,11 +187,13 @@ export class RuntimeAccountController {
   onChanged(listener: (snapshot: AccountsSnapshot) => void): () => void {
     const services = this.requireServices()
     return services.rateLimits.onStateChange((rateLimits) => {
-      listener({
-        claude: remoteClaudeAccounts(services.claudeAccounts.listAccounts()),
-        codex: services.codexAccounts.listAccounts(),
-        rateLimits
-      })
+      listener(
+        remoteSnapshot(
+          services.claudeAccounts.listAccounts(),
+          services.codexAccounts.listAccounts(),
+          rateLimits
+        )
+      )
     })
   }
 

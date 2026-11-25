@@ -4201,7 +4201,8 @@
           },
           "footerClaudeAccount": {
             "project": "Conta Claude deste projeto: {{value0}}",
-            "active": "Conta Claude ativa: {{value0}}"
+            "active": "Conta Claude ativa: {{value0}}",
+            "apiKeyRefused": "Este projeto está fixado na conta de API do Claude {{value0}}. As execuções normais do Claude aqui são recusadas."
           }
         }
       },
@@ -6576,7 +6577,9 @@
           "pinned": "Conta do Codex: {{value0}}",
           "claudeUnavailableDetail": "A conta do Claude com que este workspace foi criado não está mais disponível. O Claude aqui usa a conta ativa.",
           "missingDetail": "A conta com que este workspace foi criado não está mais disponível. Os lançamentos aqui usam a conta ativa.",
-          "claudePinned": "Conta do Claude: {{value0}}"
+          "claudePinned": "Conta do Claude: {{value0}}",
+          "apiKeyRefused": "Execução recusada",
+          "apiKeyRefusedDetail": "Este workspace está fixado numa conta de API do Claude. As execuções normais do Claude aqui são recusadas, porque nunca usam uma conta de API."
         },
         "AddRepoAccountStep": {
           "title": "Conta e autor do commit",
@@ -12742,7 +12745,7 @@
           "keyPlaceholder": "Cole sua chave de API da Anthropic",
           "copyFrom": "Copiar perfil de",
           "copyNone": "Começar com um perfil vazio",
-          "copyHint": "Copia instruções, configurações, skills, agentes, comandos, servidores MCP e plugins. Logins e chaves nunca são copiados.",
+          "copyHint": "Copia instruções, configurações, skills, agentes, comandos, servidores MCP e plugins. Logins do Claude e credenciais da Anthropic ou de nuvem não são copiados; servidores MCP e plugins são copiados como estão, inclusive com os tokens deles.",
           "cancel": "Cancelar",
           "save": "Adicionar conta",
           "replaced": "Chave de API substituída.",

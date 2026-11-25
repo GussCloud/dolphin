@@ -142,7 +142,7 @@ export function ClaudeApiAccountForm(props: {
             <p className="text-[11px] text-muted-foreground">
               {translate(
                 `${T}.copyHint`,
-                'Copies instructions, settings, skills, agents, commands, MCP servers and plugins. Logins and keys are never copied.'
+                'Copies instructions, settings, skills, agents, commands, MCP servers and plugins. Claude logins and Anthropic or cloud credentials are not copied; MCP servers and plugins are copied as they are, including their own tokens.'
               )}
             </p>
           </div>

@@ -4201,7 +4201,8 @@
           },
           "footerClaudeAccount": {
             "project": "Claude account of this project: {{value0}}",
-            "active": "Active Claude account: {{value0}}"
+            "active": "Active Claude account: {{value0}}",
+            "apiKeyRefused": "This project is pinned to the Claude API account {{value0}}. Plain Claude launches here are refused."
           }
         }
       },
@@ -6585,7 +6586,9 @@
           "pinned": "Codex account: {{value0}}",
           "claudeUnavailableDetail": "The Claude account this workspace was created with is no longer available. Claude launches here use the active account.",
           "missingDetail": "The account this workspace was created with is no longer available. Launches here use the active account.",
-          "claudePinned": "Claude account: {{value0}}"
+          "claudePinned": "Claude account: {{value0}}",
+          "apiKeyRefused": "Launch refused",
+          "apiKeyRefusedDetail": "This workspace is pinned to a Claude API account. Plain Claude launches here are refused, because they never use an API account."
         }
       },
       "shared": {
@@ -12742,7 +12745,7 @@
           "keyPlaceholder": "Paste your Anthropic API key",
           "copyFrom": "Copy profile from",
           "copyNone": "Start with an empty profile",
-          "copyHint": "Copies instructions, settings, skills, agents, commands, MCP servers and plugins. Logins and keys are never copied.",
+          "copyHint": "Copies instructions, settings, skills, agents, commands, MCP servers and plugins. Claude logins and Anthropic or cloud credentials are not copied; MCP servers and plugins are copied as they are, including their own tokens.",
           "cancel": "Cancel",
           "save": "Add account",
           "replaced": "API key replaced.",

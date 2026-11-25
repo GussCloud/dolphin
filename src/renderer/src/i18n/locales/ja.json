@@ -4020,6 +4020,9 @@
             "checkAriaOne": "再開後に確認が必要なチャット 1 件。詳細はクリックしてください。",
             "checkAria": "再開後に確認が必要なチャット {{value0}} 件。詳細はクリックしてください。",
             "checkTooltip": "再起動後に Dolphin が再開できなかった、または再開を確認できなかったチャット。詳細はクリックしてください。"
+          },
+          "footerClaudeAccount": {
+            "apiKeyRefused": "このプロジェクトは Claude API アカウント {{value0}} に固定されています。ここでの通常の Claude の起動は拒否されます。"
           }
         }
       },
@@ -6375,6 +6378,10 @@
           "browse": "Azure DevOps を参照",
           "filter": "リポジトリを絞り込む",
           "empty": "リポジトリが見つかりません。"
+        },
+        "WorktreeAgentAccountBadge": {
+          "apiKeyRefused": "起動は拒否されます",
+          "apiKeyRefusedDetail": "このワークスペースは Claude API アカウントに固定されています。通常の Claude は API アカウントを使わないため、ここでの起動は拒否されます。"
         }
       },
       "shared": {
@@ -12385,7 +12392,7 @@
           "keyPlaceholder": "Anthropic API キーを貼り付け",
           "copyFrom": "プロファイルのコピー元",
           "copyNone": "空のプロファイルで開始",
-          "copyHint": "指示、設定、スキル、Agent、コマンド、MCP サーバー、プラグインをコピーします。ログイン情報とキーはコピーされません。",
+          "copyHint": "指示、設定、スキル、Agent、コマンド、MCP サーバー、プラグインをコピーします。Claude のログイン情報と Anthropic やクラウドの認証情報はコピーされません。MCP サーバーとプラグインは、それぞれのトークンも含めてそのままコピーされます。",
           "cancel": "キャンセル",
           "save": "アカウントを追加",
           "replaced": "API キーを置き換えました。",

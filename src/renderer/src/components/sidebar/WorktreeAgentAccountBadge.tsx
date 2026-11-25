@@ -40,50 +40,62 @@ export function WorktreeAgentAccountBadge({
     return null
   }
   const unavailable = resolution.kind === 'unavailable'
+  // Why separate: this pin is not a fallback; plain Claude refuses to launch here at all.
+  const refused = unavailable && resolution.reason === 'api-key-account'
   const accounts =
     agent === 'codex' ? settings.codexManagedAccounts : settings.claudeManagedAccounts
   const email = unavailable
     ? null
     : accounts.find((account) => account.id === resolution.accountId)?.email
-  const label = unavailable
-    ? translate('auto.components.sidebar.WorktreeAgentAccountBadge.unavailable', 'Account missing')
-    : (email ?? '')
-  const tooltip = unavailable
-    ? resolution.reason === 'missing'
-      ? // Why: a deleted account no longer says which agent it served.
-        translate(
-          'auto.components.sidebar.WorktreeAgentAccountBadge.missingDetail',
-          'The account this workspace was created with is no longer available. Launches here use the active account.'
+  const label = refused
+    ? translate('auto.components.sidebar.WorktreeAgentAccountBadge.apiKeyRefused', 'Launch refused')
+    : unavailable
+      ? translate(
+          'auto.components.sidebar.WorktreeAgentAccountBadge.unavailable',
+          'Account missing'
         )
+      : (email ?? '')
+  const tooltip = refused
+    ? translate(
+        'auto.components.sidebar.WorktreeAgentAccountBadge.apiKeyRefusedDetail',
+        'This workspace is pinned to a Claude API account. Plain Claude launches here are refused, because they never use an API account.'
+      )
+    : unavailable
+      ? resolution.reason === 'missing'
+        ? // Why: a deleted account no longer says which agent it served.
+          translate(
+            'auto.components.sidebar.WorktreeAgentAccountBadge.missingDetail',
+            'The account this workspace was created with is no longer available. Launches here use the active account.'
+          )
+        : agent === 'codex'
+          ? translate(
+              'auto.components.sidebar.WorktreeAgentAccountBadge.unavailableDetail',
+              'The Codex account this workspace was created with is no longer available. Codex launches here use the active account.'
+            )
+          : translate(
+              'auto.components.sidebar.WorktreeAgentAccountBadge.claudeUnavailableDetail',
+              'The Claude account this workspace was created with is no longer available. Claude launches here use the active account.'
+            )
       : agent === 'codex'
         ? translate(
-            'auto.components.sidebar.WorktreeAgentAccountBadge.unavailableDetail',
-            'The Codex account this workspace was created with is no longer available. Codex launches here use the active account.'
+            'auto.components.sidebar.WorktreeAgentAccountBadge.pinned',
+            'Codex account: {{value0}}',
+            {
+              value0: label
+            }
           )
         : translate(
-            'auto.components.sidebar.WorktreeAgentAccountBadge.claudeUnavailableDetail',
-            'The Claude account this workspace was created with is no longer available. Claude launches here use the active account.'
+            'auto.components.sidebar.WorktreeAgentAccountBadge.claudePinned',
+            'Claude account: {{value0}}',
+            { value0: label }
           )
-    : agent === 'codex'
-      ? translate(
-          'auto.components.sidebar.WorktreeAgentAccountBadge.pinned',
-          'Codex account: {{value0}}',
-          {
-            value0: label
-          }
-        )
-      : translate(
-          'auto.components.sidebar.WorktreeAgentAccountBadge.claudePinned',
-          'Claude account: {{value0}}',
-          { value0: label }
-        )
   return (
     <Tooltip>
       <TooltipTrigger asChild>
         <Badge
           variant="hostContext"
           className="max-w-[8rem]"
-          data-worktree-agent-account={unavailable ? 'unavailable' : 'pinned'}
+          data-worktree-agent-account={refused ? 'refused' : unavailable ? 'unavailable' : 'pinned'}
           aria-label={tooltip}
         >
           {unavailable ? (

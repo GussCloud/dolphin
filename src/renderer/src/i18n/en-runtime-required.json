@@ -1162,7 +1162,7 @@
           "add": "Add API account",
           "cancel": "Cancel",
           "copyFrom": "Copy profile from",
-          "copyHint": "Copies instructions, settings, skills, agents, commands, MCP servers and plugins. Logins and keys are never copied.",
+          "copyHint": "Copies instructions, settings, skills, agents, commands, MCP servers and plugins. Claude logins and Anthropic or cloud credentials are not copied; MCP servers and plugins are copied as they are, including their own tokens.",
           "copyNone": "Start with an empty profile",
           "description": "Bill Claude to an Anthropic API key instead of your plan. Each API account has its own profile and key, and plain Claude launches never use it.",
           "key": "Anthropic API key",

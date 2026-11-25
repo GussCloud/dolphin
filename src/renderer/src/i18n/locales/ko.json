@@ -4020,6 +4020,9 @@
             "checkAriaOne": "재개한 후 확인할 채팅 1개. 자세히 보려면 클릭하세요.",
             "checkAria": "재개한 후 확인할 채팅 {{value0}}개. 자세히 보려면 클릭하세요.",
             "checkTooltip": "다시 시작한 후 Dolphin이 재개하지 못했거나 재개했는지 확인하지 못한 채팅. 자세히 보려면 클릭하세요."
+          },
+          "footerClaudeAccount": {
+            "apiKeyRefused": "이 프로젝트는 Claude API 계정 {{value0}}에 고정되어 있습니다. 여기서는 일반 Claude 실행이 거부됩니다."
           }
         }
       },
@@ -6375,6 +6378,10 @@
           "browse": "Azure DevOps 둘러보기",
           "filter": "저장소 필터링",
           "empty": "저장소를 찾을 수 없습니다."
+        },
+        "WorktreeAgentAccountBadge": {
+          "apiKeyRefused": "실행 거부됨",
+          "apiKeyRefusedDetail": "이 워크스페이스는 Claude API 계정에 고정되어 있습니다. 일반 Claude 실행은 API 계정을 사용하지 않으므로 여기서는 거부됩니다."
         }
       },
       "shared": {
@@ -12385,7 +12392,7 @@
           "keyPlaceholder": "Anthropic API 키를 붙여 넣으세요",
           "copyFrom": "프로필 복사 원본",
           "copyNone": "빈 프로필로 시작",
-          "copyHint": "지침, 설정, 스킬, 에이전트, 명령, MCP 서버, 플러그인을 복사합니다. 로그인 정보와 키는 복사하지 않습니다.",
+          "copyHint": "지침, 설정, 스킬, 에이전트, 명령, MCP 서버, 플러그인을 복사합니다. Claude 로그인과 Anthropic 또는 클라우드 자격 증명은 복사하지 않습니다. MCP 서버와 플러그인은 자체 토큰을 포함해 그대로 복사됩니다.",
           "cancel": "취소",
           "save": "계정 추가",
           "replaced": "API 키를 교체했습니다.",
