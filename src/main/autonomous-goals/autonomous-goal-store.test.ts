@@ -36,6 +36,17 @@ describe('AutonomousGoalStore', () => {
       () => clock++
     )
 
+  it('keeps creation order for goals created in the same millisecond', () => {
+    const goals = new AutonomousGoalStore(
+      () => file,
+      () => 5_000
+    )
+    const first = goals.create(INPUT)
+    goals.update(first.id, { status: 'complete' })
+    const second = goals.create(INPUT)
+    expect(goals.list().map((goal) => goal.id)).toEqual([first.id, second.id])
+  })
+
   it('persists goals and finds the open one for a coordinator pane', () => {
     const created = store().create(INPUT)
     const reopened = store()
