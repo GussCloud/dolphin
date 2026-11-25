@@ -118,10 +118,12 @@ export class DolphinRuntimeWithStopExplicitlyClosedTabPtys extends DolphinRuntim
           : null)
       const tabId = surface?.tab.parentTabId ?? pty.pty.tabId ?? pty.record.tabId
       // Why: relay recovery can leave stale renderer leaves; the persisted HUB layout defines whether closing this PTY closes the whole surface.
-      const siblingCount = surface?.tab.parentLayout
-        ? countTerminalLayoutLeaves(surface.tab.parentLayout.root)
+      const parentLayout = surface?.tab.parentLayout
+      const siblingCount = parentLayout
+        ? countTerminalLayoutLeaves(parentLayout.root)
         : this.countLeavesInTab(tabId)
-      const closesWholeTab = siblingCount <= 1 && !this.tabHasLeafOfOtherPty(tabId, pty.pty.ptyId)
+      const closesWholeTab =
+        siblingCount <= 1 && (parentLayout || !this.tabHasLeafOfOtherPty(tabId, pty.pty.ptyId))
       if (closesWholeTab && surface && this.tabs.has(tabId) && this.notifier?.closeTerminalTab) {
         const ptyIdsToKill = this.getPtyIdsForExplicitTabClose(pty.pty.worktreeId, tabId)
         try {
