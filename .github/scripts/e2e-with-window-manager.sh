@@ -1,5 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Why wait: xvfb-run can return before Xvfb accepts clients; openbox then exits at once with
+# "Failed to open the display" and the whole shard dies before any test runs.
+display_ready=false
+for attempt in {1..100}; do
+  if xprop -root >/dev/null 2>&1; then
+    display_ready=true
+    break
+  fi
+  sleep 0.1
+done
+if [ "$display_ready" != true ]; then
+  echo "Xvfb display $DISPLAY never accepted connections" >&2
+  exit 1
+fi
 openbox --sm-disable > /tmp/dolphin-e2e-window-manager.log 2>&1 &
 wm_pid=$!
 cleanup() {
