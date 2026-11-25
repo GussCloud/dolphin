@@ -116,6 +116,15 @@ describe('release workflows', () => {
     }
     // Why exit 0: without the variables node-gyp falls back to its own detection.
     expect(pin.run).toMatch(/::warning::[\s\S]*exit 0/)
+    // Why the wait matters: build:release bundles the mobile web page from mobile/node_modules.
+    const mobile = steps.find(
+      (step) => step.uses === './.github/actions/install-mobile-dependencies'
+    )
+    expect(mobile).toMatchObject({ id: 'mobile-deps', background: true })
+    const waitIndex = steps.findIndex((step) => step.wait === 'mobile-deps')
+    expect(steps.indexOf(mobile)).toBeLessThan(names.indexOf('Install dependencies'))
+    expect(waitIndex).toBeGreaterThan(names.indexOf('Install dependencies'))
+    expect(waitIndex).toBeLessThan(names.indexOf('Build app'))
     const cache = steps.find((step) => step.name === 'Cache node-gyp headers')
     // Why not package.json: the release version stamp rewrites it, so the key would never hit.
     expect(cache.with.key).toBe('node-gyp-headers-win-arm64-${{ steps.node.outputs.node-version }}')
