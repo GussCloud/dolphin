@@ -125,6 +125,29 @@ export function createCloseContinuityGraphFixture({
       leaves: includeCanary ? [canarySyncedLeaf] : []
     })
 
+  // Why: the renderer drops an exited pane's leaf on its own, leaving only the sibling in the tab.
+  const syncSiblingOnlyGraph = () =>
+    runtime.syncWindowGraph(1, {
+      tabs: [
+        {
+          tabId: TAB_ID,
+          worktreeId: WORKTREE_ID,
+          title: 'Fixture shell',
+          activeLeafId: SIBLING_LEAF_ID,
+          layout: { type: 'leaf', leafId: SIBLING_LEAF_ID }
+        }
+      ],
+      leaves: [
+        {
+          tabId: TAB_ID,
+          worktreeId: WORKTREE_ID,
+          leafId: SIBLING_LEAF_ID,
+          paneRuntimeId: 8,
+          ptyId: SIBLING_PTY_ID
+        }
+      ]
+    })
+
   const syncSplitFixtureGraph = () => {
     markSiblingPtyIncluded()
     const splitLayout = {
@@ -222,6 +245,7 @@ export function createCloseContinuityGraphFixture({
     syncCanaryGraph,
     syncEmptyGraph,
     syncFixtureTabWithoutLeaf,
+    syncSiblingOnlyGraph,
     syncSplitFixtureGraph
   }
 }
