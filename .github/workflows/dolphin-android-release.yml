@@ -171,6 +171,19 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      # Why cached: without it every build fetches Gradle and the whole Android dependency graph from
+      # Maven Central, which rate-limits shared runners (429 failed the 2026-11-24 beta).
+      - name: Cache Gradle downloads
+        if: steps.gate.outputs.skip != 'true'
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-android-${{ hashFiles('mobile/pnpm-lock.yaml') }}
+          restore-keys: |
+            gradle-android-
+
       - name: Expo prebuild
         if: steps.gate.outputs.skip != 'true'
         run: npx expo prebuild --platform android --no-install
@@ -184,7 +197,19 @@ jobs:
         run: |
           set -euo pipefail
           echo "Mobile shell: $EXPO_PUBLIC_MOBILE_SHELL"
-          cd android && ./gradlew assembleRelease --no-daemon
+          cd android
+          log="$RUNNER_TEMP/gradle-build.log"
+          # Why retry only on a fetch error: a compile error fails the same way twice.
+          for attempt in 1 2; do
+            if ./gradlew assembleRelease --no-daemon 2>&1 | tee "$log"; then
+              exit 0
+            fi
+            if [[ "$attempt" == 2 ]] || ! grep -qE 'status code (429|5[0-9][0-9])|Could not GET|Read timed out' "$log"; then
+              exit 1
+            fi
+            echo "::warning::Gradle could not fetch a dependency (attempt $attempt); retrying in 60s"
+            sleep 60
+          done
 
       - name: Sign APK
         if: steps.gate.outputs.skip != 'true'
