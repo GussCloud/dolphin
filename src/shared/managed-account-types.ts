@@ -55,6 +55,9 @@ export type CodexManagedAccountRuntimeSelection = {
   wsl: Record<string, string | null>
 }
 
+/** 'api-key': billed to an Anthropic API key held by Dolphin, never usable by plain `claude`. */
+export type ClaudeAccountAuthMethod = 'subscription-oauth' | 'api-key' | 'unknown'
+
 export type ClaudeManagedAccount = {
   id: string
   email: string
@@ -65,7 +68,9 @@ export type ClaudeManagedAccount = {
   /** A config dir the user already manages (e.g. from a terminal menu); Dolphin launches in it
    *  and never writes credentials there. Absent: an isolated profile Dolphin manages. */
   linkedConfigDir?: string | null
-  authMethod: 'subscription-oauth' | 'unknown'
+  authMethod: ClaudeAccountAuthMethod
+  /** Name the user gave an api-key account, which has no OAuth email (`email` is empty). */
+  label?: string | null
   organizationUuid?: string | null
   organizationName?: string | null
   createdAt: number
@@ -79,7 +84,9 @@ export type ClaudeManagedAccountSummary = {
   managedAuthRuntime?: 'host' | 'wsl'
   wslDistro?: string | null
   linkedConfigDir?: string | null
-  authMethod: 'subscription-oauth' | 'unknown'
+  authMethod: ClaudeAccountAuthMethod
+  /** Name the user gave an api-key account, which has no OAuth email (`email` is empty). */
+  label?: string | null
   organizationUuid?: string | null
   organizationName?: string | null
   createdAt: number
@@ -113,4 +120,16 @@ export type ClaudeRateLimitAccountsState = {
 export type ClaudeManagedAccountRuntimeSelection = {
   host: string | null
   wsl: Record<string, string | null>
+}
+
+export type ClaudeApiKeyStatus = {
+  apiKeyConfigured: boolean
+  encryptionAvailable: boolean
+}
+
+export type ClaudeApiKeyAccountRequest = {
+  label: string
+  apiKey: string
+  /** Account whose profile (instructions, settings, tools; never credentials) seeds the new one. */
+  copyFromAccountId?: string | null
 }

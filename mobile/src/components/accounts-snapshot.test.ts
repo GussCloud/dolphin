@@ -131,4 +131,20 @@ describe('decodeAccountsSnapshot', () => {
 
     expect(() => decodeAccountsSnapshot(snapshot)).toThrow('Invalid accounts snapshot from host')
   })
+
+  it('keeps the account list when a newer host sends an auth method this client does not know', () => {
+    const snapshot = makeSnapshot()
+    setPath(
+      snapshot,
+      ['claude', 'accounts'],
+      [
+        { id: 'claude-a', email: 'a@example.com', authMethod: 'subscription-oauth' },
+        { id: 'claude-b', email: 'b@example.com', authMethod: 'some-future-method' }
+      ]
+    )
+
+    const decoded = decodeAccountsSnapshot(snapshot)
+
+    expect(decoded.claude.accounts.map((account) => account.id)).toEqual(['claude-a', 'claude-b'])
+  })
 })

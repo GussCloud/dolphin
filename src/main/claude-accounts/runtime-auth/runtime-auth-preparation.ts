@@ -1,4 +1,5 @@
 import { join } from 'node:path'
+import { isClaudeApiKeyAccount } from '../../../shared/claude-api-account'
 import type { ClaudeManagedAccount } from '../../../shared/managed-account-types'
 import { resolveLocalAccountRuntimeTarget } from '../../../shared/local-account-runtime'
 import { parseWslUncPath } from '../../../shared/wsl-paths'
@@ -93,7 +94,10 @@ export class ClaudeRuntimeAuthPreparationService extends ClaudeRuntimeAuthSnapsh
     if (!activeAccountId) {
       return null
     }
-    return accounts.find((account) => account.id === activeAccountId) ?? null
+    const account = accounts.find((candidate) => candidate.id === activeAccountId) ?? null
+    // Why: an API account bills a key, never the plan; as the active one it counts as none, and
+    // the sync then clears the selection instead of launching plain `claude` in its profile.
+    return isClaudeApiKeyAccount(account) ? null : account
   }
 
   protected getDefaultAccountSelectionTarget(

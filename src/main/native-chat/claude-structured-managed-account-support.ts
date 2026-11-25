@@ -1,3 +1,4 @@
+import { isClaudeApiKeyAccount } from '../../shared/claude-api-account'
 import type { GlobalSettings } from '../../shared/global-settings-types'
 import { getSelectedClaudeAccountIdForTarget } from '../claude-accounts/runtime-selection'
 
@@ -46,7 +47,8 @@ export function structuredClaudeMatchesActiveManagedAccount(
     return !accounts.some((candidate) => candidate.managedAuthRuntime === 'wsl')
   }
   const active = accounts.find((candidate) => candidate.id === activeHostId)
-  return active ? active.managedAuthRuntime !== 'wsl' : false
+  // Why: an API account bills a key that ambient Claude auth never carries.
+  return active ? active.managedAuthRuntime !== 'wsl' && !isClaudeApiKeyAccount(active) : false
 }
 
 /** Reads the gate's settings, answering null when they cannot be read so callers refuse. */

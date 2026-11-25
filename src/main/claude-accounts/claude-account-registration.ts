@@ -1,3 +1,4 @@
+import { isClaudeApiKeyAccount } from '../../shared/claude-api-account'
 import { randomUUID } from 'node:crypto'
 import type {
   ClaudeManagedAccount,
@@ -90,6 +91,10 @@ export class ClaudeAccountRegistration {
 
   async reauthenticate(accountId: string): Promise<ClaudeRateLimitAccountsState> {
     const account = this.dependencies.selection.requireAccount(accountId)
+    // Why: an OAuth login here would turn the API account into a plan account under its name.
+    if (isClaudeApiKeyAccount(account)) {
+      throw new Error('An API account has no Claude login to renew. Replace its key instead.')
+    }
     const managedAuthPath = await this.dependencies.assertManagedAuth(
       account.managedAuthPath,
       accountId

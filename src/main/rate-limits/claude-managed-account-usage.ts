@@ -34,12 +34,26 @@ function noClaudeManagedCredentialsResult(): ProviderRateLimits {
   }
 }
 
+function apiKeyAccountUsageResult(): ProviderRateLimits {
+  return {
+    provider: 'claude',
+    session: null,
+    weekly: null,
+    updatedAt: Date.now(),
+    error: null,
+    status: 'unavailable'
+  }
+}
+
 export async function fetchInactiveClaudeAccountUsage(
   account: InactiveClaudeAccount,
   options: ClaudeManagedAccountUsageOptions = {}
 ): Promise<ProviderRateLimits> {
   if (options.signal?.aborted) {
     return abortedClaudeRateLimitResult()
+  }
+  if (account.apiKeyAccount) {
+    return apiKeyAccountUsageResult()
   }
   if (account.linkedConfigDir) {
     return fetchLinkedFolderClaudeUsage(account.linkedConfigDir, options)

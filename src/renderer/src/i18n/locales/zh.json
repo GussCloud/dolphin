@@ -12374,6 +12374,27 @@
         "TerminalWindowsShellSection": {
           "powerShell7": "PowerShell 7",
           "pwshRecommended": "已安装 PowerShell 7 并推荐使用:新的 PowerShell 终端会使用它。"
+        },
+        "ClaudeApiAccounts": {
+          "title": "API 账户",
+          "description": "将 Claude 的费用计入 Anthropic API 密钥，而不是你的套餐。每个 API 账户都有自己的配置文件和密钥，普通的 Claude 启动从不使用它。",
+          "add": "添加 API 账户",
+          "name": "名称",
+          "namePlaceholder": "例如：工作 API",
+          "key": "Anthropic API 密钥",
+          "keyPlaceholder": "粘贴你的 Anthropic API 密钥",
+          "copyFrom": "从以下配置文件复制",
+          "copyNone": "从空配置文件开始",
+          "copyHint": "复制指令、设置、技能、代理、命令、MCP 服务器和插件。登录信息和密钥永远不会被复制。",
+          "cancel": "取消",
+          "save": "添加账户",
+          "replaced": "已替换 API 密钥。",
+          "replaceFailed": "无法替换 API 密钥。",
+          "replace": "替换密钥",
+          "newKey": "新的 Anthropic API 密钥",
+          "replaceSave": "保存",
+          "badge": "API 密钥",
+          "row": "计入 Anthropic API 密钥"
         }
       },
       "right": {

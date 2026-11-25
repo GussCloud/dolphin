@@ -1158,6 +1158,25 @@
         "BrowserUsePane": {
           "e44c5d681e": "From"
         },
+        "ClaudeApiAccounts": {
+          "add": "Add API account",
+          "cancel": "Cancel",
+          "copyFrom": "Copy profile from",
+          "copyHint": "Copies instructions, settings, skills, agents, commands, MCP servers and plugins. Logins and keys are never copied.",
+          "copyNone": "Start with an empty profile",
+          "description": "Bill Claude to an Anthropic API key instead of your plan. Each API account has its own profile and key, and plain Claude launches never use it.",
+          "key": "Anthropic API key",
+          "keyPlaceholder": "Paste your Anthropic API key",
+          "name": "Name",
+          "namePlaceholder": "e.g. Work API",
+          "newKey": "New Anthropic API key",
+          "replace": "Replace key",
+          "replaceFailed": "Couldn't replace the API key.",
+          "replaceSave": "Save",
+          "replaced": "API key replaced.",
+          "save": "Add account",
+          "title": "API accounts"
+        },
         "ClaudeLinkedFolders": {
           "choose": "Choose folder",
           "default": "Default folder",

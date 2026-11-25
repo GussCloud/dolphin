@@ -27,6 +27,7 @@ import { isRealHomeCodexHookLaneUsable } from '../codex/codex-real-home-hook-ins
 import { resolveHostCodexSessionSourceHome } from '../codex/codex-session-source-home'
 import { browserManager } from '../browser/browser-manager'
 import { mainProcessState as state } from './main-process-state'
+import { isClaudeApiKeyAccount } from '../../shared/claude-api-account'
 
 export function initializeMainProcessAccountServices(): void {
   const store = state.store
@@ -166,6 +167,7 @@ export function initializeMainProcessAccountServices(): void {
         wslDistro: account.wslDistro,
         wslLinuxAuthPath: account.wslLinuxAuthPath,
         linkedConfigDir: account.linkedConfigDir ?? null,
+        apiKeyAccount: isClaudeApiKeyAccount(account),
         pinnedConfigDir:
           account.managedAuthRuntime === 'wsl' ? null : getClaudePinnedConfigDir(account.id)
       }))

@@ -95,4 +95,43 @@ describe('listWorktreeAgentAccountChoices', () => {
       }).map((choice) => choice.id)
     ).toEqual(['codex-wsl'])
   })
+
+  describe('Claude API accounts', () => {
+    const apiAccount: ClaudeManagedAccount = {
+      ...claudeAccount,
+      id: 'claude-api',
+      email: '',
+      label: 'Work API',
+      authMethod: 'api-key'
+    }
+    const withApi = { ...settings, claudeManagedAccounts: [claudeAccount, apiAccount] }
+
+    it('never offers an API account as a plain Claude pin', () => {
+      expect(
+        listWorktreeAgentAccountChoices({ agent: 'claude', settings: withApi }).map(
+          (choice) => choice.id
+        )
+      ).toEqual(['claude-a'])
+    })
+
+    it('refuses a plain Claude launch pinned to an API account instead of falling back', () => {
+      expect(
+        resolveWorktreeAgentAccount({
+          agentAccountId: 'claude-api',
+          agent: 'claude',
+          settings: withApi
+        })
+      ).toEqual({ kind: 'unavailable', accountId: 'claude-api', reason: 'api-key-account' })
+    })
+
+    it('keeps the global selection for a Codex launch in a worktree pinned to an API account', () => {
+      expect(
+        resolveWorktreeAgentAccount({
+          agentAccountId: 'claude-api',
+          agent: 'codex',
+          settings: withApi
+        })
+      ).toEqual({ kind: 'global' })
+    })
+  })
 })

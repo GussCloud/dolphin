@@ -12731,6 +12731,27 @@
           "removeMcp": "Remover {{value0}}",
           "remove": "Remover",
           "importDone": "Importação concluída."
+        },
+        "ClaudeApiAccounts": {
+          "title": "Contas de API",
+          "description": "Cobre o Claude numa chave de API da Anthropic em vez do seu plano. Cada conta de API tem perfil e chave próprios, e as execuções normais do Claude nunca a usam.",
+          "add": "Adicionar conta de API",
+          "name": "Nome",
+          "namePlaceholder": "ex.: API do trabalho",
+          "key": "Chave de API da Anthropic",
+          "keyPlaceholder": "Cole sua chave de API da Anthropic",
+          "copyFrom": "Copiar perfil de",
+          "copyNone": "Começar com um perfil vazio",
+          "copyHint": "Copia instruções, configurações, skills, agentes, comandos, servidores MCP e plugins. Logins e chaves nunca são copiados.",
+          "cancel": "Cancelar",
+          "save": "Adicionar conta",
+          "replaced": "Chave de API substituída.",
+          "replaceFailed": "Não foi possível substituir a chave de API.",
+          "replace": "Trocar chave",
+          "newKey": "Nova chave de API da Anthropic",
+          "replaceSave": "Salvar",
+          "badge": "Chave de API",
+          "row": "Cobrada numa chave de API da Anthropic"
         }
       },
       "right": {

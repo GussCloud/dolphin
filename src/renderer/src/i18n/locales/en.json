@@ -12731,6 +12731,27 @@
           "removeMcp": "Remove {{value0}}",
           "remove": "Remove",
           "importDone": "Import finished."
+        },
+        "ClaudeApiAccounts": {
+          "title": "API accounts",
+          "description": "Bill Claude to an Anthropic API key instead of your plan. Each API account has its own profile and key, and plain Claude launches never use it.",
+          "add": "Add API account",
+          "name": "Name",
+          "namePlaceholder": "e.g. Work API",
+          "key": "Anthropic API key",
+          "keyPlaceholder": "Paste your Anthropic API key",
+          "copyFrom": "Copy profile from",
+          "copyNone": "Start with an empty profile",
+          "copyHint": "Copies instructions, settings, skills, agents, commands, MCP servers and plugins. Logins and keys are never copied.",
+          "cancel": "Cancel",
+          "save": "Add account",
+          "replaced": "API key replaced.",
+          "replaceFailed": "Couldn't replace the API key.",
+          "replace": "Replace key",
+          "newKey": "New Anthropic API key",
+          "replaceSave": "Save",
+          "badge": "API key",
+          "row": "Billed to an Anthropic API key"
         }
       },
       "right": {

@@ -10811,6 +10811,27 @@
         "TerminalWindowsShellSection": {
           "powerShell7": "PowerShell 7",
           "pwshRecommended": "PowerShell 7 está instalado y es el recomendado: los nuevos terminales de PowerShell lo usan."
+        },
+        "ClaudeApiAccounts": {
+          "title": "Cuentas de API",
+          "description": "Factura Claude a una clave de API de Anthropic en lugar de tu plan. Cada cuenta de API tiene su propio perfil y clave, y los inicios normales de Claude nunca la usan.",
+          "add": "Añadir cuenta de API",
+          "name": "Nombre",
+          "namePlaceholder": "p. ej., API del trabajo",
+          "key": "Clave de API de Anthropic",
+          "keyPlaceholder": "Pega tu clave de API de Anthropic",
+          "copyFrom": "Copiar perfil de",
+          "copyNone": "Empezar con un perfil vacío",
+          "copyHint": "Copia instrucciones, ajustes, skills, agentes, comandos, servidores MCP y plugins. Los inicios de sesión y las claves nunca se copian.",
+          "cancel": "Cancelar",
+          "save": "Añadir cuenta",
+          "replaced": "Clave de API reemplazada.",
+          "replaceFailed": "No se pudo reemplazar la clave de API.",
+          "replace": "Reemplazar clave",
+          "newKey": "Nueva clave de API de Anthropic",
+          "replaceSave": "Guardar",
+          "badge": "Clave de API",
+          "row": "Facturada a una clave de API de Anthropic"
         }
       },
       "right": {

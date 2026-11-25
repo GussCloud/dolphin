@@ -13,6 +13,11 @@ import {
 import { formatAccountTimestamp, getClaudeAccountRuntimeLabel } from './accounts-pane-runtime'
 import type { AccountsPaneSectionModel } from './accounts-pane-types'
 import { ClaudeLinkedFolders } from './ClaudeLinkedFolders'
+import { ClaudeApiAccountForm, ClaudeApiKeyReplaceButton } from './ClaudeApiAccounts'
+import {
+  claudeAccountDisplayName,
+  isClaudeApiKeyAccount
+} from '../../../../shared/claude-api-account'
 import { ClaudeProfileButton } from './ClaudeProfileButton'
 
 export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): React.JSX.Element {
@@ -127,6 +132,13 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
             }
           />
         ) : null}
+        {!isRemoteAccountScope && accountRuntime.runtime === 'host' ? (
+          <ClaudeApiAccountForm
+            accounts={claudeAccounts.accounts}
+            claudeAction={claudeAction}
+            runClaudeAccountAction={runClaudeAccountAction}
+          />
+        ) : null}
 
         <div className="space-y-2">
           <button
@@ -194,10 +206,12 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
               )
               const isReauthing = claudeAction === `reauth:${account.id}`
               const isBusy = claudeAction !== 'idle' || accountRuntimeUnavailable
+              const isApiAccount = isClaudeApiKeyAccount(account)
 
               return (
                 <div
                   key={account.id}
+                  data-claude-account-kind={isApiAccount ? 'api-key' : 'subscription'}
                   className={`flex w-full items-center justify-between gap-3 rounded-md border px-3 py-2.5 text-left transition-colors ${
                     isActive
                       ? 'border-foreground/20 bg-accent/15'
@@ -219,11 +233,25 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                           accountRuntimeView
                         )
                       }}
-                      disabled={isBusy}
+                      // Why: the selection is the plain `claude` account, which an API account never is.
+                      disabled={isBusy || isApiAccount}
                       className="flex min-w-0 flex-1 flex-col gap-0.5 text-left disabled:cursor-default"
                     >
                       <div className="flex min-w-0 items-center gap-2">
-                        <span className="truncate text-sm font-medium">{account.email}</span>
+                        <span className="truncate text-sm font-medium">
+                          {claudeAccountDisplayName(account)}
+                        </span>
+                        {isApiAccount ? (
+                          <Badge
+                            variant="outline"
+                            className="h-4 shrink-0 rounded px-1.5 text-[10px] font-medium leading-none text-foreground/80"
+                          >
+                            {translate(
+                              'auto.components.settings.ClaudeApiAccounts.badge',
+                              'API key'
+                            )}
+                          </Badge>
+                        ) : null}
                         <Badge
                           variant="outline"
                           className="h-4 shrink-0 rounded px-1.5 text-[10px] font-medium leading-none text-foreground/70"
@@ -243,15 +271,20 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                         ) : null}
                       </div>
                       <span className="truncate text-[11px] text-muted-foreground">
-                        {account.linkedConfigDir
+                        {isApiAccount
                           ? translate(
-                              'auto.components.settings.ClaudeLinkedFolders.linkedRow',
-                              'Linked folder {{value0}}',
-                              { value0: account.linkedConfigDir }
+                              'auto.components.settings.ClaudeApiAccounts.row',
+                              'Billed to an Anthropic API key'
                             )
-                          : account.organizationName
-                            ? `${account.organizationName} · ${formatAccountTimestamp(account.lastAuthenticatedAt)}`
-                            : formatAccountTimestamp(account.lastAuthenticatedAt)}
+                          : account.linkedConfigDir
+                            ? translate(
+                                'auto.components.settings.ClaudeLinkedFolders.linkedRow',
+                                'Linked folder {{value0}}',
+                                { value0: account.linkedConfigDir }
+                              )
+                            : account.organizationName
+                              ? `${account.organizationName} · ${formatAccountTimestamp(account.lastAuthenticatedAt)}`
+                              : formatAccountTimestamp(account.lastAuthenticatedAt)}
                       </span>
                     </button>
                     <div className="flex shrink-0 items-center justify-end gap-1 max-md:w-full max-md:flex-wrap">
@@ -259,40 +292,47 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
                       !isRemoteAccountScope ? (
                         <ClaudeProfileButton
                           accountId={account.id}
-                          email={account.email}
+                          email={claudeAccountDisplayName(account)}
                           disabled={isBusy}
                         />
                       ) : null}
-                      <Button
-                        variant="ghost"
-                        size="xs"
-                        onClick={(event) => {
-                          event.stopPropagation()
-                          void runClaudeAccountAction(
-                            `reauth:${account.id}`,
-                            () =>
-                              window.api.claudeAccounts.reauthenticate({
-                                accountId: account.id
-                              }),
-                            getProviderAccountRuntime(account)
-                          )
-                        }}
-                        // Why: a linked folder's login is renewed from the terminal that owns it.
-                        disabled={
-                          isRemoteAccountScope || isBusy || Boolean(account.linkedConfigDir)
-                        }
-                        className="h-6 px-2 text-muted-foreground hover:text-foreground"
-                      >
-                        {isReauthing ? (
-                          <Loader2 className="size-3 animate-spin" />
-                        ) : (
-                          <RefreshCw className="size-3" />
-                        )}
-                        {translate(
-                          'auto.components.settings.AccountsPane.8a0f870153',
-                          'Re-authenticate'
-                        )}
-                      </Button>
+                      {isApiAccount ? (
+                        <ClaudeApiKeyReplaceButton
+                          accountId={account.id}
+                          disabled={isRemoteAccountScope || isBusy}
+                        />
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          size="xs"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            void runClaudeAccountAction(
+                              `reauth:${account.id}`,
+                              () =>
+                                window.api.claudeAccounts.reauthenticate({
+                                  accountId: account.id
+                                }),
+                              getProviderAccountRuntime(account)
+                            )
+                          }}
+                          // Why: a linked folder's login is renewed from the terminal that owns it.
+                          disabled={
+                            isRemoteAccountScope || isBusy || Boolean(account.linkedConfigDir)
+                          }
+                          className="h-6 px-2 text-muted-foreground hover:text-foreground"
+                        >
+                          {isReauthing ? (
+                            <Loader2 className="size-3 animate-spin" />
+                          ) : (
+                            <RefreshCw className="size-3" />
+                          )}
+                          {translate(
+                            'auto.components.settings.AccountsPane.8a0f870153',
+                            'Re-authenticate'
+                          )}
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="xs"

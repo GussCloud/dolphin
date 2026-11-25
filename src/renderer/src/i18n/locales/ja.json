@@ -12374,6 +12374,27 @@
         "TerminalWindowsShellSection": {
           "powerShell7": "PowerShell 7",
           "pwshRecommended": "PowerShell 7 はインストール済みで推奨です。新しい PowerShell ターミナルで使用されます。"
+        },
+        "ClaudeApiAccounts": {
+          "title": "API アカウント",
+          "description": "Claude の利用料をプランではなく Anthropic API キーに請求します。API アカウントごとに専用のプロファイルとキーがあり、通常の Claude 起動では使われません。",
+          "add": "API アカウントを追加",
+          "name": "名前",
+          "namePlaceholder": "例: 仕事用 API",
+          "key": "Anthropic API キー",
+          "keyPlaceholder": "Anthropic API キーを貼り付け",
+          "copyFrom": "プロファイルのコピー元",
+          "copyNone": "空のプロファイルで開始",
+          "copyHint": "指示、設定、スキル、Agent、コマンド、MCP サーバー、プラグインをコピーします。ログイン情報とキーはコピーされません。",
+          "cancel": "キャンセル",
+          "save": "アカウントを追加",
+          "replaced": "API キーを置き換えました。",
+          "replaceFailed": "API キーを置き換えられませんでした。",
+          "replace": "キーを置き換え",
+          "newKey": "新しい Anthropic API キー",
+          "replaceSave": "保存",
+          "badge": "API キー",
+          "row": "Anthropic API キーに請求"
         }
       },
       "right": {

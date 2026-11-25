@@ -1,4 +1,5 @@
 import { ipcRenderer } from 'electron'
+import type { ClaudeApiKeyAccountRequest } from '../../shared/managed-account-types'
 import type { PreloadApi } from '../api-types'
 
 export const claudeAccountsApi = {
@@ -8,6 +9,12 @@ export const claudeAccountsApi = {
   discoverFolders: () => ipcRenderer.invoke('claudeAccounts:discoverFolders'),
   linkFolder: (args: { configDir: string }) =>
     ipcRenderer.invoke('claudeAccounts:linkFolder', args),
+  addApiKeyAccount: (args: ClaudeApiKeyAccountRequest) =>
+    ipcRenderer.invoke('claudeAccounts:addApiKeyAccount', args),
+  replaceApiKey: (args: { accountId: string; apiKey: string }) =>
+    ipcRenderer.invoke('claudeAccounts:replaceApiKey', args),
+  apiKeyStatus: (args: { accountId: string }) =>
+    ipcRenderer.invoke('claudeAccounts:apiKeyStatus', args),
   pickFolder: (): Promise<string | null> => ipcRenderer.invoke('claudeAccounts:pickFolder'),
   profile: (args: { accountId: string }) => ipcRenderer.invoke('claudeAccounts:profile', args),
   saveProfileInstructions: (args: { accountId: string; content: string }) =>

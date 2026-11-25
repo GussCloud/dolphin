@@ -1,3 +1,4 @@
+import { isClaudeApiKeyAccount } from '../../shared/claude-api-account'
 import type { GlobalSettings } from '../../shared/global-settings-types'
 import type {
   ClaudeManagedAccount,
@@ -123,7 +124,10 @@ export function pruneInvalidClaudeRuntimeSelection(
         : null
   }
   return {
-    host: hostAccount && hostAccount.managedAuthRuntime !== 'wsl' ? selection.host : null,
+    host:
+      hostAccount && hostAccount.managedAuthRuntime !== 'wsl' && !isClaudeApiKeyAccount(hostAccount)
+        ? selection.host
+        : null,
     wsl: nextWsl
   }
 }
