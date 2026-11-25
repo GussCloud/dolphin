@@ -56,7 +56,7 @@ Alongside the approval, the `e2e` and `e2e_wsl` jobs run the **whole** e2e suite
 
 The full-suite runs (E2E develop and the promote) give each failed test one retry (`DOLPHIN_E2E_RETRIES=1`, read by `tests/playwright.config.ts`). A test that fails twice fails the run; one that passes on its retry is annotated `Flaky e2e`, and E2E develop collects those into the issue "Flaky e2e tests on develop". The first attempt's trace is kept. Pull requests run with no retry, so a spec a PR writes or edits must pass on its first attempt.
 
-The owner's approval is the dispatch itself: only someone who can run workflows starts a promote (agents cannot). If the `production` environment has required reviewers, the run also waits there for one. It then rebuilds **the commit the rc tag points at**, versioned `X.Y.Z`. Once the suite and the build pass, one job per app publishes it:
+The owner's approval is the dispatch itself: only someone who can run workflows starts a promote (agents cannot). If the `production` environment has required reviewers, the run also waits there for one. It then rebuilds **the commit the rc tag points at**, versioned `X.Y.Z`. When nothing that app ships changed between that commit and `develop` (only tests, CI or docs, judged by the same rules that decide whether a merge cuts a beta), it builds `develop` instead, so a tests-only fix needs no new beta before a promote (`beta-release-scope.mjs --promotion-commit`). Once the suite and the build pass, one job per app publishes it:
 
 - **Desktop:** `desktop-publish` undrafts `vX.Y.Z` as the latest stable release.
 - **Android:** `android-publish` creates `mobile-android-vX.Y.Z` from the build's APK artifact and refreshes `mobile-android-latest`.

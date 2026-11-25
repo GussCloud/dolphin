@@ -10,6 +10,7 @@ import {
   isMobileReleasePath,
   isTestPath,
   nearestReleaseTag,
+  promotionCommit,
   scopeForApp
 } from './beta-release-scope.mjs'
 
@@ -149,6 +150,51 @@ describe('detectBetaScope', () => {
     withGitRepo((repo) => {
       commitFile(repo, 'src/main/a.ts')
       expect(() => detectBetaScope('0'.repeat(40), { cwd: repo, ...quiet })).toThrow()
+    })
+  })
+})
+
+describe('promotionCommit', () => {
+  it('promotes develop head when only tests and CI changed since the rc', () => {
+    withGitRepo((repo) => {
+      const rc = commitFile(repo, 'src/main/a.ts')
+      commitFile(repo, 'tests/e2e/fixed.spec.ts')
+      const head = commitFile(repo, '.github/workflows/e2e.yml')
+
+      expect(promotionCommit('desktop', rc, head, { cwd: repo })).toBe(head)
+    })
+  })
+
+  it('keeps the rc commit when something the app ships changed after it', () => {
+    withGitRepo((repo) => {
+      const rc = commitFile(repo, 'src/main/a.ts')
+      commitFile(repo, 'tests/e2e/fixed.spec.ts')
+      const head = commitFile(repo, 'src/main/b.ts')
+
+      expect(promotionCommit('desktop', rc, head, { cwd: repo })).toBe(rc)
+    })
+  })
+
+  it('judges each app by its own paths', () => {
+    withGitRepo((repo) => {
+      const rc = commitFile(repo, 'mobile/src/App.tsx')
+      const head = commitFile(repo, 'src/main/a.ts')
+
+      expect(promotionCommit('mobile', rc, head, { cwd: repo })).toBe(head)
+      expect(promotionCommit('desktop', rc, head, { cwd: repo })).toBe(rc)
+    })
+  })
+
+  it('keeps the rc commit when develop head does not contain it', () => {
+    withGitRepo((repo) => {
+      const base = commitFile(repo, 'src/main/a.ts')
+      git(repo, ['checkout', '-q', '-b', 'side'])
+      const rc = commitFile(repo, 'src/main/b.ts')
+      git(repo, ['checkout', '-q', 'develop'])
+      const head = commitFile(repo, 'tests/e2e/x.spec.ts')
+
+      expect(git(repo, ['merge-base', rc, head])).toBe(base)
+      expect(promotionCommit('desktop', rc, head, { cwd: repo })).toBe(rc)
     })
   })
 })
