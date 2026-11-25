@@ -38,7 +38,13 @@ describe('release workflows', () => {
       expect(jobs[leg].needs, leg).toBe('draft')
       expect(jobs[leg].env.TAG, leg).toBe('${{ needs.draft.outputs.tag }}')
     }
-    expect(jobs.publish.needs).toEqual(['draft', 'build-win', 'build-win-arm64', 'build-mac'])
+    expect(jobs.publish.needs).toEqual([
+      'draft',
+      'build-win',
+      'build-win-arm64',
+      'build-mac',
+      'mac-update-manifest'
+    ])
     expect(jobs.publish.if).toContain('inputs.publish')
     expect(on.workflow_call.inputs.publish.default).toBe(true)
     expect(jobs.publish.steps.at(-1).uses).toBe('./.github/actions/publish-desktop-release')
@@ -48,6 +54,66 @@ describe('release workflows', () => {
       'verify-release-required-assets.mjs "$TAG" --platforms=mac,win,win-arm64'
     )
     expect(steps).toContain('--prerelease --latest=false')
+  })
+
+  it('packages each mac slice on its own runner and publishes one merged update manifest', () => {
+    const { jobs } = workflow('dolphin-windows-release')
+    const mac = jobs['build-mac']
+    expect(mac.strategy.matrix.include).toEqual([
+      { arch: 'x64', app_dir: 'mac', zip_suffix: 'mac.zip' },
+      { arch: 'arm64', app_dir: 'mac-arm64', zip_suffix: 'arm64-mac.zip' }
+    ])
+    // Why: with fail-fast the surviving slice would be cancelled mid-notarization.
+    expect(mac.strategy['fail-fast']).toBe(false)
+    const pack = mac.steps.find((step) => step.name === 'Package macOS dmg and zip')
+    expect(pack.env.DOLPHIN_MAC_ARCH).toBe('${{ matrix.arch }}')
+    expect(pack.env.DOLPHIN_MAC_RELEASE).toBe('1')
+    const upload = mac.steps.find((step) => step.name === 'Verify and upload release assets')
+    // Why: a slice's own latest-mac.yml names only its files; on the release it would hide the other slice.
+    expect(upload.run).toContain('files=("$dmg" "$dmg.blockmap" "$zip" "$zip.blockmap")')
+    expect(upload.run).toContain('gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" "${files[@]}"')
+    expect(upload.run).toContain('xcrun stapler validate "$app"')
+    expect(mac.steps.at(-1).with).toMatchObject({
+      name: 'mac-update-manifest-${{ matrix.arch }}',
+      path: 'dist/latest-mac.yml',
+      'if-no-files-found': 'error'
+    })
+
+    const merge = jobs['mac-update-manifest']
+    expect(merge.needs).toEqual(['draft', 'build-mac'])
+    expect(merge.if).toBe("github.repository == 'GussCloud/dolphin'")
+    const downloads = merge.steps.filter((step) => step.uses?.startsWith('actions/download-artifact@'))
+    expect(downloads.map((step) => step.with.name)).toEqual([
+      'mac-update-manifest-x64',
+      'mac-update-manifest-arm64'
+    ])
+    const run = merge.steps.at(-1).run
+    expect(run).toContain('node config/scripts/merge-mac-update-manifests.mjs')
+    expect(run).toMatch(/mac-x64\/latest-mac\.yml"\s+"\$RUNNER_TEMP\/mac-arm64\/latest-mac\.yml"/)
+    expect(run).toContain('gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" dist/latest-mac.yml')
+  })
+
+  it('compiles native modules once per Windows leg and spares arm64 the Visual Studio search', () => {
+    const { jobs } = workflow('dolphin-windows-release')
+    for (const leg of ['build-win', 'build-win-arm64']) {
+      const pack = jobs[leg].steps.find((step) => step.name?.startsWith('Package Windows'))
+      expect(pack.run, leg).toContain('ensure-native-runtime.mjs --runtime=electron')
+      expect(pack.env.DOLPHIN_REUSE_PREPARED_NATIVE_RUNTIME, leg).toBe('1')
+    }
+    const steps = jobs['build-win-arm64'].steps
+    const names = steps.map((step) => step.name)
+    const pin = steps.find((step) => step.name === 'Tell node-gyp where Visual Studio is')
+    // Why before the install: the first node-gyp run is a dependency's install script.
+    expect(names.indexOf(pin.name)).toBeLessThan(names.indexOf('Install dependencies'))
+    for (const variable of ['VCINSTALLDIR', 'VSCMD_VER', 'WindowsSDKVersion']) {
+      expect(pin.run).toContain(`"${variable}=`)
+    }
+    // Why exit 0: without the variables node-gyp falls back to its own detection.
+    expect(pin.run).toMatch(/::warning::[\s\S]*exit 0/)
+    const cache = steps.find((step) => step.name === 'Cache node-gyp headers')
+    // Why not package.json: the release version stamp rewrites it, so the key would never hit.
+    expect(cache.with.key).toBe('node-gyp-headers-win-arm64-${{ steps.node.outputs.node-version }}')
+    expect(names.indexOf('Stamp the release version')).toBeLessThan(names.indexOf(cache.name))
   })
 
   it.each([

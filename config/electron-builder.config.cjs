@@ -58,6 +58,14 @@ const isMacRelease =
 const isMacUnsignedRelease = !isMacRelease && process.env.DOLPHIN_MAC_UNSIGNED_RELEASE === '1'
 // Mirrors MAC_UNSIGNED_RELEASE_MARKER in src/main/mac-unsigned-release.ts.
 const MAC_UNSIGNED_RELEASE_MARKER = 'dolphin-unsigned-mac-release'
+// Why one slice per run in release CI: each slice waits ~5 min on Apple's notary, so two runners
+// overlap that wait; merge-mac-update-manifests.mjs then joins the two latest-mac.yml files.
+const MAC_ARCHS = ['x64', 'arm64']
+const macArchOverride = process.env.DOLPHIN_MAC_ARCH
+if (macArchOverride && !MAC_ARCHS.includes(macArchOverride)) {
+  throw new Error(`DOLPHIN_MAC_ARCH must be one of ${MAC_ARCHS.join(', ')}; got '${macArchOverride}'`)
+}
+const macTargetArchs = macArchOverride ? [macArchOverride] : MAC_ARCHS
 const isLinuxArm64Release = process.env.DOLPHIN_LINUX_ARM64_RELEASE === '1'
 // Why a flag rather than the packaged arch: NSIS artifactName and the update channel are config-wide,
 // and the x64 installer's names must stay byte-identical for installs already pointed at them.
@@ -635,11 +643,11 @@ module.exports = {
     target: [
       {
         target: 'dmg',
-        arch: ['x64', 'arm64']
+        arch: macTargetArchs
       },
       {
         target: 'zip',
-        arch: ['x64', 'arm64']
+        arch: macTargetArchs
       }
     ]
   },

@@ -77,7 +77,7 @@ Last, the `fast-forward-main` job moves `main` to the promoted commit (with both
 The desktop release is assembled as a **draft**:
 
 1. The `draft` job checks the version and runs `create-draft-release.mjs`.
-2. The Windows x64, Windows arm64 and macOS jobs build in parallel and upload into that draft.
+2. The Windows x64, Windows arm64 and the two macOS jobs (one per slice, so their notarizations overlap) build in parallel and upload into that draft. Each macOS job writes a `latest-mac.yml` naming only its own slice; `mac-update-manifest` joins the two with `merge-mac-update-manifests.mjs` and uploads the single manifest the updater reads.
 3. The `publish` action (`.github/actions/publish-desktop-release`) runs `verify-release-required-assets.mjs --platforms=mac,win,win-arm64`, then undrafts the release. A beta runs it inside the desktop workflow; a promote calls the workflow with `publish: false` and runs it in `desktop-publish` after the e2e suite.
 
 The updater never sees a release that is missing a platform's manifest. If a leg fails, nothing is published: re-run the failed jobs. A later run for the same version deletes the stale draft before it starts.
