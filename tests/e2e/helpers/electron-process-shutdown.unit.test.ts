@@ -93,4 +93,33 @@ describe("Electron shutdown with a detached daemon holding Playwright's pipe", (
     },
     15_000
   )
+
+  it.skipIf(process.platform === 'win32')(
+    'leaves the daemon alone while Electron is still running',
+    async () => {
+      vi.useFakeTimers()
+      const userDataDir = mkdtempSync(path.join(tmpdir(), 'dolphin-e2e-close-'))
+      const daemon = spawn('sleep', ['60'], { detached: true, stdio: 'ignore' })
+      try {
+        mkdirSync(path.join(userDataDir, 'daemon'))
+        writeFileSync(
+          path.join(userDataDir, 'daemon', 'dolphind.pid'),
+          JSON.stringify({ pid: daemon.pid })
+        )
+        const { app } = exitedAppFixture()
+        const closing = closeElectronAppForE2E(app, { userDataDir })
+        await vi.advanceTimersByTimeAsync(9_000)
+
+        expect(daemon.exitCode).toBeNull()
+        expect(daemon.signalCode).toBeNull()
+        await vi.advanceTimersByTimeAsync(1_000)
+        await closing
+      } finally {
+        vi.useRealTimers()
+        daemon.kill('SIGKILL')
+        rmSync(userDataDir, { recursive: true, force: true })
+      }
+    },
+    15_000
+  )
 })
