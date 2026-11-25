@@ -49,9 +49,11 @@ import {
   callEnvironment,
   createPairedHostTerminal,
   openPairedClientTab,
+  readPairedPaneContent,
   waitForPairedPaneMarker,
   type PairedHostTerminal
 } from './helpers/paired-host-terminal'
+import { readTerminalMultiplexLifecycle } from './helpers/remote-terminal-lifecycle-observer'
 import { focusActiveTerminalInput } from './helpers/terminal'
 import { waitForTabParked } from './helpers/terminal-hidden-parking'
 import { readPersistedProfileState } from './helpers/persisted-profile-state'
@@ -206,6 +208,8 @@ type ParkedRemoteTerminal = {
   client: PairedElectronClient
   worktreeId: string
   webTabId: string
+  /** Host terminal handle, to tell when the relaunched client's stream for it is attached. */
+  terminal: string
   token: string
   tokenBeforePark: boolean
   storeAtPark: number
@@ -280,7 +284,15 @@ async function parkRemoteTerminalWithToken(
   }
   await waitForTabParked(client.page, target.webTabId, { parkDelayMs: PARK_DELAY_MS })
   const storeAtPark = await readStoreBufferLength(client.page, target.webTabId)
-  return { client, worktreeId, webTabId: target.webTabId, token, tokenBeforePark, storeAtPark }
+  return {
+    client,
+    worktreeId,
+    webTabId: target.webTabId,
+    terminal: target.terminal,
+    token,
+    tokenBeforePark,
+    storeAtPark
+  }
 }
 
 async function relaunchAndReveal(
@@ -292,6 +304,7 @@ async function relaunchAndReveal(
   relaunched: PairedElectronClient
   storeAfterRelaunch: number
   tokenAfterReveal: boolean
+  tokenAfterHostSnapshot: boolean
 }> {
   const relaunched = await launchPairedElectronClient(offer, testInfo, 'parked-restart-relaunch', {
     extraEnv,
@@ -306,7 +319,33 @@ async function relaunchAndReveal(
     parked.token,
     PAINT_BUDGET_MS
   )
-  return { relaunched, storeAfterRelaunch, tokenAfterReveal }
+  // Why: the first poll can read the restored copy in the window before the host's initial
+  // subscribe snapshot lands; that snapshot clears the pane, so re-read once it has been applied.
+  await expect
+    .poll(
+      async () =>
+        (await readTerminalMultiplexLifecycle(relaunched.page)).activeStreams.some(
+          (stream) => stream.terminal === parked.terminal
+        ),
+      { timeout: PAINT_BUDGET_MS, message: 'relaunched client never subscribed to the host pty' }
+    )
+    .toBe(true)
+  const tokenAfterHostSnapshot = (
+    await settledPaneContent(relaunched.page, parked.webTabId)
+  ).includes(parked.token)
+  return { relaunched, storeAfterRelaunch, tokenAfterReveal, tokenAfterHostSnapshot }
+}
+
+/** Pane text once it has stopped changing for a beat, so a pending replay drain has run. */
+async function settledPaneContent(page: Page, webTabId: string): Promise<string> {
+  let previous = await readPairedPaneContent(page, webTabId)
+  for (let stableReads = 0; stableReads < 4;) {
+    await new Promise((resolve) => setTimeout(resolve, 250))
+    const current = await readPairedPaneContent(page, webTabId)
+    stableReads = current === previous ? stableReads + 1 : 0
+    previous = current
+  }
+  return previous
 }
 
 async function closeCreatedTerminals(
@@ -354,7 +393,8 @@ test.describe('host retains nothing', () => {
           storeAtPark: parked.storeAtPark,
           onDiskAfterPark,
           storeAfterRelaunch: reveal.storeAfterRelaunch,
-          tokenAfterReveal: reveal.tokenAfterReveal
+          tokenAfterReveal: reveal.tokenAfterReveal,
+          tokenAfterHostSnapshot: reveal.tokenAfterHostSnapshot
         })}`
       )
       expect({
@@ -367,14 +407,18 @@ test.describe('host retains nothing', () => {
         localPartitionDidNotKeepCapture: localPartitionBufferLength(onDiskAfterPark) <= 0,
         // Secondary: the reveal may be served by the live host's retained tail rather than the
         // disk copy, so it is not the fix's oracle — it confirms relaunch and a visible pane.
-        tokenAfterReveal: reveal.tokenAfterReveal
+        tokenAfterReveal: reveal.tokenAfterReveal,
+        // The host is forced to retain nothing, so its subscribe snapshot must not replace the
+        // restored copy: this is what kept tokenAfterReveal a race against the host's tail.
+        tokenAfterHostSnapshot: reveal.tokenAfterHostSnapshot
       }).toEqual({
         tokenBeforePark: true,
         capturedAtPark: true,
         profileSurvived: true,
         runtimePartitionHoldsCapture: true,
         localPartitionDidNotKeepCapture: true,
-        tokenAfterReveal: true
+        tokenAfterReveal: true,
+        tokenAfterHostSnapshot: true
       })
     } finally {
       const live = relaunched ?? first

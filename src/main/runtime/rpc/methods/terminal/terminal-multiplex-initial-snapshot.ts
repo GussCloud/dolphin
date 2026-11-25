@@ -1,4 +1,5 @@
 import {
+  isTerminalSnapshotForcedUnavailable,
   sendSnapshotFrames,
   serializeBudgetedMobileSnapshot
 } from './terminal-snapshot-publication'
@@ -101,7 +102,13 @@ export async function publishMultiplexInitialSnapshot(
       terminalOwner: serialized?.terminalOwner,
       oscLinks: serialized?.oscLinks,
       pendingEscapeTailAnsi: serialized?.pendingEscapeTailAnsi,
-      data: serialized?.data ?? (read.tail.length > 0 ? `${read.tail.join('\r\n')}\r\n` : '')
+      // Why gated: a host forced to retain nothing must not answer with its tail either, or the
+      // tail clears the client's restored copy that the e2e is proving.
+      data:
+        serialized?.data ??
+        (read.tail.length > 0 && !isTerminalSnapshotForcedUnavailable()
+          ? `${read.tail.join('\r\n')}\r\n`
+          : '')
     }
   )
   const replacement = stream.sourceRangeReplacement
