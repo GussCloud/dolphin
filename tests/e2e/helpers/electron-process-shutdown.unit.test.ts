@@ -1,6 +1,9 @@
 import { EventEmitter } from 'node:events'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import { PassThrough } from 'node:stream'
-import type { ChildProcess } from 'node:child_process'
+import { spawn, type ChildProcess } from 'node:child_process'
 import type { ElectronApplication } from '@playwright/test'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { closeElectronAppForE2E } from './electron-process-shutdown'
@@ -56,4 +59,38 @@ describe('Electron shutdown with inherited pipes', () => {
       stream.destroy()
     }
   })
+})
+
+describe("Electron shutdown with a detached daemon holding Playwright's pipe", () => {
+  it.skipIf(process.platform === 'win32')(
+    'releases the daemon when Electron exits instead of waiting out the close timeout',
+    async () => {
+      const userDataDir = mkdtempSync(path.join(tmpdir(), 'dolphin-e2e-close-'))
+      // A real process stands in for the daemon that inherits Playwright's control pipe.
+      const daemon = spawn('sleep', ['60'], { detached: true, stdio: 'ignore' })
+      try {
+        mkdirSync(path.join(userDataDir, 'daemon'))
+        writeFileSync(
+          path.join(userDataDir, 'daemon', 'dolphind.pid'),
+          JSON.stringify({ pid: daemon.pid })
+        )
+        const daemonGone = new Promise<void>((resolve) => daemon.once('exit', () => resolve()))
+        const { proc, app } = exitedAppFixture()
+        vi.mocked(app.close).mockImplementation(() => daemonGone)
+
+        const started = Date.now()
+        const closing = closeElectronAppForE2E(app, { userDataDir })
+        proc.exitCode = 0
+        proc.emit('exit', 0, null)
+        await closing
+
+        expect(Date.now() - started).toBeLessThan(5_000)
+        expect(daemon.exitCode !== null || daemon.signalCode !== null).toBe(true)
+      } finally {
+        daemon.kill('SIGKILL')
+        rmSync(userDataDir, { recursive: true, force: true })
+      }
+    },
+    15_000
+  )
 })

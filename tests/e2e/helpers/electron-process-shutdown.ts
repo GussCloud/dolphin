@@ -104,6 +104,15 @@ function readPosixDescendantPids(rootPid: number): number[] {
   }
 }
 
+function isPidAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
 function killPid(pid: number, signal: NodeJS.Signals): void {
   try {
     process.kill(pid, signal)
@@ -133,7 +142,11 @@ async function forceKillPidTree(pid: number): Promise<void> {
   for (const targetPid of [...pids].toReversed()) {
     killPid(targetPid, 'SIGTERM')
   }
-  await delay(FORCE_KILL_WAIT_MS)
+  // Why poll: most trees die on SIGTERM at once; a fixed wait cost every test the full grace period.
+  const deadline = Date.now() + FORCE_KILL_WAIT_MS
+  while (pids.some(isPidAlive) && Date.now() < deadline) {
+    await delay(50)
+  }
   for (const targetPid of [...pids].toReversed()) {
     killPid(targetPid, 'SIGKILL')
   }
@@ -195,10 +208,22 @@ export async function forceQuitElectronAppForE2E(
   ).catch(() => undefined)
 }
 
-export async function closeElectronAppForE2E(app: ElectronApplication): Promise<void> {
+export async function closeElectronAppForE2E(
+  app: ElectronApplication,
+  options: { userDataDir?: string } = {}
+): Promise<void> {
   const proc = app.process()
   const releasePipes = (): void => releaseExitedProcessPipes(proc)
   proc.once('exit', releasePipes)
+  // Why on exit: the detached daemon inherits Playwright's control pipe (fd 4) and Crashpad its
+  // stdout/stderr, so app.close() waits on them until its timeout unless they go when the app does.
+  const { userDataDir } = options
+  const releaseHolders = (): void => {
+    if (userDataDir) {
+      void cleanupE2EDaemons(userDataDir)
+    }
+  }
+  proc.once('exit', releaseHolders)
   releasePipes()
   try {
     await withTimeout(app.close(), GRACEFUL_CLOSE_TIMEOUT_MS, 'Timed out closing Electron app')
@@ -214,6 +239,7 @@ export async function closeElectronAppForE2E(app: ElectronApplication): Promise<
     }
   } finally {
     proc.off('exit', releasePipes)
+    proc.off('exit', releaseHolders)
     releasePipes()
   }
 }

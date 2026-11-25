@@ -263,7 +263,7 @@ export const test = base.extend<DolphinTestFixtures, DolphinWorkerFixtures>({
       )
       assertElectronResolvedIsolatedHome(resolvedHome, homeIsolation)
     } catch (error) {
-      await closeElectronAppForE2E(app)
+      await closeElectronAppForE2E(app, { userDataDir })
       await cleanupE2EDaemons(userDataDir)
       await removeUserDataDirAfterShutdown(userDataDir)
       throw error
@@ -271,7 +271,7 @@ export const test = base.extend<DolphinTestFixtures, DolphinWorkerFixtures>({
     await provideFixture(app)
     // Why: the Playwright close promise can settle before all Electron and PTY
     // descendants are gone in CI; worker teardown then hangs on open handles.
-    await closeElectronAppForE2E(app)
+    await closeElectronAppForE2E(app, { userDataDir })
     await cleanupE2EDaemons(userDataDir)
     await removeUserDataDirAfterShutdown(userDataDir)
   },
