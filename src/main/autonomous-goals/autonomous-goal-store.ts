@@ -147,8 +147,11 @@ export class AutonomousGoalStore {
     // Why: closed goals are history; open ones are never evicted by the cap.
     const open = goals.filter(isAutonomousGoalOpen)
     const closed = goals.filter((goal) => !isAutonomousGoalOpen(goal))
+    // Why the index tie-break: goals created in the same millisecond keep creation order, which the
+    // open-first partition above would otherwise reverse.
+    const order = new Map(goals.map((goal, index) => [goal.id, index]))
     const kept = [...open, ...closed.slice(-Math.max(0, MAX_GOALS - open.length))].sort(
-      (a, b) => a.createdAt - b.createdAt
+      (a, b) => a.createdAt - b.createdAt || (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0)
     )
     writeFileAtomically(this.resolveFilePath(), JSON.stringify(kept), { mode: 0o600 })
     this.cache = kept

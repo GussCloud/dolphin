@@ -6,6 +6,11 @@ import { defineConfig } from '@playwright/test'
 const retries = Number.parseInt(process.env.DOLPHIN_E2E_RETRIES ?? '0', 10)
 const e2eRetries = Number.isInteger(retries) && retries > 0 ? Math.min(retries, 2) : 0
 
+function e2eWorkers(): number {
+  const requested = Number.parseInt(process.env.DOLPHIN_E2E_WORKERS ?? '1', 10)
+  return Number.isInteger(requested) && requested > 1 ? Math.min(requested, 4) : 1
+}
+
 /**
  * Playwright config for Dolphin E2E tests.
  *
@@ -32,10 +37,11 @@ export default defineConfig({
   // substantially. The few visible-window tests that still rely on real
   // pointer interaction are marked serial in their spec file instead.
   fullyParallel: true,
-  // Why: each CI worker launches a real Electron/Chromium process tree against
-  // a mutable seeded repo. Release runners showed two apps per VM can contend
-  // on Xvfb/git enough to create false E2E failures, so CI scales by shards.
-  workers: process.env.CI ? 1 : undefined,
+  // Why an env knob: each CI worker launches a real Electron/Chromium tree against a mutable
+  // seeded repo, so CI stays at 1 by default (older 2-core runners saw two apps contend on
+  // Xvfb/git). The sharded full suite sets 2 on today's 4-core public runners, which halved a
+  // shard's run in a local 4-core measurement with no new failures.
+  workers: process.env.CI ? e2eWorkers() : undefined,
   forbidOnly: !!process.env.CI,
   retries: e2eRetries,
   reporter: e2eRetries > 0 ? [['list'], ['./e2e/flaky-annotation-reporter.ts']] : 'list',
