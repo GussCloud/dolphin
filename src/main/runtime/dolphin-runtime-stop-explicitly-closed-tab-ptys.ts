@@ -121,7 +121,8 @@ export class DolphinRuntimeWithStopExplicitlyClosedTabPtys extends DolphinRuntim
       const siblingCount = surface?.tab.parentLayout
         ? countTerminalLayoutLeaves(surface.tab.parentLayout.root)
         : this.countLeavesInTab(tabId)
-      if (siblingCount <= 1 && surface && this.tabs.has(tabId) && this.notifier?.closeTerminalTab) {
+      const closesWholeTab = siblingCount <= 1 && !this.tabHasLeafOfOtherPty(tabId, pty.pty.ptyId)
+      if (closesWholeTab && surface && this.tabs.has(tabId) && this.notifier?.closeTerminalTab) {
         const ptyIdsToKill = this.getPtyIdsForExplicitTabClose(pty.pty.worktreeId, tabId)
         try {
           await this.closeMobileSessionTab(`id:${pty.pty.worktreeId}`, tabId, {
@@ -137,7 +138,7 @@ export class DolphinRuntimeWithStopExplicitlyClosedTabPtys extends DolphinRuntim
         return this.describeTerminalClose(handle, tabId, pty.pty.ptyId, ptyKilled)
       }
       if (
-        siblingCount <= 1 &&
+        closesWholeTab &&
         surface &&
         ptyCloseAuthority &&
         !this.tabs.has(surface.tab.parentTabId)
@@ -159,18 +160,18 @@ export class DolphinRuntimeWithStopExplicitlyClosedTabPtys extends DolphinRuntim
         const ptyKilled = await this.stopExplicitlyClosedTabPtys([pty.pty.ptyId], pty.pty.ptyId)
         return this.describeTerminalClose(handle, tabId, pty.pty.ptyId, ptyKilled)
       }
-      if (siblingCount <= 1 && !surface && pty.pty.tabId && this.notifier?.closeTerminalTab) {
+      if (closesWholeTab && !surface && pty.pty.tabId && this.notifier?.closeTerminalTab) {
         const ptyIdsToKill = this.getPtyIdsForExplicitTabClose(pty.pty.worktreeId, tabId)
         await this.notifier.closeTerminalTab(tabId, { localPtyTeardownOwnedExternally: true })
         const ptyKilled = await this.stopExplicitlyClosedTabPtys(ptyIdsToKill, pty.pty.ptyId)
         return this.describeTerminalClose(handle, tabId, pty.pty.ptyId, ptyKilled)
       }
       const ptyKilled = await this.stopExplicitlyClosedTabPtys([pty.pty.ptyId], pty.pty.ptyId)
-      const splitPaneKey = siblingCount > 1 ? parsePaneKey(pty.pty.paneKey ?? '') : null
+      const splitPaneKey = closesWholeTab ? null : parsePaneKey(pty.pty.paneKey ?? '')
       if (splitPaneKey) {
         // Why: same as the leaf path below — an unconfirmed split stop must not close live siblings.
         this.closeKilledSplitLeaf(splitPaneKey.tabId, splitPaneKey.leafId)
-      } else if (siblingCount <= 1) {
+      } else if (closesWholeTab) {
         if (surface) {
           // Why: paired viewers keep ended streams mounted until the HUB publishes removal, so explicit close uses the durable host-tab transaction instead of viewer-local exit handling.
           try {
@@ -212,6 +213,17 @@ export class DolphinRuntimeWithStopExplicitlyClosedTabPtys extends DolphinRuntim
       this.notifier?.closeTerminal(leaf.tabId, leaf.paneRuntimeId)
     }
     return this.describeTerminalClose(handle, leaf.tabId, leaf.ptyId ?? null, ptyKilled)
+  }
+
+  // Why: the renderer drops an exited pane's leaf on its own, so the tab's one remaining leaf can
+  // belong to a sibling (an Agent Teams leader); escalating to a tab close killed it.
+  private tabHasLeafOfOtherPty(tabId: string, ptyId: string): boolean {
+    for (const leaf of this.leaves.values()) {
+      if (leaf.tabId === tabId && leaf.ptyId !== ptyId) {
+        return true
+      }
+    }
+    return false
   }
 
   // Why: the renderer keeps a local pane whose process exits non-zero as a "Terminal exited"

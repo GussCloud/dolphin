@@ -66,6 +66,7 @@ export type CloseContinuityHarness = {
   syncEmptyGraph: () => void
   syncFixtureGraph: () => void
   syncFixtureTabWithoutLeaf: () => void
+  syncSiblingOnlyGraph: () => void
   syncSplitFixtureGraph: () => void
   getSession: () => WorkspaceSessionState
   makeSessionUnavailable: () => void

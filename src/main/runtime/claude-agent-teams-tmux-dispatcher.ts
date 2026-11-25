@@ -245,7 +245,16 @@ export class ClaudeAgentTeamsTmuxDispatcher {
     api: AgentTeamsTerminalApi
   ): Promise<string> {
     const parsed = parseTmuxArgs(args, ['-t'], [])
-    const pane = this.resolvePane(team, tmuxValue(parsed, '-t') ?? envPane)
+    const rawTarget = tmuxValue(parsed, '-t')
+    const pane = this.resolvePane(team, rawTarget ?? envPane)
+    // Why: a kill-pane that ends the wrong terminal is otherwise untraceable after the team is gone.
+    console.info('[agent-teams] kill-pane', {
+      teamId: team.teamId,
+      target: rawTarget ?? null,
+      callerPane: envPane,
+      resolvedPane: pane.fakePaneId,
+      handle: pane.handle
+    })
     if (pane.fakePaneId === team.leaderPane) {
       throw new Error('refusing to kill leader pane')
     }

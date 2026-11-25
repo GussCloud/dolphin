@@ -240,6 +240,31 @@ describe('terminal close and handle incarnation continuity', () => {
     expect(harness.closeTerminal).toHaveBeenCalledWith(TAB_ID, undefined, LEAF_ID)
   })
 
+  // Agent Teams: the last teammate exits and its leaf is gone before the leader's kill-pane lands.
+  it('never closes the tab with a live sibling when the addressed pane already left the graph', async () => {
+    const harness = createHarness({ registerPtyBacked: true })
+    harness.syncSplitFixtureGraph()
+    harness.syncSiblingOnlyGraph()
+    // Why: a teammate pane split by the runtime is addressed by its PTY handle, not a leaf handle.
+    const teammate = (await harness.runtime.listTerminals(`id:${WORKTREE_ID}`)).terminals.find(
+      (candidate) => candidate.ptyId === PTY_ID
+    )!
+    await harness.runtime.onPtyExit(PTY_ID, 0, INCARNATION_ID)
+    harness.setCloseTerminalTabAction(() => {})
+
+    // Why: the exited PTY counts as stopped, so the dispatcher's kill-pane succeeds.
+    await expect(harness.runtime.closeTerminal(teammate.handle)).resolves.toEqual({
+      handle: teammate.handle,
+      tabId: TAB_ID,
+      ptyKilled: true
+    })
+
+    expect(harness.closeTerminalTab).not.toHaveBeenCalled()
+    expect(harness.stopAndWait.mock.calls.map(([ptyId]) => ptyId)).not.toContain(SIBLING_PTY_ID)
+    expect(harness.kill).not.toHaveBeenCalledWith(SIBLING_PTY_ID)
+    expect(harness.closeTerminal).not.toHaveBeenCalledWith(TAB_ID)
+  })
+
   it('closes the teammate panes of an Agent Teams leader before the leader itself', async () => {
     const harness = createHarness({ registerPtyBacked: true })
     harness.syncSplitFixtureGraph()
@@ -253,10 +278,7 @@ describe('terminal close and handle incarnation continuity', () => {
 
     await harness.runtime.closeTerminal(leader.handle)
 
-    expect(harness.stopAndWait.mock.calls.map(([ptyId]) => ptyId)).toEqual([
-      SIBLING_PTY_ID,
-      PTY_ID
-    ])
+    expect(harness.stopAndWait.mock.calls.map(([ptyId]) => ptyId)).toEqual([SIBLING_PTY_ID, PTY_ID])
   })
 
   it('fences final-pane exit ordering until exact retirement commits', async () => {

@@ -87,6 +87,8 @@ a pane that already closed itself is ignored rather than falling through to a ta
 That holds when the stop cannot be confirmed too: a teammate that exits 0 after approving
 shutdown is often gone before the leader's `kill-pane` lands, and a pane-id close of that
 gone pane used to close the whole tab, leader included.
+It also holds when the renderer already dropped that pane's leaf: a tab whose one remaining
+leaf belongs to another PTY (the leader) is never closed on behalf of the addressed pane.
 A teammate that exits 0 closes its pane through the normal exit path.
 
 When the leader's tab is not mounted (another worktree is active), no pane manager hears
