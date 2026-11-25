@@ -297,6 +297,13 @@ jobs:
           path: ~\AppData\Local\node-gyp\Cache
           key: node-gyp-headers-win-arm64-${{ steps.node.outputs.node-version }}
 
+      # Why in the background: linking mobile's ~1,360 packages takes 3 min on this runner's disk and
+      # uses nothing the root install produces (its own project, lockfile and node_modules), so the
+      # two overlap. Both only read the restored pnpm store. Build app waits for it below.
+      - uses: ./.github/actions/install-mobile-dependencies
+        id: mobile-deps
+        background: true
+
       # Why retried: electron's postinstall pulls its binary from GitHub release assets, which
       # returns transient 504s.
       - name: Install dependencies
@@ -307,13 +314,13 @@ jobs:
           retry_wait_seconds: 30
           command: pnpm install --frozen-lockfile
 
-      - uses: ./.github/actions/install-mobile-dependencies
-
       - name: Build Windows process-table addon for the relay
         shell: bash
         run: |
           node config/scripts/build-windows-process-tree-relay-addon.mjs --arch=x64
           node config/scripts/build-windows-process-tree-relay-addon.mjs --arch=arm64
+
+      - wait: mobile-deps
 
       - name: Build app
         shell: bash
