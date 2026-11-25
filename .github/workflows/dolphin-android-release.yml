@@ -201,7 +201,9 @@ jobs:
           log="$RUNNER_TEMP/gradle-build.log"
           # Why retry only on a fetch error: a compile error fails the same way twice.
           for attempt in 1 2; do
-            if ./gradlew assembleRelease --no-daemon 2>&1 | tee "$log"; then
+            # Why arm only: phones are arm64-v8a or armeabi-v7a; x86/x86_64 are emulators and Intel
+            # Chromebooks, which the owner chose not to ship to, and they doubled the native compile.
+            if ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=armeabi-v7a,arm64-v8a 2>&1 | tee "$log"; then
               exit 0
             fi
             if [[ "$attempt" == 2 ]] || ! grep -qE 'status code (429|5[0-9][0-9])|Could not GET|Read timed out' "$log"; then

@@ -145,6 +145,27 @@ jobs:
           DOLPHIN_IOS_APS_ENVIRONMENT: production
         run: npx expo prebuild --platform ios --no-install
 
+      # Why ccache: React Native is built from source (its native patch needs it), ~1,800 files on
+      # every run; ccache reuses them while the native code is unchanged. CI only, so local builds
+      # keep their own setting; pod install reads apple.ccacheEnabled, so this comes first.
+      - name: Enable ccache for the native build
+        if: steps.gate.outputs.skip != 'true'
+        run: |
+          set -euo pipefail
+          brew install ccache
+          node -e "const f='ios/Podfile.properties.json';const fs=require('fs');const p=JSON.parse(fs.readFileSync(f,'utf8'));p['apple.ccacheEnabled']='true';fs.writeFileSync(f,JSON.stringify(p,null,2)+'\\n')"
+          echo "CCACHE_DIR=$HOME/.ccache-dolphin-ios" >>"$GITHUB_ENV"
+
+      - name: Restore the native build cache
+        if: steps.gate.outputs.skip != 'true'
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: ~/.ccache-dolphin-ios
+          key: ccache-ios-${{ hashFiles('mobile/pnpm-lock.yaml', 'mobile/patches/**') }}-${{ github.run_id }}
+          restore-keys: |
+            ccache-ios-${{ hashFiles('mobile/pnpm-lock.yaml', 'mobile/patches/**') }}-
+            ccache-ios-
+
       - name: Install CocoaPods
         if: steps.gate.outputs.skip != 'true'
         run: npx pod-install ios
@@ -178,6 +199,12 @@ jobs:
       - name: Build and upload to TestFlight
         if: steps.gate.outputs.skip != 'true'
         env:
+          # React Native's recommended settings for ccache with Xcode (clang index store, PCH, modules).
+          CCACHE_SLOPPINESS: clang_index_store,file_stat_matches,include_file_ctime,include_file_mtime,ivfsoverlay,pch_defines,modules,system_headers,time_macros
+          CCACHE_FILECLONE: 'true'
+          CCACHE_DEPEND: 'true'
+          CCACHE_INODECACHE: 'true'
+          CCACHE_MAXSIZE: 3G
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
           ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
@@ -188,6 +215,11 @@ jobs:
           set -euo pipefail
           echo "Mobile shell: $EXPO_PUBLIC_MOBILE_SHELL"
           bundle exec fastlane ios build_and_upload skip_upload:"$SKIP_UPLOAD"
+
+      # Why: the hit rate is how the next run proves the cache works; it never fails the build.
+      - name: Report the native build cache
+        if: always() && steps.gate.outputs.skip != 'true'
+        run: ccache --show-stats || true
 
       - name: Upload .ipa artifact
         if: always() && steps.gate.outputs.skip != 'true'
