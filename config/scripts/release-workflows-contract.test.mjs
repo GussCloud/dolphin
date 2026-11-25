@@ -71,7 +71,9 @@ describe('release workflows', () => {
     const upload = mac.steps.find((step) => step.name === 'Verify and upload release assets')
     // Why: a slice's own latest-mac.yml names only its files; on the release it would hide the other slice.
     expect(upload.run).toContain('files=("$dmg" "$dmg.blockmap" "$zip" "$zip.blockmap")')
-    expect(upload.run).toContain('gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" "${files[@]}"')
+    expect(upload.run).toContain(
+      'gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" "${files[@]}"'
+    )
     expect(upload.run).toContain('xcrun stapler validate "$app"')
     expect(mac.steps.at(-1).with).toMatchObject({
       name: 'mac-update-manifest-${{ matrix.arch }}',
@@ -82,7 +84,9 @@ describe('release workflows', () => {
     const merge = jobs['mac-update-manifest']
     expect(merge.needs).toEqual(['draft', 'build-mac'])
     expect(merge.if).toBe("github.repository == 'GussCloud/dolphin'")
-    const downloads = merge.steps.filter((step) => step.uses?.startsWith('actions/download-artifact@'))
+    const downloads = merge.steps.filter((step) =>
+      step.uses?.startsWith('actions/download-artifact@')
+    )
     expect(downloads.map((step) => step.with.name)).toEqual([
       'mac-update-manifest-x64',
       'mac-update-manifest-arm64'
@@ -90,7 +94,9 @@ describe('release workflows', () => {
     const run = merge.steps.at(-1).run
     expect(run).toContain('node config/scripts/merge-mac-update-manifests.mjs')
     expect(run).toMatch(/mac-x64\/latest-mac\.yml"\s+"\$RUNNER_TEMP\/mac-arm64\/latest-mac\.yml"/)
-    expect(run).toContain('gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" dist/latest-mac.yml')
+    expect(run).toContain(
+      'gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" dist/latest-mac.yml'
+    )
   })
 
   it('compiles native modules once per Windows leg and spares arm64 the Visual Studio search', () => {
@@ -282,7 +288,9 @@ describe('release workflows', () => {
     const read = jobs.resolve.steps.find((step) => step.id === 'ios_build')
     expect(read.if).toBe("${{ inputs.app != 'desktop' && !inputs.rebuild_ios }}")
     expect(read.run).toContain(`--pattern ${IOS_BUILD_RECORD_ASSET}`)
-    expect(read.run).toContain('ios-beta-build-record.mjs read "$record" --version "$VERSION" --sha "$RC_SHA"')
+    expect(read.run).toContain(
+      'ios-beta-build-record.mjs read "$record" --version "$VERSION" --sha "$RC_SHA"'
+    )
     expect(read.env.RC_SHA).toBe('${{ steps.mobile_commit.outputs.rc_sha }}')
     expect(on.workflow_dispatch.inputs.rebuild_ios.default).toBe(false)
 
@@ -402,7 +410,9 @@ describe('release workflows', () => {
     // Why each result is named: a skipped publish job is not a failure, and main must never
     // move past an app that was not published.
     expect(job.if).toContain("needs.e2e-gate.result == 'success'")
-    expect(job.if).toContain("(inputs.app == 'mobile' || needs.desktop-publish.result == 'success')")
+    expect(job.if).toContain(
+      "(inputs.app == 'mobile' || needs.desktop-publish.result == 'success')"
+    )
     expect(job.if).toContain(
       "(needs.android-publish.result == 'success' && needs.ios-distribute.result == 'success')"
     )

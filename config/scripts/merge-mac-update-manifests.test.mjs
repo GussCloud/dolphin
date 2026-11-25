@@ -55,7 +55,7 @@ describe('mergeMacUpdateManifests', () => {
   })
 
   it('refuses a slice that is missing its dmg or carries a file with no hash', () => {
-    const [zip] = twoSlice.files.filter((file) => !file.url.includes('arm64'))
+    const zip = twoSlice.files.find((file) => !file.url.includes('arm64'))
     expect(() => mergeMacUpdateManifests(slice('x64', { files: [zip] }), slice('arm64'))).toThrow(
       /expected one zip and one dmg/
     )

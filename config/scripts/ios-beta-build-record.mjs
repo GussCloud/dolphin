@@ -71,7 +71,9 @@ function main() {
     }
     return
   }
-  throw new Error('Usage: ios-beta-build-record.mjs write <version> <build> <sha> <file> | read <file> --version <v> --sha <sha>')
+  throw new Error(
+    'Usage: ios-beta-build-record.mjs write <version> <build> <sha> <file> | read <file> --version <v> --sha <sha>'
+  )
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

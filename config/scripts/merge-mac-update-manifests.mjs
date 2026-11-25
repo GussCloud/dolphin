@@ -54,7 +54,12 @@ function readSlice(text, arch) {
   if (manifest.path !== zips[0].url || manifest.sha512 !== zips[0].sha512) {
     fail('path/sha512 do not name its zip')
   }
-  return { version: manifest.version, releaseDate: manifest.releaseDate, zip: zips[0], dmg: dmgs[0] }
+  return {
+    version: manifest.version,
+    releaseDate: manifest.releaseDate,
+    zip: zips[0],
+    dmg: dmgs[0]
+  }
 }
 
 export function mergeMacUpdateManifests(x64Text, arm64Text) {

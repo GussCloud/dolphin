@@ -63,7 +63,9 @@ const MAC_UNSIGNED_RELEASE_MARKER = 'dolphin-unsigned-mac-release'
 const MAC_ARCHS = ['x64', 'arm64']
 const macArchOverride = process.env.DOLPHIN_MAC_ARCH
 if (macArchOverride && !MAC_ARCHS.includes(macArchOverride)) {
-  throw new Error(`DOLPHIN_MAC_ARCH must be one of ${MAC_ARCHS.join(', ')}; got '${macArchOverride}'`)
+  throw new Error(
+    `DOLPHIN_MAC_ARCH must be one of ${MAC_ARCHS.join(', ')}; got '${macArchOverride}'`
+  )
 }
 const macTargetArchs = macArchOverride ? [macArchOverride] : MAC_ARCHS
 const isLinuxArm64Release = process.env.DOLPHIN_LINUX_ARM64_RELEASE === '1'

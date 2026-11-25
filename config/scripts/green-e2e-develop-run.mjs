@@ -73,7 +73,9 @@ function main() {
     // Why not fatal: without a proven run the promote simply runs the suite itself.
     console.log(`::warning::Could not look up E2E develop runs: ${error?.message ?? error}`)
   }
-  console.log(url ? `E2E develop already passed on ${sha}: ${url}` : `No green E2E develop run for ${sha}.`)
+  console.log(
+    url ? `E2E develop already passed on ${sha}: ${url}` : `No green E2E develop run for ${sha}.`
+  )
   if (process.env.GITHUB_OUTPUT) {
     appendFileSync(process.env.GITHUB_OUTPUT, `url=${url}\n`)
   }
