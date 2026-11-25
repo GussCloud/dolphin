@@ -178,6 +178,12 @@ describe('PR E2E gate contract', () => {
     // Why: PR runs pass no retries input, so a changed spec must pass on its first attempt.
     expect(playwrightConfig).toContain("process.env.DOLPHIN_E2E_RETRIES ?? '0'")
     expect(e2eWorkflow.env.DOLPHIN_E2E_RETRIES).toBe("${{ inputs.retries || '0' }}")
+    // Why: only the sharded suite runs two apps per runner; the one-runner changed-specs lane stays at 1.
+    const shardRun = e2eWorkflow.jobs.e2e.steps.find((step) =>
+      step.name?.startsWith('Run E2E tests (')
+    )
+    expect(shardRun.env.DOLPHIN_E2E_WORKERS).toBe('2')
+    expect(playwrightConfig).toContain("process.env.DOLPHIN_E2E_WORKERS ?? '1'")
     const steps = e2eWorkflow.jobs.e2e.steps.filter((step) =>
       step.run?.includes('tests/e2e/worktree-switch-first-paint.spec.ts')
     )

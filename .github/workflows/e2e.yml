@@ -213,6 +213,9 @@ jobs:
           node config/scripts/ci-e2e-shard-plan.mjs --verify ci-shards/assignment.json ci-shards/selected-discovery.json
 
       - name: Run E2E tests (${{ matrix.shard_name }})
+        # Why 2: public runners have 4 cores; see the workers note in tests/playwright.config.ts.
+        env:
+          DOLPHIN_E2E_WORKERS: '2'
         run: xvfb-run --auto-servernum bash .github/scripts/e2e-with-window-manager.sh env SKIP_BUILD=1 DOLPHIN_E2E_FORWARD_APP_LOGS=1 DOLPHIN_E2E_WEB_CLIENT=1 DOLPHIN_RELAY_PATH="$GITHUB_WORKSPACE/out/relay" pnpm run test:e2e --test-list=ci-shards/selected.txt
 
       - name: Upload E2E shard assignment
