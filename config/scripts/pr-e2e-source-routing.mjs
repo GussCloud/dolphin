@@ -338,6 +338,16 @@ export function selectChangedE2eSpecs(changedPaths, specSources = readSpecSource
   return [...specs].sort((a, b) => a.localeCompare(b))
 }
 
+// Why a cap: the changed-specs lane is one unsharded runner with a 45-minute budget; a shared
+// helper such as dolphin-app reaches nearly every spec, which only the sharded suite can run.
+export const MAX_CHANGED_SPECS_ON_ONE_RUNNER = 40
+
+/** The test_files input for e2e.yml: the changed specs, or empty for the full sharded suite. */
+export function changedE2eTestFiles(changedPaths, specSources = readSpecSources) {
+  const specs = selectChangedE2eSpecs(changedPaths, specSources)
+  return specs.length > MAX_CHANGED_SPECS_ON_ONE_RUNNER ? '' : JSON.stringify(specs)
+}
+
 /** The native IME spec needs its own ibus session, so it never uses the reusable workflow. */
 export function shouldRunChangedE2e(changedPaths) {
   return selectChangedE2eSpecs(changedPaths).some((spec) => spec !== NATIVE_IME_SPEC)
@@ -361,7 +371,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   }
   const changedPaths = input.split(/\r?\n/).filter(Boolean)
   if (process.argv.includes('--changed-specs')) {
-    process.stdout.write(`${JSON.stringify(selectChangedE2eSpecs(changedPaths))}\n`)
+    process.stdout.write(`${changedE2eTestFiles(changedPaths)}\n`)
   } else if (process.argv.includes('--changed-reusable')) {
     process.stdout.write(`${shouldRunChangedE2e(changedPaths)}\n`)
   } else if (process.argv.includes('--changed-wsl')) {
