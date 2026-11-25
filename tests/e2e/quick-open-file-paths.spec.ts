@@ -34,9 +34,13 @@ test('cmd+p quick open prioritizes the filename and reveals the full path on hov
   const row = dialog.getByRole('option').filter({ hasText: 'QuickOpenTarget.tsx' }).first()
   await expect(row).toBeVisible()
   await expect(row).toContainText('packages/dolphin/src/renderer/src/components/navigation/')
-  const rowBox = await row.boundingBox()
-  expect(rowBox).not.toBeNull()
-  expect(rowBox!.height).toBeLessThanOrEqual(29)
+  // Why polled: streaming results can remount the row between the visibility check and the
+  // measurement, which leaves no box for that instant.
+  await expect(async () => {
+    const rowBox = await row.boundingBox()
+    expect(rowBox).not.toBeNull()
+    expect(rowBox!.height).toBeLessThanOrEqual(29)
+  }).toPass({ timeout: 5_000 })
   const rowText = await row.textContent()
   expect(rowText?.indexOf('QuickOpenTarget.tsx')).toBeLessThan(
     rowText?.indexOf('packages/dolphin/src/renderer/src/components/navigation/') ?? -1
