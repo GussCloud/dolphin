@@ -103,6 +103,32 @@ describe('registerFilesystemHandlers', () => {
     )
   })
 
+  it('lists claude-api models without preparing an API account env', async () => {
+    discoverCommitMessageModelsLocalMock.mockResolvedValue({
+      success: true,
+      models: [{ id: 'sonnet', label: 'Sonnet' }],
+      defaultModelId: 'sonnet'
+    })
+    // Would read a key and write the profile; a static list needs neither.
+    const prepareForClaudeApiLaunch = vi.fn(async () => {
+      throw new Error('Choose which API account the Claude API agent uses')
+    })
+
+    registerFilesystemHandlers(store as never, { prepareForClaudeApiLaunch })
+
+    const result = await handlers.get('git:discoverCommitMessageModels')!(null, {
+      agentId: 'claude-api'
+    })
+
+    expect(prepareForClaudeApiLaunch).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ success: true })
+    expect(discoverCommitMessageModelsLocalMock).toHaveBeenCalledWith(
+      'claude-api',
+      undefined,
+      undefined
+    )
+  })
+
   it('discovers models from an exact repo-less folder workspace root', async () => {
     const folderPath = path.resolve('/outside-workspace/folder-project')
     const folderStore = {

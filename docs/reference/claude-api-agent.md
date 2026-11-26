@@ -173,6 +173,12 @@ process env before the account env is laid over it (`claude-api-commit-message-e
 or key is refused while the env is prepared. The `-p` mode shows no API-key question, and the
 profile approval stays idempotent anyway.
 
+A leading env assignment in the user's `claude-api` command override (Settings > Agents) is applied
+after the account env (`mergeCommandEnvironment`): it is an explicit user choice, as for DeepSeek.
+Model discovery skips the env step for static model lists, so listing models reads no key. A first
+work title generated in a `\\wsl$` worktree is refused for `claude-api` and DeepSeek, which never
+generate inside WSL.
+
 Paired hosts: a host without the `claude-api` spec (any build before this one) answers that the
 agent does not support AI generation; it never falls back to plain `claude`, because the plan
 builder refuses an agent with no spec. A newer host generates on its own API accounts by the same

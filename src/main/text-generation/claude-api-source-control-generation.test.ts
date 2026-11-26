@@ -142,6 +142,10 @@ describe('prepareLocalCommitMessageAgentEnv for claude-api', () => {
   it('bills the account the workspace pins, with its key and profile, and drops inherited auth', async () => {
     vi.stubEnv('ANTHROPIC_AUTH_TOKEN', 'inherited-plan-token')
     vi.stubEnv('ANTHROPIC_BASE_URL', 'https://proxy.invalid')
+    // Dolphin started from a DeepSeek pane: its model slots must not reach api.anthropic.com.
+    vi.stubEnv('ANTHROPIC_MODEL', 'deepseek-flash[1m]')
+    vi.stubEnv('ANTHROPIC_DEFAULT_SONNET_MODEL', 'deepseek-flash[1m]')
+    vi.stubEnv('CLAUDE_CODE_SUBAGENT_MODEL', 'deepseek-flash')
     try {
       const result = await prepareLocalCommitMessageAgentEnv(
         'claude-api',
@@ -156,6 +160,9 @@ describe('prepareLocalCommitMessageAgentEnv for claude-api', () => {
       expect(env[CLAUDE_API_ACCOUNT_ENV_KEY]).toBe('api2')
       expect(env.ANTHROPIC_AUTH_TOKEN).toBeUndefined()
       expect(env.ANTHROPIC_BASE_URL).toBeUndefined()
+      expect(env.ANTHROPIC_MODEL).toBeUndefined()
+      expect(env.ANTHROPIC_DEFAULT_SONNET_MODEL).toBeUndefined()
+      expect(env.CLAUDE_CODE_SUBAGENT_MODEL).toBeUndefined()
     } finally {
       vi.unstubAllEnvs()
     }
