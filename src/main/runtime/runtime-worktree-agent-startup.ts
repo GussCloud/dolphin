@@ -89,6 +89,7 @@ export async function buildWorktreeStartupForDraft(
       agent,
       startup: {
         command: draftPlan.launchCommand,
+        launchAgent: agent,
         launchConfig: draftPlan.launchConfig,
         ...(draftPlan.startupCommandDelivery
           ? { startupCommandDelivery: draftPlan.startupCommandDelivery }
@@ -109,6 +110,8 @@ export async function buildWorktreeStartupForDraft(
     agent,
     startup: {
       command: startupPlan.launchCommand,
+      // Why: the renderer spawns with this id; without it main launches plain `claude`.
+      launchAgent: agent,
       launchConfig: startupPlan.launchConfig,
       ...(startupPlan.startupCommandDelivery
         ? { startupCommandDelivery: startupPlan.startupCommandDelivery }
@@ -153,6 +156,8 @@ export function buildWorktreeStartupForAgent(
     agent,
     startup: {
       command: startupPlan.launchCommand,
+      // Why: the renderer spawns with this id; without it main launches plain `claude`.
+      launchAgent: agent,
       launchConfig: startupPlan.launchConfig,
       ...(startupPlan.startupCommandDelivery
         ? { startupCommandDelivery: startupPlan.startupCommandDelivery }

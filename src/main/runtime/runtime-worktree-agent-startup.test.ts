@@ -128,6 +128,19 @@ describe('buildWorktreeStartupForAgent host resolution', () => {
       request_kind: 'new'
     })
   })
+
+  it('names the agent on the startup, so the renderer never spawns an API-key agent as plain claude', () => {
+    for (const agent of ['claude-api', 'claude-api-agent-teams'] as const) {
+      const result = buildWorktreeStartupForAgent({
+        repo: makeRepo({}),
+        settings,
+        agent,
+        getLaunchPlatform: () => 'linux',
+        toSessionOptions: () => undefined
+      })
+      expect(result.startup.launchAgent).toBe(agent)
+    }
+  })
 })
 
 describe('buildWorktreeStartupForDraft agent detection', () => {

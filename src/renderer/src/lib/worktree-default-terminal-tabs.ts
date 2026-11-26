@@ -97,7 +97,11 @@ export function applyDefaultTerminalTabs(
     if (startupAgent) {
       seedNativeChatAppliedSessionOptions(firstTabId, startupAgent, startup.sessionOptions)
     }
-    store.queueTabStartupCommand(firstTabId, startup)
+    // Why: only the queued launchAgent reaches the spawn; see worktree-initial-terminal-seeding.ts.
+    store.queueTabStartupCommand(
+      firstTabId,
+      startupAgent ? { ...startup, launchAgent: startupAgent } : startup
+    )
   }
   queueSetupAndIssueCommands(
     store,

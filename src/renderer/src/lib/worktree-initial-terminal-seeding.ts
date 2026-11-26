@@ -254,7 +254,12 @@ export function ensureWorktreeHasInitialTerminal(
         sequencedStartup.sessionOptions
       )
     }
-    store.queueTabStartupCommand(terminalTab.id, sequencedStartup)
+    // Why the resolved agent: only the queued launchAgent reaches the spawn, and main launches a
+    // command with none as plain `claude`, which would bill the plan for an API-key agent.
+    store.queueTabStartupCommand(
+      terminalTab.id,
+      launchAgent ? { ...sequencedStartup, launchAgent } : sequencedStartup
+    )
   }
   queueSetupAndIssueCommands(
     store,
