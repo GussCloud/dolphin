@@ -1,3 +1,4 @@
+import { deletePlatformEnvKeys } from '../../../shared/platform-env-key-deletion'
 import { restoreOrStripOverlayEnv } from '../../../shared/agent-overlay-env'
 import { delimiter } from 'node:path'
 import { dropInheritedDolphinFishHistory } from '../../fish-history-session'
@@ -74,9 +75,7 @@ function deleteRequestedDaemonEnvKeys(
       {}
     )
   }
-  for (const key of keys ?? []) {
-    delete env[key]
-  }
+  deletePlatformEnvKeys(env, keys)
   if (deleteDolphinOwnedCodexHome) {
     delete env.CODEX_HOME
   }

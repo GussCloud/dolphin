@@ -45,7 +45,9 @@ The managed account gate (`isManagedClaudeAuthLaunch`) skips these launches thro
 
 Inherited env that would send the CLI elsewhere (`CLAUDE_API_CONFLICTING_ENV_KEYS`: auth tokens,
 `ANTHROPIC_BASE_URL`, Bedrock/Vertex/Foundry switches and their keys) is added to the spawn's
-`envToDelete`, and deletions never remove the key or config dir the launch set.
+`envToDelete`, and deletions never remove the key or config dir the launch set. On Windows the
+deletion ignores case (`deletePlatformEnvKeys`), so an inherited `Anthropic_Base_Url` goes too;
+POSIX keeps exact-case names.
 
 A plain `claude --resume <id>` whose transcript lives in an API account's profile is re-marked as
 a `claude-api` spawn on that account before the gate runs (`routeClaudeApiResumeEnv`): the CLI finds
@@ -84,6 +86,13 @@ At each launch, best effort (a failure degrades status or the first prompt, neve
 - The key is in the pane's env, so the shell the pane runs keeps it after `claude` exits: a plain
   `claude` typed later in that pane bills the same API account, and child processes can read it.
   DeepSeek has the same property.
+- Resume routing needs the account service: in a process without it (no registered launch source
+  or no settings), a plain `claude --resume` of a session stored in an API account's profile runs
+  in the plan's profile, which lacks the transcript. The CLI answers "No conversation found" and
+  nothing is billed.
+- An old desktop client paired to a new host may drop the unknown `claude-api` id and relaunch a
+  pane as plain `claude`, which the host runs on its plan. A resume still routes by transcript,
+  because the host decides that at spawn.
 
 ## Not yet
 

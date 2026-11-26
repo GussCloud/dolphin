@@ -1,3 +1,4 @@
+import { deletePlatformEnvKeys } from '../../../../shared/platform-env-key-deletion'
 import { delimiter } from 'node:path'
 import { isLegacyTerminalShimPathEntry } from '../../../pty/legacy-terminal-shim-dir'
 import { resolvePathEnvKey } from '../../../pty/windows-environment-path'
@@ -44,7 +45,5 @@ export function deleteRequestedEnvKeys(
   if (!env || !keys) {
     return
   }
-  for (const key of keys) {
-    delete env[key]
-  }
+  deletePlatformEnvKeys(env, keys)
 }
