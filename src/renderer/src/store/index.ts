@@ -18,6 +18,7 @@ import { createStatsSlice } from './slices/stats'
 import { createMemorySlice } from './slices/memory'
 import { createWorkspaceSpaceSlice } from './slices/workspace-space'
 import { createDeepSeekUsageSlice } from './slices/deepseek-usage-slice'
+import { createClaudeApiUsageSlice } from './slices/claude-api-usage-slice'
 import {
   createClaudeUsageSlice,
   createCodexUsageSlice,
@@ -96,6 +97,7 @@ export const useAppStore = create<AppState>()(
         ...createWorkspaceSpaceSlice(...a),
         ...createClaudeUsageSlice(...a),
         ...createDeepSeekUsageSlice(...a),
+        ...createClaudeApiUsageSlice(...a),
         ...createCodexUsageSlice(...a),
         ...createOpenCodeUsageSlice(...a),
         ...createMuseUsageSlice(...a),

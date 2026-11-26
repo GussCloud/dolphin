@@ -119,6 +119,12 @@ export function UsageOverviewPane(): React.JSX.Element {
                 <Button variant="outline" size="sm" onClick={() => handleEnable('muse')}>
                   {translate('auto.components.stats.UsageOverviewPane.enableMuse', 'Enable Muse')}
                 </Button>
+                <Button variant="outline" size="sm" onClick={() => handleEnable('claude-api')}>
+                  {translate(
+                    'auto.components.stats.UsageOverviewPane.enableClaudeApi',
+                    'Enable Claude (API)'
+                  )}
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => handleEnable('deepseek')}>
                   {translate(
                     'auto.components.stats.UsageOverviewPane.enableDeepSeek',

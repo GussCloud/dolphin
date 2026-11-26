@@ -5,6 +5,7 @@ import type {
   UsageOverviewModel
 } from './usage-overview-types'
 import {
+  createClaudeApiProvider,
   createClaudeProvider,
   createCodexProvider,
   createDeepSeekProvider,
@@ -15,6 +16,7 @@ import {
 export function buildUsageOverview(input: UsageOverviewInput): UsageOverviewModel {
   const providers = [
     createClaudeProvider(input.claude),
+    createClaudeApiProvider(input['claude-api']),
     createDeepSeekProvider(input.deepseek),
     createCodexProvider(input.codex),
     createOpenCodeProvider(input.opencode),

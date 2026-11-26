@@ -4393,7 +4393,8 @@
           "eb6a066185": "claude",
           "eee19cfade": "overview",
           "grokUsageTab": "Grok",
-          "trackingSince": "Tracking since {{value0}}"
+          "trackingSince": "Tracking since {{value0}}",
+          "claudeApiUsageTab": "Claude (API)"
         },
         "UsageOverviewPane": {
           "22ed1b7669": "sessions",
@@ -4415,7 +4416,8 @@
           "55c910f4f1": "- some model prices are unavailable",
           "enableMuse": "Enable Muse",
           "noLocalUsageYetWithDeepSeek": "No local Claude, DeepSeek, Codex, OpenCode, or Muse usage found yet. The overview will populate after the next agent session writes token logs.",
-          "enableDeepSeek": "Enable DeepSeek"
+          "enableDeepSeek": "Enable DeepSeek",
+          "enableClaudeApi": "Enable Claude (API)"
         },
         "share": {
           "card": {
@@ -4454,7 +4456,8 @@
             "a3b6c7d8e9": "grok usage",
             "9f2a3b4c5d": "xai",
             "museKeyword": "muse",
-            "deepseekKeyword": "deepseek"
+            "deepseekKeyword": "deepseek",
+            "claudeApiKeyword": "api key"
           }
         },
         "usage": {
@@ -4462,7 +4465,8 @@
             "model": {
               "bc474051e5": "OpenCode",
               "eb220d193b": "Codex",
-              "544d6d4c16": "Claude"
+              "544d6d4c16": "Claude",
+              "claudeApi": "Claude (API)"
             },
             "sections": {
               "9564a3b21b": "sessions -",
@@ -4541,6 +4545,17 @@
           "options": "DeepSeek usage options",
           "refresh": "Refresh DeepSeek usage",
           "empty": "No local DeepSeek usage found yet for this scope."
+        },
+        "ClaudeApiUsagePane": {
+          "title": "Claude (API) Usage Tracking",
+          "enable": "Enable Claude (API) usage analytics",
+          "disabledDescription": "Reads the local usage logs of your Claude API accounts to show token, model, session, and estimated cost stats.",
+          "allScope": "All local Claude (API) usage",
+          "options": "Claude (API) usage options",
+          "refresh": "Refresh Claude (API) usage",
+          "empty": "No local Claude (API) usage found yet for this scope.",
+          "cost": "Est. cost (list prices)",
+          "costNote": "Cost is estimated from Anthropic list prices; your invoice can differ."
         }
       },
       "sparse": {

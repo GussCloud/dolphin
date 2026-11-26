@@ -16,6 +16,7 @@ import type { StatsSlice } from './slices/stats'
 import type { MemorySlice } from './slices/memory'
 import type { WorkspaceSpaceSlice } from './slices/workspace-space'
 import type { DeepSeekUsageSlice } from './slices/deepseek-usage-slice'
+import type { ClaudeApiUsageSlice } from './slices/claude-api-usage-slice'
 import type {
   ClaudeUsageSlice,
   CodexUsageSlice,
@@ -66,6 +67,7 @@ export type AppState = RepoSlice &
   WorkspaceSpaceSlice &
   ClaudeUsageSlice &
   DeepSeekUsageSlice &
+  ClaudeApiUsageSlice &
   CodexUsageSlice &
   OpenCodeUsageSlice &
   MuseUsageSlice &

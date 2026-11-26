@@ -13,6 +13,9 @@ export function useUsageOverviewProviders(): UsageOverviewProviders {
   const claudeScanState = useAppStore((state) => state.claudeUsageScanState)
   const claudeSummary = useAppStore((state) => state.claudeUsageSummary)
   const claudeDaily = useAppStore((state) => state.claudeUsageDaily)
+  const claudeApiScanState = useAppStore((state) => state.claudeApiUsageScanState)
+  const claudeApiSummary = useAppStore((state) => state.claudeApiUsageSummary)
+  const claudeApiDaily = useAppStore((state) => state.claudeApiUsageDaily)
   const deepSeekScanState = useAppStore((state) => state.deepSeekUsageScanState)
   const deepSeekSummary = useAppStore((state) => state.deepSeekUsageSummary)
   const deepSeekDaily = useAppStore((state) => state.deepSeekUsageDaily)
@@ -26,16 +29,19 @@ export function useUsageOverviewProviders(): UsageOverviewProviders {
   const museSummary = useAppStore((state) => state.museUsageSummary)
   const museDaily = useAppStore((state) => state.museUsageDaily)
   const fetchClaudeUsage = useAppStore((state) => state.fetchClaudeUsage)
+  const fetchClaudeApiUsage = useAppStore((state) => state.fetchClaudeApiUsage)
   const fetchDeepSeekUsage = useAppStore((state) => state.fetchDeepSeekUsage)
   const fetchCodexUsage = useAppStore((state) => state.fetchCodexUsage)
   const fetchOpenCodeUsage = useAppStore((state) => state.fetchOpenCodeUsage)
   const fetchMuseUsage = useAppStore((state) => state.fetchMuseUsage)
   const refreshClaudeUsage = useAppStore((state) => state.refreshClaudeUsage)
+  const refreshClaudeApiUsage = useAppStore((state) => state.refreshClaudeApiUsage)
   const refreshDeepSeekUsage = useAppStore((state) => state.refreshDeepSeekUsage)
   const refreshCodexUsage = useAppStore((state) => state.refreshCodexUsage)
   const refreshOpenCodeUsage = useAppStore((state) => state.refreshOpenCodeUsage)
   const refreshMuseUsage = useAppStore((state) => state.refreshMuseUsage)
   const enableClaudeUsage = useAppStore((state) => state.enableClaudeUsage)
+  const enableClaudeApiUsage = useAppStore((state) => state.enableClaudeApiUsage)
   const enableDeepSeekUsage = useAppStore((state) => state.enableDeepSeekUsage)
   const enableCodexUsage = useAppStore((state) => state.enableCodexUsage)
   const enableOpenCodeUsage = useAppStore((state) => state.enableOpenCodeUsage)
@@ -43,15 +49,28 @@ export function useUsageOverviewProviders(): UsageOverviewProviders {
 
   useEffect(() => {
     void fetchClaudeUsage()
+    void fetchClaudeApiUsage()
     void fetchDeepSeekUsage()
     void fetchCodexUsage()
     void fetchOpenCodeUsage()
     void fetchMuseUsage()
-  }, [fetchClaudeUsage, fetchDeepSeekUsage, fetchCodexUsage, fetchOpenCodeUsage, fetchMuseUsage])
+  }, [
+    fetchClaudeUsage,
+    fetchClaudeApiUsage,
+    fetchDeepSeekUsage,
+    fetchCodexUsage,
+    fetchOpenCodeUsage,
+    fetchMuseUsage
+  ])
 
   const input = useMemo<UsageOverviewInput>(
     () => ({
       claude: { scanState: claudeScanState, summary: claudeSummary, daily: claudeDaily },
+      'claude-api': {
+        scanState: claudeApiScanState,
+        summary: claudeApiSummary,
+        daily: claudeApiDaily
+      },
       deepseek: { scanState: deepSeekScanState, summary: deepSeekSummary, daily: deepSeekDaily },
       codex: { scanState: codexScanState, summary: codexSummary, daily: codexDaily },
       opencode: { scanState: openCodeScanState, summary: openCodeSummary, daily: openCodeDaily },
@@ -61,6 +80,9 @@ export function useUsageOverviewProviders(): UsageOverviewProviders {
       claudeDaily,
       claudeScanState,
       claudeSummary,
+      claudeApiDaily,
+      claudeApiScanState,
+      claudeApiSummary,
       deepSeekDaily,
       deepSeekScanState,
       deepSeekSummary,
@@ -80,6 +102,7 @@ export function useUsageOverviewProviders(): UsageOverviewProviders {
     () =>
       Promise.all([
         claudeScanState?.enabled ? refreshClaudeUsage() : Promise.resolve(),
+        claudeApiScanState?.enabled ? refreshClaudeApiUsage() : Promise.resolve(),
         deepSeekScanState?.enabled ? refreshDeepSeekUsage() : Promise.resolve(),
         codexScanState?.enabled ? refreshCodexUsage() : Promise.resolve(),
         openCodeScanState?.enabled ? refreshOpenCodeUsage() : Promise.resolve(),
@@ -87,11 +110,13 @@ export function useUsageOverviewProviders(): UsageOverviewProviders {
       ]),
     [
       claudeScanState,
+      claudeApiScanState,
       deepSeekScanState,
       codexScanState,
       openCodeScanState,
       museScanState,
       refreshClaudeUsage,
+      refreshClaudeApiUsage,
       refreshDeepSeekUsage,
       refreshCodexUsage,
       refreshOpenCodeUsage,
@@ -103,6 +128,7 @@ export function useUsageOverviewProviders(): UsageOverviewProviders {
     (id: UsageProviderId): Promise<void> => {
       const enableById: Record<UsageProviderId, () => Promise<void>> = {
         claude: enableClaudeUsage,
+        'claude-api': enableClaudeApiUsage,
         deepseek: enableDeepSeekUsage,
         codex: enableCodexUsage,
         opencode: enableOpenCodeUsage,
@@ -110,7 +136,14 @@ export function useUsageOverviewProviders(): UsageOverviewProviders {
       }
       return enableById[id]()
     },
-    [enableClaudeUsage, enableDeepSeekUsage, enableCodexUsage, enableOpenCodeUsage, enableMuseUsage]
+    [
+      enableClaudeUsage,
+      enableClaudeApiUsage,
+      enableDeepSeekUsage,
+      enableCodexUsage,
+      enableOpenCodeUsage,
+      enableMuseUsage
+    ]
   )
 
   return { input, refreshEnabled, enable }

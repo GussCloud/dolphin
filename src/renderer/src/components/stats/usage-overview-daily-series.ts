@@ -31,6 +31,7 @@ function emptyDailyTotals(day: string): Omit<UsageOverviewDailyPoint, 'intensity
     day,
     totalTokens: 0,
     claudeTokens: 0,
+    claudeApiTokens: 0,
     deepSeekTokens: 0,
     codexTokens: 0,
     openCodeTokens: 0,
@@ -46,6 +47,14 @@ export function buildDailyOverview(input: UsageOverviewInput): UsageOverviewDail
     const total = getClaudeDailyTotal(entry)
     current.totalTokens += total
     current.claudeTokens += total
+    byDay.set(entry.day, current)
+  }
+
+  for (const entry of input['claude-api'].daily) {
+    const current = byDay.get(entry.day) ?? emptyDailyTotals(entry.day)
+    const total = getClaudeDailyTotal(entry)
+    current.totalTokens += total
+    current.claudeApiTokens += total
     byDay.set(entry.day, current)
   }
 
