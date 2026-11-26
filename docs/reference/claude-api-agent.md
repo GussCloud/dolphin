@@ -117,7 +117,13 @@ below asks the host's account list which profiles bill an API key
 (`src/main/claude-accounts/profile/claude-profile-roots.ts`: `listClaudePlanProfileConfigDirs`,
 `listClaudeApiProfileConfigDirs`, `isClaudeApiProfilePath`). Readers that attribute a session to
 an agent use that split; trust revocation, worktree retirement and native chat keep reading every
-profile.
+profile. A profile whose account is no longer in settings (a remove that left the folder) belongs
+to neither agent and drops out of history and stats.
+
+Builds before this split stored API transcripts as `claude` in the AI Vault parse cache and the
+search index. Both re-read a transcript whose stored agent differs from the one discovery now
+assigns (`sessionParseCacheEntryMatchesAgent`, `sessionSearchReadDecision`), so the upgrade
+re-labels those rows without waiting for the file to change.
 
 - **Status.** Hooks reach the hook server as `claude` and keep every Claude status rule. The hook
   host stamps `displayAgentType: 'claude-api'` when the event's transcript is under an API profile
@@ -146,6 +152,9 @@ profile.
 
 ## Known limits
 
+- Hook events that reach the hook server before the account service registers the profile roots
+  (`registerClaudeProfileRootSourcesFromStore`, early in startup) are not stamped `claude-api`; the
+  next event that carries a transcript path re-labels the row.
 - The key is in the pane's env, so the shell the pane runs keeps it after `claude` exits: a plain
   `claude` typed later in that pane bills the same API account, and child processes can read it.
   DeepSeek has the same property.
