@@ -7,6 +7,11 @@ import {
   DEEPSEEK_PROVIDER_ENV_VALUE
 } from '../../shared/deepseek-claude-provider'
 import type { AgentTeam, AgentTeamsTerminalApi } from './claude-agent-teams-types'
+import {
+  CLAUDE_API_ACCOUNT_ENV_KEY,
+  CLAUDE_API_PROVIDER_ENV_KEY,
+  CLAUDE_API_PROVIDER_ENV_VALUE
+} from '../../shared/claude-api-provider'
 import { DolphinRuntimeService } from './dolphin-runtime'
 
 const REPO_ID = 'repo-1'
@@ -251,5 +256,20 @@ describe('Agent Teams teammate launch agent', () => {
 
     expect(harness.spawn.mock.calls[0]![0].launchAgent).toBe('deepseek')
     expect(harness.internals.ptysById.get(TEAMMATE_PTY_ID)?.launchAgent).toBe('deepseek')
+  })
+
+  it('labels an API-key team teammate as claude-api and gives it the team account, not a key', async () => {
+    const harness = createHarness('renderer-leaf', {
+      [CLAUDE_API_PROVIDER_ENV_KEY]: CLAUDE_API_PROVIDER_ENV_VALUE,
+      [CLAUDE_API_ACCOUNT_ENV_KEY]: 'api1'
+    })
+
+    await harness.splitTeammate()
+
+    const spawned = harness.spawn.mock.calls[0]![0]
+    expect(spawned.launchAgent).toBe('claude-api')
+    expect(spawned.env?.[CLAUDE_API_ACCOUNT_ENV_KEY]).toBe('api1')
+    expect(spawned.env?.ANTHROPIC_API_KEY).toBeUndefined()
+    expect(harness.internals.ptysById.get(TEAMMATE_PTY_ID)?.launchAgent).toBe('claude-api')
   })
 })

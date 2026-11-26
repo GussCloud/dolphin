@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DEEPSEEK_PROVIDER_ENV_KEY } from '../../shared/deepseek-claude-provider'
 import {
+  CLAUDE_API_ACCOUNT_ENV_KEY,
   CLAUDE_API_PROVIDER_ENV_KEY,
   CLAUDE_API_PROVIDER_ENV_VALUE
 } from '../../shared/claude-api-provider'
@@ -87,16 +88,56 @@ describe('Agent Teams DeepSeek provider marker', () => {
     expect(service.getActiveTeamCount()).toBe(2)
   })
 
-  it('never registers a team for an API-key leader, so no teammate spawns on the plan', () => {
+  it('gives an API-key team only the marker and the leader account, never the key', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'agent-teams-claude-api-'))
+    tempDirs.push(dir)
+    const registryPath = join(dir, 'leaders.json')
+    const service = new ClaudeAgentTeamsService(
+      'linux',
+      new ClaudeAgentTeamsLeaderRegistry(() => registryPath)
+    )
+    const factory = service.createLaunchEnvFactory({
+      leaderHandle: 'leader',
+      // The leader's pane env: its spawn already resolved account api1 and its key.
+      baseEnv: {
+        PATH: '/usr/bin',
+        ANTHROPIC_API_KEY: 'sk-ant-fake-leader',
+        [CLAUDE_API_PROVIDER_ENV_KEY]: CLAUDE_API_PROVIDER_ENV_VALUE,
+        [CLAUDE_API_ACCOUNT_ENV_KEY]: 'api1'
+      },
+      launchAgent: 'claude-api-agent-teams'
+    })
+    const env = factory('/shim', '/usr/bin/dolphin', ['/shim'])
+    expect(env).toMatchObject({
+      [CLAUDE_API_PROVIDER_ENV_KEY]: CLAUDE_API_PROVIDER_ENV_VALUE,
+      [CLAUDE_API_ACCOUNT_ENV_KEY]: 'api1'
+    })
+    expect(env?.[DEEPSEEK_PROVIDER_ENV_KEY]).toBe(CLAUDE_API_PROVIDER_ENV_VALUE)
+    expect(JSON.stringify(env)).not.toContain('sk-ant-fake-leader')
+    expect(service.getActiveTeamCount()).toBe(1)
+  })
+
+  it('keeps an API-key team in-process when remote-routed or when its account is unknown', () => {
     const service = new ClaudeAgentTeamsService('linux')
     for (const leader of [
-      { launchAgent: 'claude-api', baseEnv: { PATH: '/usr/bin' } },
+      {
+        launchAgent: 'claude-api-agent-teams',
+        baseEnv: { PATH: '/usr/bin', DOLPHIN_PAIRING_CODE: 'abc' },
+        claudeApiAccountId: 'api1'
+      },
+      {
+        launchAgent: 'claude-api-agent-teams',
+        baseEnv: { PATH: '/usr/bin', DOLPHIN_ENVIRONMENT: 'hub' },
+        claudeApiAccountId: 'api1'
+      },
+      {
+        launchAgent: 'claude-api-agent-teams',
+        baseEnv: { PATH: '/usr/bin' },
+        claudeApiAccountId: null
+      },
       {
         launchAgent: undefined,
-        baseEnv: {
-          PATH: '/usr/bin',
-          [CLAUDE_API_PROVIDER_ENV_KEY]: CLAUDE_API_PROVIDER_ENV_VALUE
-        }
+        baseEnv: { PATH: '/usr/bin', [CLAUDE_API_PROVIDER_ENV_KEY]: CLAUDE_API_PROVIDER_ENV_VALUE }
       }
     ]) {
       const factory = service.createLaunchEnvFactory({ leaderHandle: 'leader', ...leader })

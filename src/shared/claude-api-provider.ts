@@ -69,3 +69,14 @@ export function buildClaudeApiClaudeEnv(args: {
     ANTHROPIC_API_KEY: args.apiKey
   }
 }
+
+/**
+ * The env an API-key Agent Team carries: only the non-secret marker and the leader's account, so
+ * each teammate spawn reads that account's key fresh. The key itself never enters a team env.
+ */
+export function buildClaudeApiTeamEnv(accountId: string): Record<string, string> {
+  return {
+    [CLAUDE_API_PROVIDER_ENV_KEY]: CLAUDE_API_PROVIDER_ENV_VALUE,
+    [CLAUDE_API_ACCOUNT_ENV_KEY]: accountId
+  }
+}

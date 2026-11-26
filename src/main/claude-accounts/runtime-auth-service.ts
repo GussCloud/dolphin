@@ -43,7 +43,8 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
     registerClaudeLaunchConfigDirResolver((launch) => this.resolveLaunchConfigDir(launch))
     registerClaudeApiLaunchSource({
       worktreeSource: this.store,
-      configDirFor: getClaudeAccountConfigDir
+      configDirFor: getClaudeAccountConfigDir,
+      getSettings: () => this.store.getSettings()
     })
     registerClaudeProfileRootSources({
       managedAccountsRoot: getClaudeManagedAccountsRoot,

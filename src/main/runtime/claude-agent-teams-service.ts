@@ -1,4 +1,8 @@
-import { isClaudeApiProviderEnv, isClaudeApiTuiAgent } from '../../shared/claude-api-provider'
+import { buildClaudeApiTeamEnv } from '../../shared/claude-api-provider'
+import type { WorktreeLaunchLocation } from '../worktree-launch-owner'
+import { resolveAgentTeamLaunchProvider } from './claude-agent-teams-provider'
+import { routesAgentTeamToRemoteRuntime } from './claude-agent-teams-remote-routing'
+export { routesAgentTeamToRemoteRuntime } from './claude-agent-teams-remote-routing'
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import { splitTmuxCommand } from '../../shared/claude-agent-teams-tmux-compat'
 import { ClaudeAgentTeamsTmuxDispatcher } from './claude-agent-teams-tmux-dispatcher'
@@ -7,8 +11,7 @@ import { AGENT_TEAMS_SHIM_PATH_DIRS_ENV } from '../claude-agent-teams-path-resto
 import type { AgentTeamHostShell } from './claude-agent-teams-host-shell'
 import {
   DEEPSEEK_PROVIDER_ENV_KEY,
-  DEEPSEEK_PROVIDER_ENV_VALUE,
-  isDeepSeekTuiAgent
+  DEEPSEEK_PROVIDER_ENV_VALUE
 } from '../../shared/deepseek-claude-provider'
 import {
   CLAUDE_DANGEROUS_RM_NO_TIMEOUT_ENV,
@@ -62,6 +65,8 @@ export class ClaudeAgentTeamsService {
     paneKey?: string
     /** DeepSeek leader: teammates get the non-secret marker; spawn resolves the key fresh. */
     deepSeekProvider?: boolean
+    /** API-key leader's account: teammates get it with the marker; spawn reads its key fresh. */
+    claudeApiAccountId?: string
   }): AgentTeamsLaunchEnv {
     const teamId = `team-${randomUUID()}`
     const token = randomBytes(32).toString('base64url')
@@ -91,6 +96,8 @@ export class ClaudeAgentTeamsService {
     }
     if (args.deepSeekProvider) {
       env[DEEPSEEK_PROVIDER_ENV_KEY] = DEEPSEEK_PROVIDER_ENV_VALUE
+    } else if (args.claudeApiAccountId) {
+      Object.assign(env, buildClaudeApiTeamEnv(args.claudeApiAccountId))
     }
     // Why: Claude does not forward this to tmux teammates; they only get it from the pane env.
     env[CLAUDE_DANGEROUS_RM_NO_TIMEOUT_ENV] = resolveClaudeDangerousRmNoTimeoutValue(args.baseEnv)
@@ -126,17 +133,17 @@ export class ClaudeAgentTeamsService {
     leaderHandle: string
     baseEnv: Record<string, string | undefined>
     launchAgent?: unknown
+    /** Where the leader launches: an API-key leader's account may come from the worktree pin. */
+    command?: string
+    launch?: WorktreeLaunchLocation
   }): (
     shimDir: string,
     shimBin: string | null,
     shimPathDirs: string[]
   ) => Record<string, string> | null {
-    const deepSeekProvider = isDeepSeekTuiAgent(args.launchAgent)
-    // Why: teammates of an API-key leader are not wired yet; a team would spawn them on the plan.
-    const claudeApiLeader =
-      isClaudeApiTuiAgent(args.launchAgent) || isClaudeApiProviderEnv(args.baseEnv)
+    const provider = resolveAgentTeamLaunchProvider(args)
     return (shimDir, shimBin, shimPathDirs) =>
-      claudeApiLeader || (deepSeekProvider && routesAgentTeamToRemoteRuntime(args.baseEnv))
+      provider.inProcess
         ? null
         : this.createLaunchEnv({
             leaderHandle: args.leaderHandle,
@@ -144,7 +151,7 @@ export class ClaudeAgentTeamsService {
             shimDir,
             shimBin,
             shimPathDirs,
-            deepSeekProvider
+            ...provider.launch
           }).env
   }
 
@@ -313,15 +320,6 @@ export class ClaudeAgentTeamsService {
       return null
     }
   }
-}
-
-/**
- * True when the team's tmux shim would create teammate panes on another Dolphin runtime. A DeepSeek
- * team must not: that host may not know the marker and would start plain `claude` on the user's
- * Anthropic account, so DeepSeek leaders keep teammates in-process instead.
- */
-export function routesAgentTeamToRemoteRuntime(env: Record<string, string | undefined>): boolean {
-  return Boolean(env.DOLPHIN_PAIRING_CODE || env.DOLPHIN_ENVIRONMENT)
 }
 
 function agentTeamTmuxValue(teamId: string): string {
