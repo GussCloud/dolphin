@@ -164,6 +164,25 @@ describe('forkAgentSessionFromPane', () => {
     )
   })
 
+  it('forks an API-key Claude pane as claude-api, not as plain claude from its hook status', async () => {
+    store.agentStatusByPaneKey = {
+      [`tab-1:${LEAF_ID}`]: { agentType: 'claude' }
+    }
+    store.tabsByWorktree = { 'wt-1': [{ id: 'tab-1', launchAgent: 'claude-api' }] }
+    const { forkAgentSessionFromPane } = await import('./terminal-agent-session-fork')
+
+    await forkAgentSessionFromPane({
+      pane: makePane('User: compare OAuth options'),
+      tabId: 'tab-1',
+      worktreeId: 'wt-1',
+      groupId: 'group-1'
+    })
+
+    expect(mockLaunchAgentInNewTab).toHaveBeenCalledWith(
+      expect.objectContaining({ agent: 'claude-api', worktreeId: 'wt-fork' })
+    )
+  })
+
   it('announces the provisional chat without waiting for structured settlement', async () => {
     store.agentStatusByPaneKey = {
       [`tab-1:${LEAF_ID}`]: { agentType: 'codex' }
