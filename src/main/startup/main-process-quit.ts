@@ -223,6 +223,7 @@ function installWillQuitHandler(): void {
     const usageCacheFlush = Promise.all([
       state.claudeUsage?.flush(),
       state.deepSeekUsage?.flush(),
+      state.claudeApiUsage?.flush(),
       state.codexUsage?.flush(),
       state.openCodeUsage?.flush(),
       state.museUsage?.flush()

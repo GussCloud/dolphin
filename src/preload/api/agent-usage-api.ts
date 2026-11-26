@@ -44,6 +44,9 @@ export type ClaudeUsageApi = UsageProviderApi<ClaudeUsageSnapshot, ClaudeUsageBr
 /** DeepSeek runs Claude Code, so its report has Claude's shape (with no cost estimate). */
 export type DeepSeekUsageApi = UsageProviderApi<ClaudeUsageSnapshot, ClaudeUsageBreakdownKind>
 
+/** API-key accounts run Claude Code, so their report has Claude's shape, priced at list prices. */
+export type ClaudeApiUsageApi = UsageProviderApi<ClaudeUsageSnapshot, ClaudeUsageBreakdownKind>
+
 export type CodexUsageApi = UsageProviderApi<CodexUsageSnapshot, CodexUsageBreakdownKind>
 
 export type OpenCodeUsageApi = UsageProviderApi<OpenCodeUsageSnapshot, OpenCodeUsageBreakdownKind>

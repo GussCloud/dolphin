@@ -77,6 +77,7 @@ import { statsApi } from './api/stats-bridge'
 import { memoryApi } from './api/memory-bridge'
 import { claudeUsageApi } from './api/claude-usage-bridge'
 import { deepSeekUsageApi } from './api/deepseek-usage-bridge'
+import { claudeApiUsageApi } from './api/claude-api-usage-bridge'
 import { codexUsageApi } from './api/codex-usage-bridge'
 import { openCodeUsageApi } from './api/open-code-usage-bridge'
 import { museUsageApi } from './api/muse-usage-bridge'
@@ -187,6 +188,7 @@ const api = {
   memory: memoryApi,
   claudeUsage: claudeUsageApi,
   deepSeekUsage: deepSeekUsageApi,
+  claudeApiUsage: claudeApiUsageApi,
   codexUsage: codexUsageApi,
   openCodeUsage: openCodeUsageApi,
   museUsage: museUsageApi,

@@ -56,6 +56,7 @@ export function openMainWindow(options: { revealOnDidFinishLoad?: boolean } = {}
     stats: state.stats,
     claudeUsage: state.claudeUsage,
     deepSeekUsage: state.deepSeekUsage,
+    claudeApiUsage: state.claudeApiUsage,
     codexUsage: state.codexUsage,
     openCodeUsage: state.openCodeUsage,
     museUsage: state.museUsage,

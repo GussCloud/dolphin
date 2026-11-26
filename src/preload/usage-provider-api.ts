@@ -4,6 +4,7 @@ import type { PreloadApi } from './api-types'
 type UsageProviderApiKey =
   | 'claudeUsage'
   | 'deepSeekUsage'
+  | 'claudeApiUsage'
   | 'codexUsage'
   | 'openCodeUsage'
   | 'museUsage'

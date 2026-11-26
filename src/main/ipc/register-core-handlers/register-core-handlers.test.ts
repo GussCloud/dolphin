@@ -520,6 +520,7 @@ describe('registerCoreHandlers', () => {
     const stats = { marker: 'stats' }
     const claudeUsage = { marker: 'claudeUsage' }
     const deepSeekUsage = { marker: 'deepSeekUsage' }
+    const claudeApiUsage = { marker: 'claudeApiUsage' }
     const codexUsage = { marker: 'codexUsage' }
     const openCodeUsage = { marker: 'openCodeUsage' }
     const museUsage = { marker: 'museUsage' }
@@ -537,6 +538,8 @@ describe('registerCoreHandlers', () => {
       claudeUsage as never,
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration only forwards this marker to the mocked usage registrar.
       deepSeekUsage as never,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration only forwards this marker to the mocked usage registrar.
+      claudeApiUsage as never,
       codexUsage as never,
       openCodeUsage as never,
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration only forwards this marker to the mocked usage registrar.
@@ -564,6 +567,7 @@ describe('registerCoreHandlers', () => {
     expect(registerUsageProviderHandlersMock).toHaveBeenCalledWith({
       claudeUsage,
       deepSeekUsage,
+      claudeApiUsage,
       codexUsage,
       openCodeUsage,
       museUsage
@@ -708,6 +712,7 @@ describe('registerCoreHandlers', () => {
     const stats2 = { marker: 'stats2' }
     const claudeUsage2 = { marker: 'claudeUsage2' }
     const deepSeekUsage2 = { marker: 'deepSeekUsage2' }
+    const claudeApiUsage2 = { marker: 'claudeApiUsage2' }
     const codexUsage2 = { marker: 'codexUsage2' }
     const openCodeUsage2 = { marker: 'openCodeUsage2' }
     const museUsage2 = { marker: 'museUsage2' }
@@ -722,6 +727,8 @@ describe('registerCoreHandlers', () => {
       claudeUsage2 as never,
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration only forwards this marker to the mocked usage registrar.
       deepSeekUsage2 as never,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration only forwards this marker to the mocked usage registrar.
+      claudeApiUsage2 as never,
       codexUsage2 as never,
       openCodeUsage2 as never,
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: registration only forwards this marker to the mocked usage registrar.
