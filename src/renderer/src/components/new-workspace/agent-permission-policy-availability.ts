@@ -9,6 +9,7 @@ import { resolvedTuiAgentArgsBypassPermissions } from '../../../../shared/tui-ag
 const CLAUDE_CLI_AGENTS: ReadonlySet<TuiAgent> = new Set([
   'claude',
   'claude-agent-teams',
+  'claude-api',
   'deepseek',
   'deepseek-agent-teams'
 ])

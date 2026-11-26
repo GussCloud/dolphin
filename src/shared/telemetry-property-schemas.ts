@@ -10,6 +10,7 @@ import type { GlobalSettings } from './global-settings-types'
 export const AGENT_KIND_VALUES = [
   'claude-code',
   'claude-agent-teams',
+  'claude-api',
   'deepseek',
   'deepseek-agent-teams',
   'openclaude',

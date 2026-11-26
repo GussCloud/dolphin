@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   DEEPSEEK_HOST_UPDATE_REQUIRED_CODE,
-  refuseDeepSeekLaunchWithoutHostSupport,
-  runtimeParamsLaunchDeepSeek
-} from './deepseek-runtime-launch-gate'
+  refuseOwnCredentialsClaudeLaunchWithoutHostSupport,
+  runtimeParamsLaunchOwnCredentialsClaude
+} from './own-credentials-claude-runtime-launch-gate'
 import {
   AGENT_SESSION_DEEPSEEK_RESUME_RUNTIME_CAPABILITY,
   DEEPSEEK_HOST_UPDATE_REQUIRED_MESSAGE
@@ -19,7 +19,7 @@ function status(capabilities: string[]) {
   }))
 }
 
-describe('runtimeParamsLaunchDeepSeek', () => {
+describe('runtimeParamsLaunchOwnCredentialsClaude', () => {
   it.each([
     ['terminal.create', { launchAgent: 'deepseek', command: 'claude' }],
     ['terminal.createAgentSession', { agent: 'deepseek-agent-teams' }],
@@ -37,7 +37,7 @@ describe('runtimeParamsLaunchDeepSeek', () => {
       }
     ]
   ])('detects a DeepSeek launch in %s params', (_method, params) => {
-    expect(runtimeParamsLaunchDeepSeek(params)).toBe(true)
+    expect(runtimeParamsLaunchOwnCredentialsClaude(params)).toBe(true)
   })
 
   it.each([
@@ -50,15 +50,15 @@ describe('runtimeParamsLaunchDeepSeek', () => {
     { env: { [DEEPSEEK_PROVIDER_ENV_KEY]: 'other' } },
     { repo: 'deepseek' }
   ])('ignores non-DeepSeek params %#', (params) => {
-    expect(runtimeParamsLaunchDeepSeek(params)).toBe(false)
+    expect(runtimeParamsLaunchOwnCredentialsClaude(params)).toBe(false)
   })
 })
 
-describe('refuseDeepSeekLaunchWithoutHostSupport', () => {
+describe('refuseOwnCredentialsClaudeLaunchWithoutHostSupport', () => {
   it('lets a DeepSeek launch through to a host that advertises DeepSeek', async () => {
     const readStatus = status([AGENT_SESSION_DEEPSEEK_RESUME_RUNTIME_CAPABILITY])
     await expect(
-      refuseDeepSeekLaunchWithoutHostSupport({
+      refuseOwnCredentialsClaudeLaunchWithoutHostSupport({
         method: 'terminal.create',
         params: { launchAgent: 'deepseek' },
         readStatus
@@ -69,7 +69,7 @@ describe('refuseDeepSeekLaunchWithoutHostSupport', () => {
 
   it('refuses a DeepSeek launch to an older host instead of letting it run plain claude', async () => {
     await expect(
-      refuseDeepSeekLaunchWithoutHostSupport({
+      refuseOwnCredentialsClaudeLaunchWithoutHostSupport({
         method: 'worktree.create',
         params: { startupCommand: 'claude', createdWithAgent: 'deepseek' },
         readStatus: status(['agent-session.zcode-resume.v1'])
@@ -92,7 +92,7 @@ describe('refuseDeepSeekLaunchWithoutHostSupport', () => {
       result: { runtimeId: 'host' },
       _meta: { runtimeId: 'host' }
     }))
-    const refusal = await refuseDeepSeekLaunchWithoutHostSupport({
+    const refusal = await refuseOwnCredentialsClaudeLaunchWithoutHostSupport({
       method: 'terminal.createAgentSession',
       params: { agent: 'deepseek' },
       readStatus
@@ -101,7 +101,7 @@ describe('refuseDeepSeekLaunchWithoutHostSupport', () => {
   })
 
   it('returns the status failure when the host cannot be asked', async () => {
-    const refusal = await refuseDeepSeekLaunchWithoutHostSupport({
+    const refusal = await refuseOwnCredentialsClaudeLaunchWithoutHostSupport({
       method: 'terminal.create',
       params: { launchAgent: 'deepseek' },
       readStatus: async () => ({
@@ -120,7 +120,7 @@ describe('refuseDeepSeekLaunchWithoutHostSupport', () => {
   it('never probes the host for non-DeepSeek agents', async () => {
     const readStatus = status([])
     await expect(
-      refuseDeepSeekLaunchWithoutHostSupport({
+      refuseOwnCredentialsClaudeLaunchWithoutHostSupport({
         method: 'terminal.create',
         params: { launchAgent: 'claude', command: 'claude' },
         readStatus

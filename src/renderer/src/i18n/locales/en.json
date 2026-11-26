@@ -663,6 +663,7 @@
           "060d152fb5": "Trae",
           "muse_label": "Muse",
           "zcode_label": "ZCode",
+          "claude_api_label": "Claude (API key)",
           "deepseek_label": "DeepSeek",
           "deepseek_agent_teams_label": "DeepSeek Agent Teams",
           "d443a47995": "Prime Agent",

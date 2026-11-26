@@ -1,5 +1,5 @@
 import type { TuiAgent } from '../../../src/shared/tui-agent'
-import { isDeepSeekTuiAgent } from '../../../src/shared/deepseek-claude-provider'
+import { isOwnCredentialsClaudeTuiAgent } from '../../../src/shared/own-credentials-claude-provider'
 import {
   filterEnabledMobileTuiAgents,
   isMobileTuiAgent,
@@ -41,14 +41,16 @@ export function normalizeWorkspaceAgent(value: unknown): WorkspaceAgentChoice | 
 
 /**
  * Whether the composer may offer `agent` for a host whose detected agents are known (a Set) or
- * unknown (null). Why: with detection unknown the host may predate DeepSeek, and an older host
+ * unknown (null). Why: with detection unknown the host may predate DeepSeek or the API-key agent, and an older host
  * drops worktree.create's unknown agent and starts its own default agent instead.
  */
 export function isWorkspaceAgentOfferable(
   agent: TuiAgent,
   detectedAgentIds: Set<string> | null
 ): boolean {
-  return detectedAgentIds === null ? !isDeepSeekTuiAgent(agent) : detectedAgentIds.has(agent)
+  return detectedAgentIds === null
+    ? !isOwnCredentialsClaudeTuiAgent(agent)
+    : detectedAgentIds.has(agent)
 }
 
 export function pickWorkspaceAgent(

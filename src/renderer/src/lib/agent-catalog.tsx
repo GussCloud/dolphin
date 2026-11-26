@@ -58,6 +58,12 @@ export const getAgentCatalog = createLocalizedCatalog((): AgentCatalogEntry[] =>
     homepageUrl: 'https://code.claude.com/docs/en/agent-teams'
   },
   {
+    id: 'claude-api',
+    label: translate('auto.lib.agent.catalog.claude_api_label', 'Claude (API key)'),
+    cmd: 'claude',
+    homepageUrl: 'https://code.claude.com/docs/en/iam'
+  },
+  {
     id: 'openclaude',
     label: translate('auto.lib.agent.catalog.a5fc0cb622', 'OpenClaude'),
     cmd: 'openclaude',
@@ -364,7 +370,7 @@ export function AgentIcon({
   if (!agent) {
     return <AgentLetterIcon letter="?" size={size} />
   }
-  if (agent === 'claude' || agent === 'claude-agent-teams') {
+  if (agent === 'claude' || agent === 'claude-agent-teams' || agent === 'claude-api') {
     return <ClaudeIcon size={size} />
   }
   if (agent === 'codex') {

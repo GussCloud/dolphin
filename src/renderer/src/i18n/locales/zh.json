@@ -542,6 +542,7 @@
           "muse_label": "Muse",
           "opencode2_label": "OpenCode 2",
           "zcode_label": "ZCode",
+          "claude_api_label": "Claude（API 密钥）",
           "deepseek_label": "DeepSeek",
           "deepseek_agent_teams_label": "DeepSeek Agent Teams"
         },
