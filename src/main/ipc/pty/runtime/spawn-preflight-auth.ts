@@ -5,14 +5,25 @@ import {
   CLAUDE_AUTH_SWITCH_IN_PROGRESS_MESSAGE,
   hasClaudeAuthEnvConflict
 } from '../../../claude-accounts/environment'
-import { prepareDeepSeekLaunch } from '../../../deepseek/deepseek-config-home-setup'
-import { isDeepSeekLaunchRequest } from '../../../deepseek/deepseek-launch-request'
+import { prepareOwnCredentialsClaudeLaunch } from '../../../claude-api/own-credentials-claude-launch-env'
+import { routeClaudeApiResumeEnv } from '../../../claude-api/claude-api-launch-request'
 import { isManagedClaudeAuthLaunch } from '../host-env/fresh-spawn-routing'
 import type { RuntimePtySpawnState } from './spawn-state'
 import { readClaudeSpawnResumeSessionId } from '../../../claude-accounts/profile/claude-session-profile'
 
 /** Classifies the spawn for the managed Claude account gate; refuses it mid account switch. */
 export function classifyRuntimeSpawnClaudeLaunch(ctx: RuntimePtySpawnState): void {
+  // Why before the gate reads the env: an API account's resume must carry its marker.
+  ctx.args = {
+    ...ctx.args,
+    env: routeClaudeApiResumeEnv({
+      launchAgent: ctx.args.launchAgent,
+      env: ctx.args.env,
+      command: ctx.args.command,
+      connectionId: ctx.args.connectionId,
+      settings: ctx.deps.getSettings?.()
+    })
+  }
   const args = ctx.args
   ctx.isClaudeLaunch = isManagedClaudeAuthLaunch({
     command: args.command,
@@ -26,7 +37,7 @@ export function classifyRuntimeSpawnClaudeLaunch(ctx: RuntimePtySpawnState): voi
   }
 }
 
-/** Resolves the managed Claude auth patch, or the DeepSeek provider env, for this spawn. */
+/** Resolves the managed Claude auth patch, or the DeepSeek or API-key provider env, for this spawn. */
 export async function prepareRuntimeSpawnAuth(ctx: RuntimePtySpawnState): Promise<void> {
   const args = ctx.args
   ctx.claudeAuth =
@@ -43,16 +54,17 @@ export async function prepareRuntimeSpawnAuth(ctx: RuntimePtySpawnState): Promis
   if (ctx.claudeAuth?.stripAuthEnv && hasClaudeAuthEnvConflict(args.env)) {
     throw new Error(CLAUDE_AUTH_ENV_CONFLICT_MESSAGE)
   }
-  ctx.deepSeekEnvPatch =
-    !ctx.preAdoptedStablePane &&
-    isDeepSeekLaunchRequest({ launchAgent: args.launchAgent, env: args.env })
-      ? await prepareDeepSeekLaunch({
-          connectionId: args.connectionId,
-          target: ctx.codexSelectionTarget,
-          settings: ctx.deps.getSettings?.(),
-          launchEnv: args.env
-        })
-      : null
+  ctx.ownCredentialsEnvPatch = ctx.preAdoptedStablePane
+    ? null
+    : await prepareOwnCredentialsClaudeLaunch({
+        launchAgent: args.launchAgent,
+        env: args.env,
+        command: args.command,
+        connectionId: args.connectionId,
+        target: ctx.codexSelectionTarget,
+        settings: ctx.deps.getSettings?.(),
+        launch: { worktreeId: args.worktreeId, workspacePath: ctx.cwd }
+      })
 }
 
 export function applyRuntimeSpawnAuthEnv(
@@ -62,5 +74,7 @@ export function applyRuntimeSpawnAuthEnv(
   if (ctx.claudeAuth) {
     return { ...env, ...ctx.claudeAuth.envPatch }
   }
-  return ctx.deepSeekEnvPatch ? overlayPlatformEnv(env ?? {}, ctx.deepSeekEnvPatch) : env
+  return ctx.ownCredentialsEnvPatch
+    ? overlayPlatformEnv(env ?? {}, ctx.ownCredentialsEnvPatch)
+    : env
 }

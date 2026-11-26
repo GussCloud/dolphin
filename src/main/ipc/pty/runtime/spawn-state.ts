@@ -39,8 +39,8 @@ export type RuntimePtySpawnState = {
   codexSelectionTarget: CodexAccountSelectionTarget
   launchCommand: string | undefined
   claudeAuth: ClaudeRuntimeAuthPreparation | null
-  /** DeepSeek provider env (holds the API key); null for every other launch. */
-  deepSeekEnvPatch: Record<string, string> | null
+  /** DeepSeek or API-key provider env (holds the key); null for every other launch. */
+  ownCredentialsEnvPatch: Record<string, string> | null
   shouldPersistHostSessionBinding: boolean
   hostSessionBinding:
     | {
@@ -161,7 +161,7 @@ export function createRuntimePtySpawnState(
     codexSelectionTarget: { runtime: 'host' },
     launchCommand: undefined,
     claudeAuth: null,
-    deepSeekEnvPatch: null,
+    ownCredentialsEnvPatch: null,
     shouldPersistHostSessionBinding: false,
     hostSessionBinding: undefined,
     env: undefined,

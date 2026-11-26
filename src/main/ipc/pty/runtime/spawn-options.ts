@@ -18,6 +18,10 @@ import {
 } from '../host-env/fresh-spawn-routing'
 import { isTuiAgent } from '../../../../shared/tui-agent-config'
 import { CLAUDE_AUTH_ENV_VARS } from '../../../claude-accounts/environment'
+import {
+  keepOwnCredentialsClaudeEnv,
+  ownCredentialsClaudeEnvToDelete
+} from '../../../claude-api/own-credentials-claude-launch-env'
 import { LEGACY_TERMINAL_SHIM_REMOTE_ENV_KEYS } from '../../../pty/legacy-terminal-shim-dir'
 import { PI_PROCESS_OWNER_ENV_KEYS } from '../../../pty/pi-process-owner-env'
 import { resolveConfiguredTerminalShellArgs } from '../configured-terminal-shell-args'
@@ -100,6 +104,14 @@ export async function buildRuntimePtySpawnOptions(
   if (ctx.codexResumeHomeSelected) {
     ctx.spawnOptions.envToDelete = removeCodexHomeDeletionRequests(ctx.spawnOptions.envToDelete)
   }
+  // Why last: an API-key spawn drops every other credential and keeps the key it was given.
+  ctx.spawnOptions.envToDelete = keepOwnCredentialsClaudeEnv(
+    mergePtyEnvDeletions(
+      ctx.spawnOptions.envToDelete,
+      ownCredentialsClaudeEnvToDelete(ctx.ownCredentialsEnvPatch)
+    ),
+    ctx.ownCredentialsEnvPatch
+  )
   deleteRequestedEnvKeys(ctx.env, ctx.spawnOptions.envToDelete)
   promoteAgentTeamsShimPath(ctx.env, ctx.requestedAgentTeamsPath)
   if (ctx.launchCommand !== undefined) {

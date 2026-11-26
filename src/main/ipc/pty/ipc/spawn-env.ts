@@ -39,8 +39,8 @@ export async function assemblePtyIpcSpawnEnv(ctx: PtyIpcSpawnState): Promise<voi
   const baseEnvWithAuth = withClaudeDangerousRmNoTimeoutEnv(
     ctx.claudeAuth
       ? { ...sshSourceEnv, ...ctx.claudeAuth.envPatch }
-      : ctx.deepSeekEnvPatch
-        ? overlayPlatformEnv(sshSourceEnv ?? {}, ctx.deepSeekEnvPatch)
+      : ctx.ownCredentialsEnvPatch
+        ? overlayPlatformEnv(sshSourceEnv ?? {}, ctx.ownCredentialsEnvPatch)
         : sshSourceEnv,
     { launchAgent: args.launchAgent, command: args.command }
   )

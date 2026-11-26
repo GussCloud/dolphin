@@ -1,4 +1,4 @@
-import { isDeepSeekLaunchRequest } from '../deepseek/deepseek-launch-request'
+import { isOwnCredentialsClaudeLaunchRequest } from '../claude-api/own-credentials-claude-launch-request'
 import { isClaudeLaunchCommand } from '../ipc/pty/host-env/fresh-spawn-routing'
 import {
   CLAUDE_DANGEROUS_RM_NO_TIMEOUT_ENV,
@@ -7,7 +7,7 @@ import {
 
 type Env = Record<string, string | undefined>
 
-/** Agents that run the Claude CLI: claude, deepseek and their Agent Teams variants. */
+/** Agents that run the Claude CLI: claude, claude-api, deepseek and their Agent Teams variants. */
 export function isClaudeCompatibleAgentLaunch(args: {
   launchAgent: unknown
   command: string | undefined
@@ -16,7 +16,7 @@ export function isClaudeCompatibleAgentLaunch(args: {
   return (
     args.launchAgent === 'claude' ||
     args.launchAgent === 'claude-agent-teams' ||
-    isDeepSeekLaunchRequest({ launchAgent: args.launchAgent, env: args.env }) ||
+    isOwnCredentialsClaudeLaunchRequest({ launchAgent: args.launchAgent, env: args.env }) ||
     isClaudeLaunchCommand(args.command)
   )
 }

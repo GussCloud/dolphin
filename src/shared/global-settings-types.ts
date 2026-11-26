@@ -323,6 +323,8 @@ export type GlobalSettings = {
   claudeManagedAccounts: ClaudeManagedAccount[]
   activeClaudeManagedAccountId: string | null
   activeClaudeManagedAccountIdsByRuntime?: ClaudeManagedAccountRuntimeSelection
+  /** The API-key account a `claude-api` launch bills when no pin chooses one; never the plan's account. */
+  claudeApiDefaultAccountId?: string | null
   /** Per-worktree shell history so ArrowUp doesn't surface other worktrees' commands (a HISTFILE for
    *  bash/zsh, a `fish_history` session name for fish). Defaults to true. */
   terminalScopeHistoryByWorktree: boolean
