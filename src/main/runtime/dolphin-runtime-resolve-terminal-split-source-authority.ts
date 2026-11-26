@@ -28,6 +28,8 @@ import {
 } from './claude-agent-teams-host-shell'
 import { resolveGitBashPath } from '../git-bash'
 import { overlayPlatformEnv } from '../../shared/platform-env-overlay'
+import { isOwnCredentialsClaudeProviderEnv } from '../../shared/own-credentials-claude-provider'
+import { isClaudeApiProviderEnv } from '../../shared/claude-api-provider'
 import { isDeepSeekProviderEnv } from '../../shared/deepseek-claude-provider'
 import { routesAgentTeamToRemoteRuntime } from './claude-agent-teams-service'
 
@@ -212,10 +214,11 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
     // Why overlay: the pane's `PATH` must replace main's `Path`, or the launch PATH is built from Electron's.
     const baseEnv = overlayPlatformEnv<string | undefined>(process.env, args.baseEnv ?? {})
     const inheritedEnvKeys = new Set(Object.keys(baseEnv))
-    // Why the pane env, not the overlay: a DeepSeek marker in main's own env must not reclassify Claude.
-    const deepSeekProvider = isDeepSeekProviderEnv(args.baseEnv)
+    // Why the pane env, not the overlay: a provider marker in main's own env must not reclassify Claude.
+    // DeepSeek and API-key panes own their credentials, so a managed account's auth never applies.
+    const ownCredentialsProvider = isOwnCredentialsClaudeProviderEnv(args.baseEnv)
     const auth =
-      args.prepareAuth && !deepSeekProvider && this.prepareClaudeAuth
+      args.prepareAuth && !ownCredentialsProvider && this.prepareClaudeAuth
         ? await this.prepareClaudeAuth(undefined, {
             worktreeId: this.handles.get(args.handle)?.worktreeId
           })
@@ -235,7 +238,10 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
       envToDelete: [...(envToDelete ?? []), ...IN_PROCESS_AGENT_TEAMS_ENV_TO_DELETE]
     }
     if (
-      (deepSeekProvider && routesAgentTeamToRemoteRuntime(baseEnv)) ||
+      (ownCredentialsProvider && routesAgentTeamToRemoteRuntime(baseEnv)) ||
+      // Why: teammate panes of an API-key leader are not wired yet; a registered team would spawn
+      // them through the plan's gate, so they stay in the leader's process and env.
+      isClaudeApiProviderEnv(args.baseEnv) ||
       !canLaunchAgentTeamPanes({
         hostShell,
         leaderIsWsl,
@@ -261,7 +267,7 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
       shimPathDirs,
       hostShell: hostShell ?? undefined,
       paneKey: args.paneKey ?? this.getPaneKeyForTerminalHandle(args.handle) ?? undefined,
-      deepSeekProvider
+      deepSeekProvider: isDeepSeekProviderEnv(args.baseEnv)
     })
     const env = auth ? { ...auth.envPatch, ...launch.env } : launch.env
     return envToDelete ? { env, envToDelete } : { env }
