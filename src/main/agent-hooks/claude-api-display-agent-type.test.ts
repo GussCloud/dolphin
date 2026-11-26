@@ -49,7 +49,8 @@ describe('the API-key presentation identity the hook host stamps', () => {
     registerClaudeProfileRootSources({
       managedAccountsRoot: () => ACCOUNTS_ROOT,
       linkedConfigDirs: () => [],
-      apiKeyAccountIds: () => ['api-1']
+      apiKeyAccountIds: () => ['api-1'],
+      planAccountIds: () => ['plan-1']
     })
   })
 
@@ -57,7 +58,8 @@ describe('the API-key presentation identity the hook host stamps', () => {
     registerClaudeProfileRootSources({
       managedAccountsRoot: () => null,
       linkedConfigDirs: () => [],
-      apiKeyAccountIds: () => []
+      apiKeyAccountIds: () => [],
+      planAccountIds: () => []
     })
   })
 
@@ -87,7 +89,8 @@ describe('the API-key presentation identity the hook host stamps', () => {
     registerClaudeProfileRootSources({
       managedAccountsRoot: () => ACCOUNTS_ROOT,
       linkedConfigDirs: () => [],
-      apiKeyAccountIds: () => []
+      apiKeyAccountIds: () => [],
+      planAccountIds: () => []
     })
     const server = new AgentHookServer()
     hook(server, API_TRANSCRIPT)

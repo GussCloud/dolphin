@@ -21,6 +21,11 @@ export function registerClaudeProfileRootSourcesFromStore(store: Pick<Store, 'ge
       store
         .getSettings()
         .claudeManagedAccounts.filter(isClaudeApiKeyAccount)
+        .map((account) => account.id),
+    planAccountIds: () =>
+      store
+        .getSettings()
+        .claudeManagedAccounts.filter((account) => !isClaudeApiKeyAccount(account))
         .map((account) => account.id)
   })
 }

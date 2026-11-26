@@ -48,7 +48,8 @@ describe('usage scans split plan and API account profiles', () => {
     registerClaudeProfileRootSources({
       managedAccountsRoot: () => root,
       linkedConfigDirs: () => [],
-      apiKeyAccountIds: () => ['api-1']
+      apiKeyAccountIds: () => ['api-1'],
+      planAccountIds: () => ['plan-1']
     })
   })
 
@@ -56,7 +57,8 @@ describe('usage scans split plan and API account profiles', () => {
     registerClaudeProfileRootSources({
       managedAccountsRoot: () => null,
       linkedConfigDirs: () => [],
-      apiKeyAccountIds: () => []
+      apiKeyAccountIds: () => [],
+      planAccountIds: () => []
     })
     rmSync(userData, { recursive: true, force: true })
   })

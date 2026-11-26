@@ -18,7 +18,8 @@ afterEach(async () => {
   registerClaudeProfileRootSources({
     managedAccountsRoot: () => null,
     linkedConfigDirs: () => [],
-    apiKeyAccountIds: () => []
+    apiKeyAccountIds: () => [],
+    planAccountIds: () => []
   })
   await Promise.all(tempRoots.map((root) => rm(root, { recursive: true, force: true })))
   tempRoots = []
@@ -60,7 +61,8 @@ async function accountProfiles(root: string) {
   registerClaudeProfileRootSources({
     managedAccountsRoot: () => accountsRoot,
     linkedConfigDirs: () => [],
-    apiKeyAccountIds: () => ['api-1']
+    apiKeyAccountIds: () => ['api-1'],
+    planAccountIds: () => ['plan-1']
   })
   return {
     planProjects: join(accountsRoot, 'plan-1', 'config', 'projects'),

@@ -9,12 +9,15 @@ type ClaudeProfileRootSources = {
   linkedConfigDirs: () => readonly string[]
   /** Ids of the accounts billed to an API key; their isolated profiles belong to `claude-api`. */
   apiKeyAccountIds: () => readonly string[]
+  /** Ids of the subscription (plan) accounts; their isolated profiles belong to `claude`. */
+  planAccountIds: () => readonly string[]
 }
 
 let sources: ClaudeProfileRootSources = {
   managedAccountsRoot: () => null,
   linkedConfigDirs: () => [],
-  apiKeyAccountIds: () => []
+  apiKeyAccountIds: () => [],
+  planAccountIds: () => []
 }
 
 /** Installed by the runtime auth service; kept as a port so plain-Node runtimes need no Electron. */
@@ -52,13 +55,17 @@ export function listClaudeProfileConfigDirs(): string[] {
   ]
 }
 
-/** Profiles plain `claude` runs in (subscription logins): every profile but the API accounts'. */
+/**
+ * Profiles plain `claude` runs in: the plan accounts' and the linked folders. A profile whose account
+ * is no longer in settings (a remove that left the folder) belongs to neither agent: dropping it
+ * from history and stats is better than billing-mislabelling it.
+ */
 export function listClaudePlanProfileConfigDirs(): string[] {
-  const apiIds = new Set(sources.apiKeyAccountIds())
+  const planIds = new Set(sources.planAccountIds())
   return [
     ...new Set([
       ...listIsolatedProfileConfigDirs()
-        .filter(({ accountId }) => !apiIds.has(accountId))
+        .filter(({ accountId }) => planIds.has(accountId))
         .map(({ configDir }) => configDir),
       ...sources.linkedConfigDirs()
     ])
