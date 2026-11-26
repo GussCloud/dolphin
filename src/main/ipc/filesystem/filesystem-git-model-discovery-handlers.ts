@@ -64,7 +64,8 @@ export function registerFilesystemGitModelDiscoveryHandlers(
       const localEnv = await prepareLocalCommitMessageAgentEnv(
         agentId,
         commitMessageAgentEnv,
-        localRuntimeTarget
+        localRuntimeTarget,
+        localDiscoveryOptions ? { workspacePath: localDiscoveryOptions.cwd } : undefined
       )
       if (!localEnv.ok) {
         return { success: false, error: localEnv.error }

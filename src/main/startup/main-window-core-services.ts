@@ -1,3 +1,4 @@
+import { prepareClaudeApiLaunch } from '../claude-api/claude-api-launch'
 import type { BrowserWindow } from 'electron'
 import { prepareDeepSeekLaunch } from '../deepseek/deepseek-config-home-setup'
 import { registerCoreHandlers } from '../ipc/register-core-handlers/register-core-handlers'
@@ -84,6 +85,16 @@ export function attachMainWindowCoreServices(
           connectionId: null,
           target: target ?? {},
           settings: store.getSettings()
+        }),
+      // Why no command: a generation resumes nothing, so the account follows pin, default, single.
+      prepareForClaudeApiLaunch: (target, launch) =>
+        prepareClaudeApiLaunch({
+          connectionId: null,
+          target: target ?? {},
+          settings: store.getSettings(),
+          launchEnv: undefined,
+          command: undefined,
+          launch: launch ?? {}
         })
     },
     state.agentAwakeService ?? undefined,

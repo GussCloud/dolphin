@@ -22,7 +22,12 @@ export async function resolveGenerationTarget(
       missingBinaryLocation: 'remote PATH'
     }
   }
-  const localEnv = await prepareLocalCommitMessageAgentEnv(agentId, deps.getAgentEnvResolvers())
+  const localEnv = await prepareLocalCommitMessageAgentEnv(
+    agentId,
+    deps.getAgentEnvResolvers(),
+    undefined,
+    { workspacePath: worktreePath }
+  )
   if (!localEnv.ok) {
     return null
   }

@@ -1,3 +1,4 @@
+import { prepareClaudeApiLaunch } from '../claude-api/claude-api-launch'
 import {
   applySessionSearchSettingsChange,
   installChildSessionSearchService
@@ -209,6 +210,16 @@ export function configureRuntimeServices(runtime: DolphinRuntimeService): void {
         connectionId: null,
         target: target ?? {},
         settings: store.getSettings()
+      }),
+    // Why no command: a generation resumes nothing, so the account follows pin, default, single.
+    prepareForClaudeApiLaunch: (target, launch) =>
+      prepareClaudeApiLaunch({
+        connectionId: null,
+        target: target ?? {},
+        settings: store.getSettings(),
+        launchEnv: undefined,
+        command: undefined,
+        launch: launch ?? {}
       })
   })
 }

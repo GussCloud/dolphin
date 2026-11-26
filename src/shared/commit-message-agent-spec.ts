@@ -138,6 +138,18 @@ export const COMMIT_MESSAGE_AGENT_SPECS: Partial<Record<TuiAgent, CommitMessageA
     modelSource: 'static',
     models: [{ id: 'default', label: 'DeepSeek main model' }],
     defaultModelId: 'default'
+  },
+  // Why: the Claude Code CLI on an API account's profile and key, injected locally like DeepSeek's
+  // env; no --model, so the account profile's own model setting answers.
+  'claude-api': {
+    id: 'claude-api',
+    label: 'Claude (API key)',
+    binary: 'claude',
+    promptDelivery: 'stdin',
+    buildArgs: () => ['-p', '--output-format', 'text', '--permission-mode', 'plan'],
+    modelSource: 'static',
+    models: [{ id: 'default', label: 'Claude default model' }],
+    defaultModelId: 'default'
   }
 }
 
@@ -145,7 +157,6 @@ export const COMMIT_MESSAGE_AGENT_SPECS: Partial<Record<TuiAgent, CommitMessageA
 const SOURCE_CONTROL_AGENT_BASE: Partial<Record<TuiAgent, TuiAgent>> = {
   'claude-agent-teams': 'claude',
   'deepseek-agent-teams': 'deepseek',
-  // Why: no API-key generation spec yet, so the base resolves to unavailable, never plain claude.
   'claude-api-agent-teams': 'claude-api'
 }
 

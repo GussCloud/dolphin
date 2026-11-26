@@ -21,6 +21,7 @@ import {
 } from '../../shared/commit-message-plan'
 import type { ResolvedSourceControlAiGenerationParams } from '../../shared/source-control-ai'
 import { isDeepSeekProviderEnv, isDeepSeekTuiAgent } from '../../shared/deepseek-claude-provider'
+import { isClaudeApiProviderEnv, isClaudeApiTuiAgent } from '../../shared/claude-api-provider'
 import { formatLinkedIssueTemplateValue } from '../../shared/source-control-ai-action-variables'
 import { renderSourceControlActionCommandTemplate } from '../../shared/source-control-ai-actions'
 import { captureAgentGenerationFailureOutput } from './agent-failure-output'
@@ -49,6 +50,35 @@ export function commandBackslashMode(
   return platform === 'win32' && target.kind === 'local' && !target.wslDistro ? 'literal' : 'escape'
 }
 
+/**
+ * DeepSeek and the API-key agent run the claude binary; without their env it would answer on the
+ * Anthropic login, so they run only locally, never in WSL, and only with their provider marker.
+ */
+function refuseOwnCredentialsGeneration(
+  agentId: string,
+  target: CommitMessageGenerationTarget
+): string | null {
+  const provider = isDeepSeekTuiAgent(agentId)
+    ? { label: 'DeepSeek', hasEnv: isDeepSeekProviderEnv }
+    : isClaudeApiTuiAgent(agentId)
+      ? { label: 'Claude API', hasEnv: isClaudeApiProviderEnv }
+      : null
+  if (!provider) {
+    return null
+  }
+  if (target.kind === 'remote') {
+    return `${provider.label} text generation runs only on this computer, not on an SSH host.`
+  }
+  // Why: wsl.exe forwards only a few launcher keys, so the key would have to ride argv.
+  if (target.wslDistro) {
+    return `${provider.label} text generation runs only on this computer, not inside WSL.`
+  }
+  if (!provider.hasEnv(target.env)) {
+    return `${provider.label} text generation needs its key and config; nothing was run.`
+  }
+  return null
+}
+
 async function executeGenerationPlan(input: {
   params: GenerateParams
   plan: CommitMessagePlan
@@ -57,27 +87,9 @@ async function executeGenerationPlan(input: {
   operation: TextGenerationOperation
   spawnAgent: SpawnSourceControlAgent
 }): Promise<InternalTextGenerationResult> {
-  // Why: DeepSeek runs the claude binary; without its env it would answer on the Anthropic login.
-  if (isDeepSeekTuiAgent(input.params.agentId)) {
-    if (input.target.kind === 'remote') {
-      return {
-        success: false,
-        error: 'DeepSeek text generation runs only on this computer, not on an SSH host.'
-      }
-    }
-    // Why: wsl.exe forwards only a few launcher keys, so the key would have to ride argv.
-    if (input.target.wslDistro) {
-      return {
-        success: false,
-        error: 'DeepSeek text generation runs only on this computer, not inside WSL.'
-      }
-    }
-    if (!isDeepSeekProviderEnv(input.target.env)) {
-      return {
-        success: false,
-        error: 'DeepSeek text generation needs its key and config; nothing was run.'
-      }
-    }
+  const ownCredentialsRefusal = refuseOwnCredentialsGeneration(input.params.agentId, input.target)
+  if (ownCredentialsRefusal) {
+    return { success: false, error: ownCredentialsRefusal }
   }
   return input.target.kind === 'remote'
     ? runRemoteSourceControlPlan({
