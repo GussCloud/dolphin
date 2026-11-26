@@ -7,6 +7,7 @@ import {
   USAGE_SCAN_NO_PROGRESS_TIMEOUT_MS,
   UsageScanWorkerClient,
   scanCodexUsageOnWorker,
+  scanClaudeApiUsageOnWorker,
   scanDeepSeekUsageOnWorker
 } from './usage-scan-worker-client'
 import { USAGE_SCAN_WORKER_ENTRY_FILENAME } from './usage-scan-worker-spawn'
@@ -231,6 +232,25 @@ describe('UsageScanWorkerClient', () => {
     })
 
     await expect(pending).rejects.toThrow(/answered for claude, expected deepseek/)
+  })
+
+  it('never accepts a subscription Claude projection for a Claude (API) scan', async () => {
+    const worker = new FakeWorker()
+    const client = createClient(() => worker)
+
+    const pending = scanClaudeApiUsageOnWorker((body) => client.scan(body), [], [], ['/api'])
+    await vi.waitFor(() => expect(worker.postedRequests).toHaveLength(1))
+    expect(worker.postedRequests[0]).toMatchObject({
+      providerId: 'claude-api',
+      profileConfigDirs: ['/api']
+    })
+    worker.emit('message', {
+      id: worker.lastId(),
+      ok: true,
+      value: { providerId: 'claude', source: [], sessions: [], dailyAggregates: [] }
+    })
+
+    await expect(pending).rejects.toThrow(/answered for claude, expected claude-api/)
   })
 })
 
