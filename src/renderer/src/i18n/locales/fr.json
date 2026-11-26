@@ -4123,6 +4123,9 @@
             "checkAriaOne": "1 chat à vérifier après la reprise. Cliquez pour plus de détails.",
             "checkAria": "{{value0}} chats à vérifier après la reprise. Cliquez pour plus de détails.",
             "checkTooltip": "Chats qu'Dolphin n'a pas pu reprendre, ou dont il n'a pas pu confirmer la reprise, après le redémarrage. Cliquez pour plus de détails."
+          },
+          "footerClaudeAccount": {
+            "apiKeyRefused": "Ce projet est épinglé au compte API Claude {{value0}}. Les lancements Claude ordinaires y sont refusés."
           }
         }
       },
@@ -6478,6 +6481,10 @@
           "browse": "Parcourir Azure DevOps",
           "filter": "Filtrer les dépôts",
           "empty": "Aucun dépôt trouvé."
+        },
+        "WorktreeAgentAccountBadge": {
+          "apiKeyRefused": "Lancement refusé",
+          "apiKeyRefusedDetail": "Cet espace de travail est épinglé à un compte API Claude. Les lancements Claude ordinaires y sont refusés, car ils n'utilisent jamais un compte API."
         }
       },
       "shared": {
@@ -12477,6 +12484,27 @@
         "TerminalWindowsShellSection": {
           "powerShell7": "PowerShell 7",
           "pwshRecommended": "PowerShell 7 est installé et recommandé : les nouveaux terminaux PowerShell l'utilisent."
+        },
+        "ClaudeApiAccounts": {
+          "title": "Comptes API",
+          "description": "Facturez Claude sur une clé API Anthropic plutôt que sur votre forfait. Chaque compte API a son propre profil et sa propre clé, et les lancements Claude ordinaires ne l'utilisent jamais.",
+          "add": "Ajouter un compte API",
+          "name": "Nom",
+          "namePlaceholder": "ex. : API du travail",
+          "key": "Clé API Anthropic",
+          "keyPlaceholder": "Collez votre clé API Anthropic",
+          "copyFrom": "Copier le profil de",
+          "copyNone": "Commencer avec un profil vide",
+          "copyHint": "Copie les instructions, réglages, skills, agents, commandes, serveurs MCP et plugins. Les connexions Claude et les identifiants Anthropic ou cloud ne sont pas copiés ; les serveurs MCP et les plugins sont copiés tels quels, y compris leurs propres jetons.",
+          "cancel": "Annuler",
+          "save": "Ajouter le compte",
+          "replaced": "Clé API remplacée.",
+          "replaceFailed": "Impossible de remplacer la clé API.",
+          "replace": "Remplacer la clé",
+          "newKey": "Nouvelle clé API Anthropic",
+          "replaceSave": "Enregistrer",
+          "badge": "Clé API",
+          "row": "Facturé sur une clé API Anthropic"
         }
       },
       "right": {

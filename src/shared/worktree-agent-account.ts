@@ -1,3 +1,4 @@
+import { isClaudeApiKeyAccount } from './claude-api-account'
 import type { GlobalSettings } from './global-settings-types'
 import {
   normalizeCodexAccountSelectionTarget,
@@ -21,7 +22,11 @@ export type WorktreeAgentAccountChoice = {
 export type WorktreeAgentAccountResolution =
   | { kind: 'global' }
   | { kind: 'override'; accountId: string }
-  | { kind: 'unavailable'; accountId: string; reason: 'missing' | 'other-runtime' }
+  | {
+      kind: 'unavailable'
+      accountId: string
+      reason: 'missing' | 'other-runtime' | 'api-key-account'
+    }
 
 type AccountLane = { runtime: 'host' | 'wsl'; wslDistro: string | null }
 
@@ -59,12 +64,31 @@ function listAgentAccounts(
       lane: codexAccountLane(account)
     }))
   }
-  return (settings.claudeManagedAccounts ?? []).map((account) => ({
+  // Why: plain `claude` launches bill the plan; an API account is never a choice or a pin for them.
+  return plainClaudeAccounts(settings).map((account) => ({
     id: account.id,
     email: account.email,
     workspaceLabel: account.organizationName ?? null,
     lane: claudeAccountLane(account)
   }))
+}
+
+function plainClaudeAccounts(
+  settings: WorktreeAgentAccountSettings
+): NonNullable<WorktreeAgentAccountSettings['claudeManagedAccounts']> {
+  return (settings.claudeManagedAccounts ?? []).filter((account) => !isClaudeApiKeyAccount(account))
+}
+
+function isAgentAccountId(
+  agent: WorktreeAccountAgent,
+  settings: WorktreeAgentAccountSettings,
+  accountId: string
+): boolean {
+  const accounts =
+    agent === 'codex'
+      ? (settings.codexManagedAccounts ?? [])
+      : (settings.claudeManagedAccounts ?? [])
+  return accounts.some((entry) => entry.id === accountId)
 }
 
 function laneAccepts(lane: AccountLane, target?: CodexAccountSelectionTarget | null): boolean {
@@ -111,12 +135,15 @@ export function resolveWorktreeAgentAccount(args: {
     (entry) => entry.id === accountId
   )
   if (!account) {
+    // Why refuse: falling back to the plan would run the pinned API account's workspace billed
+    // to another identity.
+    if (args.agent === 'claude' && isAgentAccountId('claude', args.settings, accountId)) {
+      return { kind: 'unavailable', accountId, reason: 'api-key-account' }
+    }
     const otherAgent: WorktreeAccountAgent = args.agent === 'codex' ? 'claude' : 'codex'
     // Why: one field pins the account of the agent chosen at creation; another agent's
     // terminal in the same worktree keeps the global selection without a warning.
-    const pinnedForOtherAgent = listAgentAccounts(otherAgent, args.settings).some(
-      (entry) => entry.id === accountId
-    )
+    const pinnedForOtherAgent = isAgentAccountId(otherAgent, args.settings, accountId)
     return pinnedForOtherAgent
       ? { kind: 'global' }
       : { kind: 'unavailable', accountId, reason: 'missing' }

@@ -7,6 +7,7 @@ import {
 } from '../runtime-selection'
 import { hasLiveClaudePtys } from '../live-pty-gate'
 import { ClaudeRuntimeAuthPinnedConfigDir } from './runtime-auth-pinned-config-dir'
+import { isClaudeApiKeyAccount } from '../../../shared/claude-api-account'
 import type { ClaudeManagedAccount } from '../../../shared/managed-account-types'
 
 export class ClaudeRuntimeAuthSync extends ClaudeRuntimeAuthPinnedConfigDir {
@@ -145,8 +146,8 @@ export class ClaudeRuntimeAuthSync extends ClaudeRuntimeAuthPinnedConfigDir {
     if (this.lastSyncedAccountId === null) {
       return
     }
-    if (account.linkedConfigDir) {
-      // Why: no Dolphin version ever materialized a linked folder's login into ~/.claude.
+    if (account.linkedConfigDir || isClaudeApiKeyAccount(account)) {
+      // Why: no Dolphin version ever materialized a linked folder's or API account's login.
       this.lastSyncedAccountId = null
       return
     }

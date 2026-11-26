@@ -1,4 +1,6 @@
 import type {
+  ClaudeApiKeyAccountRequest,
+  ClaudeApiKeyStatus,
   ClaudeConfigFolderDiscovery,
   ClaudeRateLimitAccountsState
 } from '../../shared/managed-account-types'
@@ -6,6 +8,7 @@ import type { Store } from '../persistence'
 import type { RateLimitService } from '../rate-limits/service'
 import { ClaudeAccountRegistration } from './claude-account-registration'
 import { ClaudeAccountSelection } from './claude-account-selection'
+import { ClaudeApiKeyAccounts } from './claude-api-key-accounts'
 import {
   captureClaudeAuthFromConfigDir,
   captureClaudeAuthFromExistingConfigDir,
@@ -55,6 +58,7 @@ export class ClaudeAccountService {
   private readonly storage = new ClaudeManagedAuthStorage()
   private readonly selection: ClaudeAccountSelection
   private readonly registration: ClaudeAccountRegistration
+  private readonly apiKeyAccounts: ClaudeApiKeyAccounts
 
   constructor(
     private readonly store: Store,
@@ -86,6 +90,12 @@ export class ClaudeAccountService {
       login: (location) => this.runClaudeLoginAndCapture(location),
       captureExisting: (configDir, previousDigest) =>
         this.captureFromExistingConfigDir(configDir, previousDigest)
+    })
+    this.apiKeyAccounts = new ClaudeApiKeyAccounts({
+      store,
+      selection: this.selection,
+      createManagedAuth: (accountId) => this.storage.create(accountId, { runtime: 'host' }),
+      removeManagedAuth: (accountId, path) => this.safeRemoveManagedAuth(accountId, path)
     })
   }
 
@@ -159,6 +169,22 @@ export class ClaudeAccountService {
       })
       return this.selection.list()
     })
+  }
+
+  /** Adds an account billed to an Anthropic API key; it has no OAuth login to run. */
+  async addApiKeyAccount(
+    request: ClaudeApiKeyAccountRequest
+  ): Promise<ClaudeRateLimitAccountsState> {
+    this.supersedePendingLogin()
+    return this.serializeMutation(() => this.apiKeyAccounts.add(request))
+  }
+
+  async replaceApiKey(accountId: string, apiKey: unknown): Promise<ClaudeApiKeyStatus> {
+    return this.serializeMutation(async () => this.apiKeyAccounts.replaceKey(accountId, apiKey))
+  }
+
+  getApiKeyStatus(accountId: string): ClaudeApiKeyStatus {
+    return this.apiKeyAccounts.status(accountId)
   }
 
   async reauthenticateAccount(accountId: string): Promise<ClaudeRateLimitAccountsState> {

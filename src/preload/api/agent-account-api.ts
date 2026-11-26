@@ -1,4 +1,6 @@
 import type {
+  ClaudeApiKeyAccountRequest,
+  ClaudeApiKeyStatus,
   ClaudeConfigFolderDiscovery,
   ClaudeRateLimitAccountsState,
   CodexRateLimitAccountsState
@@ -59,6 +61,9 @@ export type ClaudeAccountsApi = {
   }) => Promise<ClaudeRateLimitAccountsState>
   discoverFolders: () => Promise<ClaudeConfigFolderDiscovery>
   linkFolder: (args: { configDir: string }) => Promise<ClaudeRateLimitAccountsState>
+  addApiKeyAccount: (args: ClaudeApiKeyAccountRequest) => Promise<ClaudeRateLimitAccountsState>
+  replaceApiKey: (args: { accountId: string; apiKey: string }) => Promise<ClaudeApiKeyStatus>
+  apiKeyStatus: (args: { accountId: string }) => Promise<ClaudeApiKeyStatus>
   pickFolder: () => Promise<string | null>
   profile: (args: { accountId: string }) => Promise<ClaudeProfileDetails>
   saveProfileInstructions: (args: { accountId: string; content: string }) => Promise<void>

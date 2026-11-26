@@ -4020,6 +4020,9 @@
             "checkAriaOne": "恢复后有 1 个待检查的聊天。点击查看详情。",
             "checkAria": "恢复后有 {{value0}} 个待检查的聊天。点击查看详情。",
             "checkTooltip": "重启后 Dolphin 未能恢复或未能确认已恢复的聊天。点击查看详情。"
+          },
+          "footerClaudeAccount": {
+            "apiKeyRefused": "此项目固定到 Claude API 账户 {{value0}}。这里的普通 Claude 启动会被拒绝。"
           }
         }
       },
@@ -6375,6 +6378,10 @@
           "browse": "浏览 Azure DevOps",
           "filter": "筛选仓库",
           "empty": "未找到仓库。"
+        },
+        "WorktreeAgentAccountBadge": {
+          "apiKeyRefused": "启动被拒绝",
+          "apiKeyRefusedDetail": "此工作区固定到 Claude API 账户。普通的 Claude 启动从不使用 API 账户，因此这里的启动会被拒绝。"
         }
       },
       "shared": {
@@ -12374,6 +12381,27 @@
         "TerminalWindowsShellSection": {
           "powerShell7": "PowerShell 7",
           "pwshRecommended": "已安装 PowerShell 7 并推荐使用:新的 PowerShell 终端会使用它。"
+        },
+        "ClaudeApiAccounts": {
+          "title": "API 账户",
+          "description": "将 Claude 的费用计入 Anthropic API 密钥，而不是你的套餐。每个 API 账户都有自己的配置文件和密钥，普通的 Claude 启动从不使用它。",
+          "add": "添加 API 账户",
+          "name": "名称",
+          "namePlaceholder": "例如：工作 API",
+          "key": "Anthropic API 密钥",
+          "keyPlaceholder": "粘贴你的 Anthropic API 密钥",
+          "copyFrom": "从以下配置文件复制",
+          "copyNone": "从空配置文件开始",
+          "copyHint": "复制指令、设置、技能、代理、命令、MCP 服务器和插件。不会复制 Claude 登录信息以及 Anthropic 或云服务凭据；MCP 服务器和插件按原样复制，包括它们自己的令牌。",
+          "cancel": "取消",
+          "save": "添加账户",
+          "replaced": "已替换 API 密钥。",
+          "replaceFailed": "无法替换 API 密钥。",
+          "replace": "替换密钥",
+          "newKey": "新的 Anthropic API 密钥",
+          "replaceSave": "保存",
+          "badge": "API 密钥",
+          "row": "计入 Anthropic API 密钥"
         }
       },
       "right": {

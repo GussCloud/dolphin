@@ -110,7 +110,8 @@ const ClaudeAccountSummarySchema = z
     email: z.string().min(1),
     managedAuthRuntime: z.enum(['host', 'wsl']).optional(),
     wslDistro: z.string().nullable().optional(),
-    authMethod: z.enum(['subscription-oauth', 'unknown']).optional(),
+    // Why catch: a newer host's auth method must not reject the whole account list.
+    authMethod: z.enum(['subscription-oauth', 'api-key', 'unknown']).optional().catch(undefined),
     organizationUuid: z.string().nullable().optional(),
     organizationName: z.string().nullable().optional(),
     createdAt: TimestampSchema.optional(),

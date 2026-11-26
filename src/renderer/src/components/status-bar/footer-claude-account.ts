@@ -2,6 +2,7 @@ import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { InactiveAccountUsage, ProviderRateLimits } from '../../../../shared/rate-limit-types'
 import type { Repo } from '../../../../shared/repo-types'
 import type { Worktree } from '../../../../shared/worktree/types'
+import { claudeAccountDisplayName } from '../../../../shared/claude-api-account'
 import { parseWslUncPath } from '../../../../shared/wsl-paths'
 import {
   projectAgentAccountId,
@@ -16,6 +17,8 @@ export type FooterClaudeAccount = {
   email: string | null
   /** True when the selected project runs on an account other than the active one. */
   fromProject: boolean
+  /** Set when the project's pin makes plain Claude refuse to launch instead of using an account. */
+  launchRefused?: 'api-key-account'
 }
 
 type Settings = Pick<
@@ -35,9 +38,10 @@ function activeHostAccountId(settings: Settings): string | null {
 }
 
 function emailOf(settings: Settings, accountId: string | null): string | null {
-  return accountId
-    ? (settings.claudeManagedAccounts.find((account) => account.id === accountId)?.email ?? null)
-    : null
+  const account = accountId
+    ? settings.claudeManagedAccounts.find((candidate) => candidate.id === accountId)
+    : undefined
+  return account ? claudeAccountDisplayName(account) || null : null
 }
 
 /**
@@ -67,6 +71,15 @@ export function resolveFooterClaudeAccount(input: {
     target: wsl ? { runtime: 'wsl', wslDistro: wsl.distro } : { runtime: 'host' },
     settings
   })
+  // Why: the launch is refused, so naming the active account would claim a fallback that never runs.
+  if (resolution.kind === 'unavailable' && resolution.reason === 'api-key-account') {
+    return {
+      accountId: resolution.accountId,
+      email: emailOf(settings, resolution.accountId),
+      fromProject: true,
+      launchRefused: 'api-key-account'
+    }
+  }
   if (resolution.kind !== 'override' || resolution.accountId === activeId) {
     return global
   }

@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { isClaudeApiKeyAccount } from '../../../shared/claude-api-account'
 import type { ClaudeManagedAccount } from '../../../shared/managed-account-types'
 import { writeFileAtomically } from '../../codex-accounts/fs-utils'
 import { hasLiveClaudePtys } from '../live-pty-gate'
@@ -27,7 +28,11 @@ export class ClaudeRuntimeAuthPinnedConfigDir extends ClaudeRuntimeAuthPreparati
   protected async readBackPinnedConfigDirCredentials(
     account: ClaudeManagedAccount
   ): Promise<string | null> {
-    if (account.managedAuthRuntime === 'wsl' || account.linkedConfigDir) {
+    if (
+      account.managedAuthRuntime === 'wsl' ||
+      account.linkedConfigDir ||
+      isClaudeApiKeyAccount(account)
+    ) {
       return null
     }
     const configDir = getClaudePinnedConfigDir(account.id)
@@ -76,6 +81,10 @@ export class ClaudeRuntimeAuthPinnedConfigDir extends ClaudeRuntimeAuthPreparati
   protected async preparePinnedAccountLaunch(
     account: ClaudeManagedAccount
   ): Promise<ClaudeRuntimeAuthPreparation | null> {
+    // Why: no OAuth credentials to materialize; a plain `claude` here would ask for a login.
+    if (isClaudeApiKeyAccount(account)) {
+      return null
+    }
     if (account.managedAuthRuntime === 'wsl') {
       // Why: WSL accounts already own a Linux CLAUDE_CONFIG_DIR; nothing to materialize.
       return account.wslLinuxAuthPath

@@ -3668,6 +3668,9 @@
             "checkAriaOne": "1 chat por revisar tras la reanudación. Haz clic para ver los detalles.",
             "checkAria": "{{value0}} chats por revisar tras la reanudación. Haz clic para ver los detalles.",
             "checkTooltip": "Chats que Dolphin no pudo reanudar, o no pudo confirmar que reanudó, tras el reinicio. Haz clic para ver los detalles."
+          },
+          "footerClaudeAccount": {
+            "apiKeyRefused": "Este proyecto está fijado a la cuenta de API de Claude {{value0}}. Los inicios normales de Claude aquí se rechazan."
           }
         }
       },
@@ -5460,6 +5463,10 @@
           "browse": "Explorar Azure DevOps",
           "filter": "Filtrar repositorios",
           "empty": "No se encontraron repositorios."
+        },
+        "WorktreeAgentAccountBadge": {
+          "apiKeyRefused": "Inicio rechazado",
+          "apiKeyRefusedDetail": "Este espacio de trabajo está fijado a una cuenta de API de Claude. Los inicios normales de Claude aquí se rechazan, porque nunca usan una cuenta de API."
         }
       },
       "shared": {
@@ -10811,6 +10818,27 @@
         "TerminalWindowsShellSection": {
           "powerShell7": "PowerShell 7",
           "pwshRecommended": "PowerShell 7 está instalado y es el recomendado: los nuevos terminales de PowerShell lo usan."
+        },
+        "ClaudeApiAccounts": {
+          "title": "Cuentas de API",
+          "description": "Factura Claude a una clave de API de Anthropic en lugar de tu plan. Cada cuenta de API tiene su propio perfil y clave, y los inicios normales de Claude nunca la usan.",
+          "add": "Añadir cuenta de API",
+          "name": "Nombre",
+          "namePlaceholder": "p. ej., API del trabajo",
+          "key": "Clave de API de Anthropic",
+          "keyPlaceholder": "Pega tu clave de API de Anthropic",
+          "copyFrom": "Copiar perfil de",
+          "copyNone": "Empezar con un perfil vacío",
+          "copyHint": "Copia instrucciones, ajustes, skills, agentes, comandos, servidores MCP y plugins. Los inicios de sesión de Claude y las credenciales de Anthropic o de la nube no se copian; los servidores MCP y los plugins se copian tal cual, incluidos sus propios tokens.",
+          "cancel": "Cancelar",
+          "save": "Añadir cuenta",
+          "replaced": "Clave de API reemplazada.",
+          "replaceFailed": "No se pudo reemplazar la clave de API.",
+          "replace": "Reemplazar clave",
+          "newKey": "Nueva clave de API de Anthropic",
+          "replaceSave": "Guardar",
+          "badge": "Clave de API",
+          "row": "Facturada a una clave de API de Anthropic"
         }
       },
       "right": {

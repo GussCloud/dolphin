@@ -1,3 +1,4 @@
+import { claudeAccountDisplayName } from '../../../../shared/claude-api-account'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type {
   ClaudeRateLimitAccountsState,
@@ -47,7 +48,8 @@ export function getClaudeAccountLabel(
   if (accountId == null) {
     return 'System default'
   }
-  return state.accounts.find((account) => account.id === accountId)?.email ?? 'Claude account'
+  const account = state.accounts.find((candidate) => candidate.id === accountId)
+  return account ? claudeAccountDisplayName(account) : 'Claude account'
 }
 
 export function getCodexAccountRuntimeLabel(

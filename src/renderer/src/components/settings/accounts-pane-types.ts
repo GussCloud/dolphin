@@ -35,7 +35,7 @@ export type CodexAccountAction =
   | `remove:${string}`
   | `select:${string}`
 
-export type ClaudeAccountAction = CodexAccountAction | `link:${string}`
+export type ClaudeAccountAction = CodexAccountAction | `link:${string}` | 'adding-api'
 
 export type RemoveAccountTarget = {
   id: string

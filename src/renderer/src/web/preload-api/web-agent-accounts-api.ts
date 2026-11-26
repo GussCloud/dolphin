@@ -85,6 +85,10 @@ export function createClaudeAccountsApi(): PreloadApi['claudeAccounts'] {
     // Why: linked folders live on the desktop that runs the terminal menu, never a web client.
     discoverFolders: () => Promise.resolve({ selectorFile: null, folders: [] }),
     linkFolder: () => Promise.resolve(empty),
+    // Why: API keys stay encrypted on the desktop host and are never sent to a web client.
+    addApiKeyAccount: () => Promise.reject(new Error('API accounts live on the desktop host.')),
+    replaceApiKey: () => Promise.reject(new Error('API accounts live on the desktop host.')),
+    apiKeyStatus: () => Promise.resolve({ apiKeyConfigured: false, encryptionAvailable: false }),
     pickFolder: () => Promise.resolve(null),
     profile: () => Promise.reject(new Error('Account profiles live on the desktop host.')),
     saveProfileInstructions: () => Promise.resolve(),

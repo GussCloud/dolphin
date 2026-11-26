@@ -71,6 +71,31 @@ describe('resolveFooterClaudeAccount', () => {
   })
 })
 
+describe('resolveFooterClaudeAccount with an API account pin', () => {
+  it('reports the refused launch instead of the active account', () => {
+    const withApi = {
+      ...settings,
+      claudeManagedAccounts: [
+        ...settings.claudeManagedAccounts,
+        { ...account('api', ''), label: 'Work API', authMethod: 'api-key' as const }
+      ]
+    }
+
+    const resolved = resolveFooterClaudeAccount({
+      settings: withApi,
+      worktree: { agentAccountId: 'api', path: '/repos/a' },
+      repo: null
+    })
+
+    expect(resolved).toEqual({
+      accountId: 'api',
+      email: 'Work API',
+      fromProject: true,
+      launchRefused: 'api-key-account'
+    })
+  })
+})
+
 describe('projectAccountUsage', () => {
   const work = { accountId: 'work', email: 'me@corp.test', fromProject: true }
   const inactive: InactiveAccountUsage[] = [

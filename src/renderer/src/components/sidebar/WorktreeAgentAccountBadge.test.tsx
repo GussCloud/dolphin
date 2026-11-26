@@ -27,6 +27,16 @@ const storeState = vi.hoisted(() => ({
         createdAt: 0,
         updatedAt: 0,
         lastAuthenticatedAt: 0
+      },
+      {
+        id: 'claude-api',
+        email: '',
+        label: 'Work API',
+        managedAuthPath: '/data/claude-accounts/claude-api/auth',
+        authMethod: 'api-key',
+        createdAt: 0,
+        updatedAt: 0,
+        lastAuthenticatedAt: 0
       }
     ]
   }
@@ -80,5 +90,16 @@ describe('WorktreeAgentAccountBadge', () => {
     const badge = container.querySelector('[data-worktree-agent-account]')
     expect(badge?.textContent).toBe('claude-pinned@example.test')
     expect(badge?.getAttribute('aria-label')).toBe('Claude account: claude-pinned@example.test')
+  })
+
+  it('says plain Claude launches are refused, not redirected, for a pin to an API account', () => {
+    const { container } = render(
+      <WorktreeAgentAccountBadge worktree={{ agentAccountId: 'claude-api', path: '/repos/a' }} />
+    )
+    const badge = container.querySelector('[data-worktree-agent-account]')
+    expect(badge?.getAttribute('data-worktree-agent-account')).toBe('refused')
+    expect(badge?.textContent).toBe('Launch refused')
+    expect(badge?.getAttribute('aria-label')).toContain('are refused')
+    expect(badge?.getAttribute('aria-label')).not.toContain('active account')
   })
 })

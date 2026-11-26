@@ -12,6 +12,29 @@ export function registerClaudeAccountHandlers(claudeAccounts: ClaudeAccountServi
   ipcMain.handle('claudeAccounts:linkFolder', (_event, args: { configDir: string }) =>
     claudeAccounts.linkConfigFolder(args.configDir)
   )
+  // Why typed checks: the key crosses from the renderer and must never be coerced or echoed.
+  ipcMain.handle('claudeAccounts:addApiKeyAccount', (_event, args: unknown) => {
+    const request = typeof args === 'object' && args !== null ? args : {}
+    const label = 'label' in request ? request.label : undefined
+    const apiKey = 'apiKey' in request ? request.apiKey : undefined
+    const copyFrom = 'copyFromAccountId' in request ? request.copyFromAccountId : undefined
+    if (typeof label !== 'string' || typeof apiKey !== 'string') {
+      throw new Error('An API account needs a name and a key.')
+    }
+    return claudeAccounts.addApiKeyAccount({
+      label,
+      apiKey,
+      copyFromAccountId: typeof copyFrom === 'string' && copyFrom ? copyFrom : null
+    })
+  })
+  ipcMain.handle(
+    'claudeAccounts:replaceApiKey',
+    (_event, args: { accountId: string; apiKey: unknown }) =>
+      claudeAccounts.replaceApiKey(String(args.accountId), args.apiKey)
+  )
+  ipcMain.handle('claudeAccounts:apiKeyStatus', (_event, args: { accountId: string }) =>
+    claudeAccounts.getApiKeyStatus(String(args.accountId))
+  )
   ipcMain.handle('claudeAccounts:pickFolder', async (): Promise<string | null> => {
     const result = await dialog.showOpenDialog({
       defaultPath: homedir(),

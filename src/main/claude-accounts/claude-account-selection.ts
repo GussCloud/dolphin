@@ -3,8 +3,10 @@ import type {
   ClaudeManagedAccountSummary,
   ClaudeRateLimitAccountsState
 } from '../../shared/managed-account-types'
+import { isClaudeApiKeyAccount } from '../../shared/claude-api-account'
 import type { Store } from '../persistence'
 import type { RateLimitService } from '../rate-limits/service'
+import { clearClaudeApiKey } from './claude-api-key-store'
 import { beginClaudeAuthSwitch, endClaudeAuthSwitch } from './live-pty-gate'
 import type { ClaudeRuntimeAuthService } from './runtime-auth-service'
 import {
@@ -59,6 +61,10 @@ export class ClaudeAccountSelection {
         })
         await this.syncRuntimeAuth(target)
       }
+      // Why first: a throw here rolls the account back while its profile still exists.
+      if (isClaudeApiKeyAccount(account)) {
+        clearClaudeApiKey(accountId)
+      }
       // Why: a linked folder is the user's own; unlinking must never touch it.
       if (!account.linkedConfigDir) {
         await this.removeManagedAuth(accountId, account.managedAuthPath)
@@ -83,6 +89,10 @@ export class ClaudeAccountSelection {
     let effectiveTarget = target
     if (accountId !== null) {
       const account = this.requireAccount(accountId)
+      // Why: the selection is what plain `claude` launches use; an API account bills a key instead.
+      if (isClaudeApiKeyAccount(account)) {
+        throw new Error('An API account cannot be the active Claude account.')
+      }
       const accountTarget = getClaudeSelectionTargetForAccount(account)
       const requestedTarget = normalizeClaudeAccountSelectionTarget(target ?? accountTarget)
       const normalizedAccountTarget = normalizeClaudeAccountSelectionTarget(accountTarget)
@@ -186,6 +196,7 @@ function toClaudeAccountSummary(account: ClaudeManagedAccount): ClaudeManagedAcc
     wslDistro: account.wslDistro ?? null,
     linkedConfigDir: account.linkedConfigDir ?? null,
     authMethod: account.authMethod ?? 'unknown',
+    label: account.label ?? null,
     organizationUuid: account.organizationUuid ?? null,
     organizationName: account.organizationName ?? null,
     createdAt: account.createdAt,

@@ -105,4 +105,12 @@ describe('Claude runtime account selection', () => {
       wsl: { Ubuntu: null, Debian: null }
     })
   })
+
+  it('drops a host selection that points at an API account', () => {
+    const selection = pruneInvalidClaudeRuntimeSelection({ host: 'api-account', wsl: {} }, [
+      createAccount({ id: 'api-account', authMethod: 'api-key', email: '', label: 'Work API' })
+    ])
+
+    expect(selection).toEqual({ host: null, wsl: {} })
+  })
 })

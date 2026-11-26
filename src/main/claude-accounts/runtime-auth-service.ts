@@ -21,8 +21,19 @@ import {
   type ClaudeLaunchConfigDir
 } from './profile/claude-launch-config-dir'
 import type { ClaudeManagedAccount } from '../../shared/managed-account-types'
+import { isClaudeApiKeyAccount } from '../../shared/claude-api-account'
 
 export type { ClaudeRuntimeAuthPreparation } from './runtime-auth/runtime-auth-types'
+
+function claudeLaunchOverrideUnavailableMessage(reason: string): string {
+  if (reason === 'other-runtime') {
+    return 'The Claude account chosen for this project belongs to another runtime. Choose another account in the project settings.'
+  }
+  if (reason === 'api-key-account') {
+    return 'The Claude account chosen for this project is an API account, which plain Claude launches never use. Choose another account in the project settings.'
+  }
+  return 'The Claude account chosen for this project was removed. Choose another account in the project settings.'
+}
 
 export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
   constructor(store: Store) {
@@ -112,7 +123,7 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
           candidate.managedAuthRuntime !== 'wsl' &&
           getClaudeAccountConfigDir(candidate) === configDir
       )
-    if (!account) {
+    if (!account || isClaudeApiKeyAccount(account)) {
       if (isClaudePinnedConfigDirPath(configDir)) {
         throw new Error('The Claude account this chat was pinned to is no longer available.')
       }
@@ -138,11 +149,7 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
     // Why refuse: each account is an isolated profile, so falling back would silently run this
     // workspace with another account's instructions and accesses.
     if (override.kind === 'unavailable') {
-      throw new Error(
-        override.reason === 'other-runtime'
-          ? 'The Claude account chosen for this project belongs to another runtime. Choose another account in the project settings.'
-          : 'The Claude account chosen for this project was removed. Choose another account in the project settings.'
-      )
+      throw new Error(claudeLaunchOverrideUnavailableMessage(override.reason))
     }
     if (override.kind !== 'override') {
       return null
@@ -181,7 +188,10 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
       sessionId,
       intended:
         override.kind === 'override' ? override.account : this.getActiveHostProfileAccount(target),
-      accounts: this.store.getSettings().claudeManagedAccounts,
+      // Why: an API account's transcripts resume only through its own agent, billed to its key.
+      accounts: this.store
+        .getSettings()
+        .claudeManagedAccounts.filter((account) => !isClaudeApiKeyAccount(account)),
       systemDir: this.getPreparation({ runtime: 'host' }).configDir,
       menuFolders: () => discoverClaudeShellSelector().folders.map((folder) => folder.configDir)
     })

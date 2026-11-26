@@ -151,4 +151,15 @@ describe('structuredClaudeMatchesActiveManagedAccount', () => {
     expect(getSelectedClaudeAccountIdForTarget(legacy, { runtime: 'host' })).toBe('wsl-1')
     expect(structuredClaudeMatchesActiveManagedAccount(legacy)).toBe(false)
   })
+
+  it('refuses when the selected host account is an API account', () => {
+    expect(
+      structuredClaudeMatchesActiveManagedAccount(
+        settings({
+          claudeManagedAccounts: [{ ...account('api-1', 'host'), authMethod: 'api-key' }],
+          activeClaudeManagedAccountIdsByRuntime: { host: 'api-1', wsl: {} }
+        })
+      )
+    ).toBe(false)
+  })
 })

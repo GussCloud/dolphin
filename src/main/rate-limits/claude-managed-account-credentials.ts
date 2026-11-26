@@ -24,6 +24,8 @@ export type InactiveClaudeAccount = {
   pinnedConfigDir?: string | null
   /** A folder the user manages; its usage is read there and never refreshed. */
   linkedConfigDir?: string | null
+  /** Billed to an API key: there is no plan usage to read and no OAuth token to refresh. */
+  apiKeyAccount?: boolean
 }
 
 export type ClaudeManagedCredentialsLocation =

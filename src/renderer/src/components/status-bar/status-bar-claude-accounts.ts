@@ -1,3 +1,4 @@
+import { isClaudeApiKeyAccount } from '../../../../shared/claude-api-account'
 import type { GlobalSettings } from '../../../../shared/global-settings-types'
 import type { ClaudeRateLimitAccountsState } from '../../../../shared/managed-account-types'
 import { translate } from '@/i18n/i18n'
@@ -60,7 +61,10 @@ function getClaudeStatusAccountsForTarget(
   target: CodexStatusRuntimeTarget
 ): ClaudeStatusAccount[] {
   if (target.runtime === 'host') {
-    return state.accounts.filter((account) => account.managedAuthRuntime !== 'wsl')
+    // Why: the switcher picks the plain `claude` account; an API account can never be that.
+    return state.accounts.filter(
+      (account) => account.managedAuthRuntime !== 'wsl' && !isClaudeApiKeyAccount(account)
+    )
   }
   return state.accounts.filter(
     (account) =>
