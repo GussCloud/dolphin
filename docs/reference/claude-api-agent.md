@@ -1,7 +1,7 @@
 # Claude API agent
 
 The `claude-api` agent runs the user's installed Claude Code CLI (`claude`) billed to an Anthropic
-API key instead of a Claude subscription. The key belongs to a Claude **API account**
+API key instead of a Claude subscription; `claude-api-agent-teams` is its Agent Teams mode. The key belongs to a Claude **API account**
 (`authMethod: 'api-key'`, see `src/shared/claude-api-account.ts`); each API account has its own
 isolated profile dir and its own encrypted key. The contract lives in
 `src/shared/claude-api-provider.ts`; the launch lives in `src/main/claude-api/`.
@@ -76,10 +76,28 @@ At each launch, best effort (a failure degrades status or the first prompt, neve
 - Local host: supported.
 - WSL: refused in v1 (`wsl.exe` forwards env only through `WSLENV`, and the profile is a host path).
 - SSH: refused. The key would cross the relay into an unmanaged remote home.
-- Paired runtime hosts: allowed only when the host advertises `CLAUDE_API_AGENT_RUNTIME_CAPABILITY`;
-  otherwise refused before the call is sent (`src/shared/own-credentials-claude-runtime-launch-gate.ts`,
+- Paired runtime hosts: allowed only when the host advertises `CLAUDE_API_AGENT_RUNTIME_CAPABILITY`,
+  and for `claude-api-agent-teams` also `CLAUDE_API_AGENT_TEAMS_RUNTIME_CAPABILITY` (a host that has
+  only the first drops the unknown teams agent and runs plain `claude`); otherwise refused before
+  the call is sent (`src/shared/own-credentials-claude-runtime-launch-gate.ts`,
   shared with DeepSeek) and for federated workers. Mobile hides the agent when host agent detection
   is unknown.
+
+## Agent Teams
+
+`claude-api-agent-teams` registers a team like `claude-agent-teams`. The team env carries only the
+non-secret `DOLPHIN_CLAUDE_PROVIDER=anthropic-api` marker and `DOLPHIN_CLAUDE_API_ACCOUNT=<leader's
+account>` (`buildClaudeApiTeamEnv`); the key never enters the team env or the persisted leader
+registry. A teammate pane spawns as `claude-api` (`teammateLaunchAgent`), so its spawn resolves the
+account from the team env (the "pane env" step) and reads that account's key fresh. If the account
+was removed or has no key, that teammate is refused; it never falls back to the plan.
+
+The leader's account is taken from its pane env (desktop and CLI launches, after its own spawn
+resolved it) or, for runtime-created leaders, resolved up front with the same order
+(`resolveClaudeApiTeamAccountId`). The team stays in-process (teammates share the leader's process
+and env) when it routes to a remote runtime (`DOLPHIN_PAIRING_CODE`, `DOLPHIN_ENVIRONMENT`) or when
+the leader's account cannot be decided there (`resolveAgentTeamLaunchProvider`). Detection offers
+the agent with `claude-agent-teams` on the host, never from WSL.
 
 ## Known limits
 
@@ -96,8 +114,6 @@ At each launch, best effort (a failure degrades status or the first prompt, neve
 
 ## Not yet
 
-- Agent Teams: an API-key leader never registers a team (teammates stay in-process), because a
-  teammate pane would otherwise spawn through the plan's gate.
-- Source Control AI has no `claude-api` spec, so a `claude-api` default resolves to "unavailable",
-  never to plain `claude`.
+- Source Control AI has no `claude-api` spec, so a `claude-api` or `claude-api-agent-teams` default
+  resolves to "unavailable", never to plain `claude`.
 - Status rows are labelled `claude`; usage and cost are not split per API account.
