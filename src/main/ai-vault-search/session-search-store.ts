@@ -40,6 +40,8 @@ export type SessionSearchFileRow = {
   state: SessionSearchFileState
   failCount: number
   failedMtimeMs: number | null
+  /** The agent of the session this file's last read produced; null before any. */
+  sessionAgent: string | null
 }
 
 /** How many rows are in each state, sessions per agent, and the indexed message total; the whole of the indexer's progress report. */
@@ -218,10 +220,11 @@ export class SessionSearchStore {
         this.db
           .prepare(
             // Numeric stat IDs may exceed SQLite's safe INTEGER-to-number read range.
-            `SELECT path, CAST(dev AS REAL) AS dev, CAST(ino AS REAL) AS ino,
-                  mtime_ms AS mtimeMs, size_bytes AS sizeBytes,
-                  state, fail_count AS failCount, failed_mtime_ms AS failedMtimeMs
-           FROM files`
+            `SELECT files.path, CAST(files.dev AS REAL) AS dev, CAST(files.ino AS REAL) AS ino,
+                  files.mtime_ms AS mtimeMs, files.size_bytes AS sizeBytes,
+                  files.state, files.fail_count AS failCount,
+                  files.failed_mtime_ms AS failedMtimeMs, sessions.agent AS sessionAgent
+           FROM files LEFT JOIN sessions ON sessions.id = files.session_row_id`
           )
           .all() as (Omit<SessionSearchFileRow, 'identity'> & {
           dev: number | null
@@ -237,7 +240,8 @@ export class SessionSearchStore {
         sizeBytes: row.sizeBytes,
         state: row.state,
         failCount: row.failCount,
-        failedMtimeMs: row.failedMtimeMs
+        failedMtimeMs: row.failedMtimeMs,
+        sessionAgent: row.sessionAgent ?? null
       }))
     )
   }
