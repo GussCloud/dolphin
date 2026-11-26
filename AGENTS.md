@@ -117,6 +117,10 @@ Every Dolphin-managed Claude account runs in its own isolated `CLAUDE_CONFIG_DIR
 
 `deepseek` / `deepseek-agent-teams` run the `claude` CLI against DeepSeek with an isolated `~/.claude-deepseek` config and a safeStorage-only key. A DeepSeek launch must never degrade to a plain Claude launch on the user's Anthropic account. Before touching the Claude account gate, Agent Teams env, or adding a `=== 'claude'` check, read [`docs/reference/deepseek-agent.md`](./docs/reference/deepseek-agent.md).
 
+## Claude API Agent
+
+`claude-api` runs the `claude` CLI billed to a per-account Anthropic API key, inside that API account's profile. It must never degrade to the subscription: no account, no key, SSH, WSL or an older paired host refuse the launch. Before touching the managed-account gate, the spawn env or a new `isDeepSeek*` check, read [`docs/reference/claude-api-agent.md`](./docs/reference/claude-api-agent.md) and prefer the shared `isOwnCredentialsClaude*` predicates.
+
 ## Agent Status
 
 The execution host owns agent status in one store, the hook server's, and every reader (sidebar, `worktree ps`, mobile, dashboard) subscribes to it. Before adding a producer, a cache, or a reader-side precedence rule, read [`docs/reference/agent-status-store.md`](./docs/reference/agent-status-store.md): new producers write into that store, and readers keep only presentation policy.
