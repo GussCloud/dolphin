@@ -12521,7 +12521,10 @@
           "newKey": "Nouvelle clé API Anthropic",
           "replaceSave": "Enregistrer",
           "badge": "Clé API",
-          "row": "Facturé sur une clé API Anthropic"
+          "row": "Facturé sur une clé API Anthropic",
+          "defaultAccount": "L'agent Claude API utilise",
+          "defaultOnly": "Le seul compte API",
+          "defaultNone": "Aucun par défaut : choisissez-en un par espace de travail"
         }
       },
       "right": {
@@ -17002,6 +17005,9 @@
         "AgentSettingsDialog": {
           "50cdb57c03": "Gérez les agents IA, définissez-en un par défaut et personnalisez les commandes.",
           "fc0268e4ed": "Agents"
+        },
+        "AgentAccountPicker": {
+          "claudeApiDefault": "Compte API par défaut"
         }
       },
       "activity": {

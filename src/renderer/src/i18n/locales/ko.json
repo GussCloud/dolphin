@@ -12416,7 +12416,10 @@
           "newKey": "새 Anthropic API 키",
           "replaceSave": "저장",
           "badge": "API 키",
-          "row": "Anthropic API 키로 청구"
+          "row": "Anthropic API 키로 청구",
+          "defaultAccount": "Claude API 에이전트가 사용하는 계정",
+          "defaultOnly": "유일한 API 계정",
+          "defaultNone": "기본값 없음: 워크스페이스마다 선택"
         }
       },
       "right": {
@@ -16897,6 +16900,9 @@
         "AgentSettingsDialog": {
           "50cdb57c03": "AI agents를 관리하고, 기본값을 설정하고, 명령을 사용자 정의하세요.",
           "fc0268e4ed": "에이전트"
+        },
+        "AgentAccountPicker": {
+          "claudeApiDefault": "기본 API 계정"
         }
       },
       "activity": {

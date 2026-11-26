@@ -12416,7 +12416,10 @@
           "newKey": "新しい Anthropic API キー",
           "replaceSave": "保存",
           "badge": "API キー",
-          "row": "Anthropic API キーに請求"
+          "row": "Anthropic API キーに請求",
+          "defaultAccount": "Claude API Agent が使用するアカウント",
+          "defaultOnly": "唯一の API アカウント",
+          "defaultNone": "既定なし: ワークスペースごとに選択"
         }
       },
       "right": {
@@ -16897,6 +16900,9 @@
         "AgentSettingsDialog": {
           "50cdb57c03": "AI Agent を管理し、デフォルトを設定し、コマンドをカスタマイズします。",
           "fc0268e4ed": "Agent"
+        },
+        "AgentAccountPicker": {
+          "claudeApiDefault": "既定の API アカウント"
         }
       },
       "activity": {

@@ -12418,7 +12418,10 @@
           "newKey": "新的 Anthropic API 密钥",
           "replaceSave": "保存",
           "badge": "API 密钥",
-          "row": "计入 Anthropic API 密钥"
+          "row": "计入 Anthropic API 密钥",
+          "defaultAccount": "Claude API 智能体使用",
+          "defaultOnly": "唯一的 API 账户",
+          "defaultNone": "无默认：每个工作区单独选择"
         }
       },
       "right": {
@@ -16899,6 +16902,9 @@
         "AgentSettingsDialog": {
           "50cdb57c03": "管理 AI 智能体、设置默认值并自定义命令。",
           "fc0268e4ed": "智能体"
+        },
+        "AgentAccountPicker": {
+          "claudeApiDefault": "默认 API 账户"
         }
       },
       "activity": {
