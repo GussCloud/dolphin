@@ -1,6 +1,6 @@
 import type { AgentStatusDisplayAgentType, AgentType } from './agent-status-types'
-import { DEEPSEEK_CLAUDE_CONFIG_DIR_NAME } from './deepseek-claude-provider'
-import { isOwnCredentialsClaudeTuiAgent } from './own-credentials-claude-provider'
+import { isClaudeApiTuiAgent } from './claude-api-provider'
+import { DEEPSEEK_CLAUDE_CONFIG_DIR_NAME, isDeepSeekTuiAgent } from './deepseek-claude-provider'
 
 // Why: DeepSeek and API-key panes run the Claude Code CLI, so the hook host keeps their rows
 // `claude` (every Claude status rule applies) and stamps `displayAgentType` for readers to show.
@@ -53,8 +53,10 @@ export function isClaudeTitleOfOwnCredentialsPane(
   left: AgentType | null | undefined,
   right: AgentType | null | undefined
 ): boolean {
+  // Why not isOwnCredentialsClaudeTuiAgent: that module imports this one (relaunch rule).
+  const ownCredentials = (agent: AgentType | null | undefined): boolean =>
+    isDeepSeekTuiAgent(agent) || isClaudeApiTuiAgent(agent)
   return (
-    (left === 'claude' && isOwnCredentialsClaudeTuiAgent(right)) ||
-    (right === 'claude' && isOwnCredentialsClaudeTuiAgent(left))
+    (left === 'claude' && ownCredentials(right)) || (right === 'claude' && ownCredentials(left))
   )
 }
