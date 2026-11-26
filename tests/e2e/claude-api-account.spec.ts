@@ -16,14 +16,16 @@ function keyFiles(home: string): string[] {
 }
 
 test.describe('Claude API accounts', () => {
-  // Why: Linux CI has no keyring, so safeStorage is unavailable and the key save is (rightly) refused.
-  test.use({ dolphinAppExtraArgs: process.platform === 'linux' ? ['--password-store=basic'] : [] })
-
   test('adds an API account with an encrypted key, marks it, and removes it with its key', async ({
     electronApp,
     appPage
   }) => {
     await waitForSessionReady(appPage)
+    if (process.platform === 'linux') {
+      // Why: Linux CI has no keyring, so the app (rightly) refuses the save; this test-only switch
+      // gives safeStorage an in-memory key, which is what the flow under test needs.
+      await electronApp.evaluate(({ safeStorage }) => safeStorage.setUsePlainTextEncryption(true))
+    }
     const home = await appPath(electronApp, 'home')
     const userData = await appPath(electronApp, 'userData')
     // Why: the host OS locale drives the default UI language; pin English for stable locators.
