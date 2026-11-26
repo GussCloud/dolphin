@@ -76,16 +76,17 @@ const FAKE_KEY = 'sk-ant-api03-test-0000000000000000000000'
 const PLAN_DIR = '/home/me/.dolphin/claude-accounts/plan/config'
 
 function account(id: string, authMethod?: 'api-key'): ClaudeManagedAccount {
-  return {
+  const base: ClaudeManagedAccount = {
     id,
     email: authMethod ? '' : `${id}@example.com`,
-    ...(authMethod ? { authMethod, label: `API ${id}` } : {}),
+    authMethod: 'subscription-oauth',
     managedAuthPath: `/managed/${id}`,
     managedAuthRuntime: 'host',
     createdAt: 1,
     updatedAt: 1,
     lastAuthenticatedAt: 1
   }
+  return authMethod ? { ...base, authMethod, label: `API ${id}` } : base
 }
 
 const INHERITED_CONFLICTS = {

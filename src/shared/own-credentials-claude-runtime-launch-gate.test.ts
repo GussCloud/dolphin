@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+  CLAUDE_API_HOST_UPDATE_REQUIRED_CODE,
   DEEPSEEK_HOST_UPDATE_REQUIRED_CODE,
+  ownCredentialsClaudeAgentHostRefusal,
   refuseOwnCredentialsClaudeLaunchWithoutHostSupport,
   runtimeParamsLaunchOwnCredentialsClaude
 } from './own-credentials-claude-runtime-launch-gate'
@@ -9,6 +11,11 @@ import {
   DEEPSEEK_HOST_UPDATE_REQUIRED_MESSAGE
 } from './protocol-version'
 import { DEEPSEEK_PROVIDER_ENV_KEY, DEEPSEEK_PROVIDER_ENV_VALUE } from './deepseek-claude-provider'
+import { CLAUDE_API_PROVIDER_ENV_KEY, CLAUDE_API_PROVIDER_ENV_VALUE } from './claude-api-provider'
+import {
+  CLAUDE_API_AGENT_RUNTIME_CAPABILITY,
+  CLAUDE_API_HOST_UPDATE_REQUIRED_MESSAGE
+} from './claude-api-runtime-capability'
 
 function status(capabilities: string[]) {
   return vi.fn(async () => ({
@@ -127,5 +134,49 @@ describe('refuseOwnCredentialsClaudeLaunchWithoutHostSupport', () => {
       })
     ).resolves.toBeNull()
     expect(readStatus).not.toHaveBeenCalled()
+  })
+})
+
+describe('claude-api on a paired host', () => {
+  const launches: unknown[] = [
+    { launchAgent: 'claude-api', command: 'claude' },
+    { createdWithAgent: 'claude-api', startupCommand: 'claude' },
+    { env: { [CLAUDE_API_PROVIDER_ENV_KEY]: CLAUDE_API_PROVIDER_ENV_VALUE } }
+  ]
+
+  it.each(launches)('refuses %# on a host without the capability', async (params) => {
+    expect(runtimeParamsLaunchOwnCredentialsClaude(params)).toBe(true)
+    // Why DeepSeek's capability: a host that knows DeepSeek still predates the API-key agent.
+    const refusal = await refuseOwnCredentialsClaudeLaunchWithoutHostSupport({
+      method: 'terminal.create',
+      params,
+      readStatus: status([AGENT_SESSION_DEEPSEEK_RESUME_RUNTIME_CAPABILITY])
+    })
+    expect(refusal?.error).toEqual({
+      code: CLAUDE_API_HOST_UPDATE_REQUIRED_CODE,
+      message: CLAUDE_API_HOST_UPDATE_REQUIRED_MESSAGE
+    })
+  })
+
+  it('lets it through to a host that advertises the capability', async () => {
+    await expect(
+      refuseOwnCredentialsClaudeLaunchWithoutHostSupport({
+        method: 'terminal.create',
+        params: { launchAgent: 'claude-api' },
+        readStatus: status([CLAUDE_API_AGENT_RUNTIME_CAPABILITY])
+      })
+    ).resolves.toBeNull()
+  })
+
+  it('refuses a federated worker of claude-api on an older host', () => {
+    expect(
+      ownCredentialsClaudeAgentHostRefusal('claude-api', [
+        AGENT_SESSION_DEEPSEEK_RESUME_RUNTIME_CAPABILITY
+      ])
+    ).toBe(CLAUDE_API_HOST_UPDATE_REQUIRED_MESSAGE)
+    expect(
+      ownCredentialsClaudeAgentHostRefusal('claude-api', [CLAUDE_API_AGENT_RUNTIME_CAPABILITY])
+    ).toBeNull()
+    expect(ownCredentialsClaudeAgentHostRefusal('claude', [])).toBeNull()
   })
 })

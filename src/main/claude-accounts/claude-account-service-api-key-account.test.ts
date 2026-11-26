@@ -130,7 +130,9 @@ describe('ClaudeAccountService API key accounts', () => {
     expect(readFileSync(keyPath(id), 'utf-8')).not.toContain(FAKE_KEY)
     expect(existsSync(join(profileDir(id), '.dolphin-claude-profile.json'))).toBe(true)
     expect(readJson(join(profileDir(id), '.claude.json'))).toMatchObject({
-      hasCompletedOnboarding: true
+      hasCompletedOnboarding: true,
+      // Pre-approved, so the first launch does not stop at Claude Code's API key question.
+      customApiKeyResponses: { approved: [FAKE_KEY.slice(-20)] }
     })
     expect(service.getApiKeyStatus(id)).toEqual({
       apiKeyConfigured: true,
@@ -190,6 +192,9 @@ describe('ClaudeAccountService API key accounts', () => {
     const before = readFileSync(keyPath(id), 'utf-8')
     await service.replaceApiKey(id, 'sk-ant-test-fake-2')
     expect(readFileSync(keyPath(id), 'utf-8')).not.toBe(before)
+    expect(readJson(join(profileDir(id), '.claude.json'))).toMatchObject({
+      customApiKeyResponses: { approved: [FAKE_KEY.slice(-20), 'sk-ant-test-fake-2'.slice(-20)] }
+    })
   })
 
   it('deletes the key and the profile when the account is removed', async () => {

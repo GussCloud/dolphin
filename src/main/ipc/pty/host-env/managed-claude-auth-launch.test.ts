@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { DEEPSEEK_PROVIDER_ENV_KEY } from '../../../../shared/deepseek-claude-provider'
+import {
+  CLAUDE_API_PROVIDER_ENV_KEY,
+  CLAUDE_API_PROVIDER_ENV_VALUE
+} from '../../../../shared/claude-api-provider'
 import { isClaudeLaunchCommand, isManagedClaudeAuthLaunch } from './fresh-spawn-routing'
 
 const MARKED_ENV = { [DEEPSEEK_PROVIDER_ENV_KEY]: 'deepseek' }
@@ -75,6 +79,27 @@ describe('isManagedClaudeAuthLaunch', () => {
         command: "cd '/repo' && env CLAUDECODE=1 '/usr/bin/claude' --agent-id a",
         launchAgent: undefined,
         env: MARKED_ENV,
+        connectionId: null,
+        preAdoptedStablePane: false
+      })
+    ).toBe(false)
+  })
+
+  it('exempts claude-api launches and panes marked with an API account', () => {
+    expect(
+      isManagedClaudeAuthLaunch({
+        command: 'claude',
+        launchAgent: 'claude-api',
+        env: {},
+        connectionId: null,
+        preAdoptedStablePane: false
+      })
+    ).toBe(false)
+    expect(
+      isManagedClaudeAuthLaunch({
+        command: 'claude --resume abc',
+        launchAgent: 'claude',
+        env: { [CLAUDE_API_PROVIDER_ENV_KEY]: CLAUDE_API_PROVIDER_ENV_VALUE },
         connectionId: null,
         preAdoptedStablePane: false
       })
