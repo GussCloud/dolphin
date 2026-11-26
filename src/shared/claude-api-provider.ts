@@ -41,7 +41,15 @@ export const CLAUDE_API_CONFLICTING_ENV_KEYS: readonly string[] = [
   'CLAUDE_CODE_USE_FOUNDRY',
   'CLAUDE_CODE_SKIP_BEDROCK_AUTH',
   'CLAUDE_CODE_SKIP_VERTEX_AUTH',
-  'CLAUDE_CODE_SKIP_FOUNDRY_AUTH'
+  'CLAUDE_CODE_SKIP_FOUNDRY_AUTH',
+  // Why: another provider's model ids (Dolphin started from a DeepSeek pane) would reach
+  // api.anthropic.com; generation passes --model and panes use the account profile's settings.
+  'ANTHROPIC_MODEL',
+  'ANTHROPIC_DEFAULT_OPUS_MODEL',
+  'ANTHROPIC_DEFAULT_SONNET_MODEL',
+  'ANTHROPIC_DEFAULT_HAIKU_MODEL',
+  'ANTHROPIC_SMALL_FAST_MODEL',
+  'CLAUDE_CODE_SUBAGENT_MODEL'
 ]
 
 export function isClaudeApiProviderEnv(

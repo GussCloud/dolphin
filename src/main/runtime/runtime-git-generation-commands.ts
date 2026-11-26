@@ -1,3 +1,4 @@
+import { commitMessageModelDiscoveryRunsCli } from '../text-generation/commit-message-model-discovery'
 import type { CommitMessageDraftContext } from '../../shared/commit-message-generation'
 import { getCommitMessageModelDiscoveryHostKey } from '../../shared/commit-message-host-key'
 import type { HostedReviewProvider } from '../../shared/hosted-review'
@@ -106,7 +107,8 @@ export class RuntimeGitGenerationCommands {
     const localEnv = await prepareLocalCommitMessageAgentEnv(
       resolvedSettings.params.agentId,
       this.host.getCommitMessageAgentEnvironment?.(),
-      localAgentRuntimeTargetForTarget(target)
+      localAgentRuntimeTargetForTarget(target),
+      { workspacePath: target.worktree.path }
     )
     if (!localEnv.ok) {
       return { success: false, error: localEnv.error }
@@ -226,7 +228,8 @@ export class RuntimeGitGenerationCommands {
     const localEnv = await prepareLocalCommitMessageAgentEnv(
       resolvedSettings.params.agentId,
       this.host.getCommitMessageAgentEnvironment?.(),
-      localAgentRuntimeTargetForTarget(target)
+      localAgentRuntimeTargetForTarget(target),
+      { workspacePath: target.worktree.path }
     )
     if (!localEnv.ok) {
       return { success: false, error: localEnv.error }
@@ -272,11 +275,15 @@ export class RuntimeGitGenerationCommands {
         agentCommandOverride
       )
     }
-    const localEnv = await prepareLocalCommitMessageAgentEnv(
-      typedAgentId,
-      this.host.getCommitMessageAgentEnvironment?.(),
-      localAgentRuntimeTargetForTarget(target)
-    )
+    // Why: a static list runs nothing, and preparing an API account's env reads its key.
+    const localEnv = commitMessageModelDiscoveryRunsCli(typedAgentId)
+      ? await prepareLocalCommitMessageAgentEnv(
+          typedAgentId,
+          this.host.getCommitMessageAgentEnvironment?.(),
+          localAgentRuntimeTargetForTarget(target),
+          { workspacePath: target.worktree.path }
+        )
+      : { ok: true as const, env: undefined }
     if (!localEnv.ok) {
       return { success: false, error: localEnv.error }
     }

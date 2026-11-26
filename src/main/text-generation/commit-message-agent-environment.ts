@@ -1,3 +1,9 @@
+import { isClaudeApiTuiAgent } from '../../shared/claude-api-provider'
+import type { WorktreeLaunchLocation } from '../worktree-launch-owner'
+import {
+  prepareClaudeApiCommitMessageEnv,
+  type PrepareForClaudeApiLaunch
+} from './claude-api-commit-message-env'
 import type { ClaudeRuntimeAuthPreparation } from '../claude-accounts/runtime-auth-service'
 import { applyClaudeEnvPatch } from '../claude-accounts/environment'
 import { readShellStartupEnvVar } from '../pty/shell-startup-env'
@@ -14,6 +20,8 @@ export type CommitMessageAgentEnvironmentResolvers = {
   prepareForDeepSeekLaunch?: (
     target?: CommitMessageAgentRuntimeTarget
   ) => Promise<Record<string, string>>
+  /** An API account's key and profile, chosen for the workspace; throws when unavailable. */
+  prepareForClaudeApiLaunch?: PrepareForClaudeApiLaunch
 }
 
 export type CommitMessageAgentRuntimeTarget = {
@@ -110,7 +118,9 @@ async function prepareDeepSeekCommitMessageEnv(
 export async function prepareLocalCommitMessageAgentEnv(
   agentId: string,
   resolvers: CommitMessageAgentEnvironmentResolvers | undefined,
-  target?: CommitMessageAgentRuntimeTarget
+  target?: CommitMessageAgentRuntimeTarget,
+  /** Where the generation runs; picks a pinned API account. */
+  launch?: WorktreeLaunchLocation
 ): Promise<{ ok: true; env?: NodeJS.ProcessEnv } | { ok: false; error: string }> {
   // Why: a non-null result short-circuits the resolvers below, so any agent added
   // to prepareShellConfigDirEnv must not also need a Codex/Claude-style resolver.
@@ -120,6 +130,14 @@ export async function prepareLocalCommitMessageAgentEnv(
   }
   if (agentId === 'deepseek') {
     return prepareDeepSeekCommitMessageEnv(resolvers, target)
+  }
+  if (isClaudeApiTuiAgent(agentId)) {
+    return prepareClaudeApiCommitMessageEnv({
+      prepare: resolvers?.prepareForClaudeApiLaunch,
+      baseEnv: cloneProcessEnv(),
+      target,
+      launch
+    })
   }
   if (!resolvers) {
     return { ok: true }

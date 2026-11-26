@@ -1,3 +1,4 @@
+import { commitMessageModelDiscoveryRunsCli } from '../../text-generation/commit-message-model-discovery'
 import { ipcMain } from 'electron'
 import type { TuiAgent } from '../../../shared/tui-agent'
 import type { CommitMessageAgentRuntimeTarget } from '../../text-generation/commit-message-agent-environment'
@@ -61,11 +62,15 @@ export function registerFilesystemGitModelDiscoveryHandlers(
           : getLocalAgentRuntimeTarget(gitOptions)
         localDiscoveryOptions = wslDistro ? { cwd: worktreePath, wslDistro } : { cwd: worktreePath }
       }
-      const localEnv = await prepareLocalCommitMessageAgentEnv(
-        agentId,
-        commitMessageAgentEnv,
-        localRuntimeTarget
-      )
+      // Why: a static list runs nothing, and preparing an API account's env reads its key.
+      const localEnv = commitMessageModelDiscoveryRunsCli(agentId)
+        ? await prepareLocalCommitMessageAgentEnv(
+            agentId,
+            commitMessageAgentEnv,
+            localRuntimeTarget,
+            localDiscoveryOptions ? { workspacePath: localDiscoveryOptions.cwd } : undefined
+          )
+        : { ok: true as const, env: undefined }
       if (!localEnv.ok) {
         return { success: false, error: localEnv.error }
       }

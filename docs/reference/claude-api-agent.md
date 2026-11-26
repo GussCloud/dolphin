@@ -153,6 +153,37 @@ re-labels those rows without waiting for the file to change.
   cost as a separate provider line. Usage is summed across API accounts and covers the local host
   only.
 
+## Source Control AI
+
+Commit messages, PR fields, branch names and workspace titles can generate with `claude-api`: its
+spec is the plain Claude spec's (`claude -p --model …`), with the same models and the same default
+(Sonnet, low effort), so an API account is billed at the model a plan generation would use. Its
+models are static: Claude's model discovery would run `claude` where an SSH host's plan login
+answers (`claude-api-commit-message-spec.ts`). A default
+agent of `claude-api` or `claude-api-agent-teams` resolves to it when Source Control AI is left on
+the default agent.
+
+The env comes from `prepareClaudeApiLaunch` through the `prepareForClaudeApiLaunch` resolver (wired
+in `main-window-core-services.ts` and `main-process-runtime-service.ts`), with the account chosen by
+the same order minus the resume step: the pin of the workspace the generation runs in, the default,
+the single API account. Inherited auth (`CLAUDE_API_CONFLICTING_ENV_KEYS`) is removed from the
+process env before the account env is laid over it (`claude-api-commit-message-env.ts`).
+`executeGenerationPlan` refuses before anything runs when the target is SSH, when it is WSL
+(`wsl.exe` would put the key in argv), or when the env lacks the provider marker; a missing account
+or key is refused while the env is prepared. The `-p` mode shows no API-key question, and the
+profile approval stays idempotent anyway.
+
+A leading env assignment in the user's `claude-api` command override (Settings > Agents) is applied
+after the account env (`mergeCommandEnvironment`): it is an explicit user choice, as for DeepSeek.
+Model discovery skips the env step for static model lists, so listing models reads no key. A first
+work title generated in a `\\wsl$` worktree is refused for `claude-api` and DeepSeek, which never
+generate inside WSL.
+
+Paired hosts: a host without the `claude-api` spec (any build before this one) answers that the
+agent does not support AI generation; it never falls back to plain `claude`, because the plan
+builder refuses an agent with no spec. A newer host generates on its own API accounts by the same
+rules.
+
 ## Known limits
 
 - Hook events that reach the hook server before the account service registers the profile roots
@@ -171,6 +202,4 @@ re-labels those rows without waiting for the file to change.
 
 ## Not yet
 
-- Source Control AI has no `claude-api` spec, so a `claude-api` or `claude-api-agent-teams` default
-  resolves to "unavailable", never to plain `claude`.
 - Usage and cost are summed across API accounts, not split per account.

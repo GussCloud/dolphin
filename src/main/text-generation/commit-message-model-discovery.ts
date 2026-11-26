@@ -1,3 +1,4 @@
+import { isTuiAgent } from '../../shared/tui-agent-config'
 import { mergeCommandEnvironment } from '../../shared/command-environment'
 import type { CommandTemplateBackslash } from '../../shared/commit-message-prompt'
 import type { CommitMessagePlan } from '../../shared/commit-message-plan'
@@ -29,6 +30,12 @@ import type {
 export type CommitMessageModelDiscoveryLocalOptions = {
   cwd?: string
   wslDistro?: string
+}
+
+/** False for a static model list: discovery then runs no CLI, so it needs no agent env. */
+export function commitMessageModelDiscoveryRunsCli(agentId: string): boolean {
+  const spec = isTuiAgent(agentId) ? getAgentModelProbeSpec(agentId) : undefined
+  return Boolean(spec && spec.modelSource !== 'static' && spec.modelDiscovery)
 }
 
 export async function discoverModelsLocal(input: {

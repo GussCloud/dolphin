@@ -95,7 +95,11 @@ const INHERITED_CONFLICTS = {
   CLAUDE_CODE_OAUTH_TOKEN: 'inherited-oauth',
   ANTHROPIC_BASE_URL: 'https://proxy.example.com',
   CLAUDE_CODE_USE_BEDROCK: '1',
-  CLAUDE_CODE_USE_VERTEX: '1'
+  CLAUDE_CODE_USE_VERTEX: '1',
+  // Dolphin started from a DeepSeek pane: its model slots must not reach api.anthropic.com.
+  ANTHROPIC_MODEL: 'deepseek-flash[1m]',
+  ANTHROPIC_DEFAULT_HAIKU_MODEL: 'deepseek-flash',
+  CLAUDE_CODE_SUBAGENT_MODEL: 'deepseek-flash'
 }
 
 describe('claude-api PTY spawn', () => {

@@ -1,3 +1,5 @@
+import { isOwnCredentialsClaudeTuiAgent } from '../../shared/own-credentials-claude-provider'
+import { parseWslUncPath } from '../../shared/wsl-paths'
 import type { SshGitProvider } from '../providers/ssh-git-provider'
 import type { CommitMessageGenerationTarget } from '../text-generation/commit-message-text-generation'
 import {
@@ -22,7 +24,17 @@ export async function resolveGenerationTarget(
       missingBinaryLocation: 'remote PATH'
     }
   }
-  const localEnv = await prepareLocalCommitMessageAgentEnv(agentId, deps.getAgentEnvResolvers())
+  // Why: DeepSeek and API-key generation refuse WSL; a `\\wsl$` cwd sets no WSL target here, so
+  // without this it would run the host `claude` with the key on a WSL worktree.
+  if (isOwnCredentialsClaudeTuiAgent(agentId) && parseWslUncPath(worktreePath)) {
+    return null
+  }
+  const localEnv = await prepareLocalCommitMessageAgentEnv(
+    agentId,
+    deps.getAgentEnvResolvers(),
+    undefined,
+    { workspacePath: worktreePath }
+  )
   if (!localEnv.ok) {
     return null
   }
