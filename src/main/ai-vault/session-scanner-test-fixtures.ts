@@ -55,7 +55,7 @@ export function isolatedScanRoots(root: string) {
   return {
     claudeProjectsDir: join(root, 'claude-projects'),
     deepSeekProjectsDir: join(root, 'deepseek-projects'),
-    claudeApiProjectsDirs: [join(root, 'claude-api-projects')] as readonly string[],
+    claudeApiProjectsDirs: [join(root, 'claude-api-projects')],
     codexSessionsDir: join(root, 'codex-sessions'),
     geminiSessionsDir: join(root, 'gemini-sessions'),
     antigravityBrainDir: join(root, 'antigravity-brain'),

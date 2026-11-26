@@ -132,10 +132,10 @@ profile.
 - **AI Vault.** `claude-api` is its own AI Vault agent, scanning only API profiles' `projects/` on the
   local host (no WSL, no SSH: the agent never runs there). Claude's source scans only plan profiles,
   so a transcript belongs to exactly one agent; subagent listing, scoped discovery, delete and the
-  search index use the same roots. Resume goes through the startup plan with `launchAgent:
-  'claude-api'`, which bills the account whose profile holds the transcript; there is no copyable
-  resume line and `dolphin search` prints none. A paired host is asked to resume only when it
-  advertises `agent-session.claude-api-resume.v1`. Remote clients that do not advertise
+  search index use the same roots. Resume goes through the startup plan as a `claude-api` launch,
+  which bills the account whose profile holds the transcript; there is no copyable resume line
+  and `dolphin search` prints none. A paired host is asked to resume only when it advertises
+  `agent-session.claude-api-resume.v1`. Remote clients that do not advertise
   `ai-vault.claude-api-sessions.v1` get no `claude-api` rows or hits.
 - **Usage.** Settings > Stats has its own "Claude (API)" provider (`ClaudeApiUsageStore`, cache
   `dolphin-claude-api-usage.json`), scanning only API profiles; the subscription Claude scan skips
