@@ -26,6 +26,7 @@ export function resolvePaneRelaunchAgent(
   statusAgent: TuiAgent | null,
   tabAgent: TuiAgent | null
 ): TuiAgent | null {
+  // Trade-off: a plain `claude` typed later in that pane is relaunched as the tab's agent too.
   if (tabAgent && isOwnCredentialsClaudeTuiAgent(tabAgent) && isClaudeHookAgentType(statusAgent)) {
     return tabAgent
   }

@@ -13,16 +13,20 @@ export type AgentTeamLaunchProvider = {
 
 export function resolveAgentTeamLaunchProvider(args: {
   baseEnv: Record<string, string | undefined>
+  /** The pane's own env, without main's: what decides whether the leader is an API-key leader. */
+  paneEnv?: Record<string, string | undefined>
   launchAgent?: unknown
   command?: string
   launch?: WorktreeLaunchLocation
 }): AgentTeamLaunchProvider {
+  // Why the pane env: a marker in main's own env (Dolphin started from an API pane) must not turn a
+  // plain Claude leader into an API-key team.
+  const paneEnv = args.paneEnv ?? args.baseEnv
   const deepSeekProvider = isDeepSeekTuiAgent(args.launchAgent)
-  const claudeApiLeader =
-    isClaudeApiTuiAgent(args.launchAgent) || isClaudeApiProviderEnv(args.baseEnv)
+  const claudeApiLeader = isClaudeApiTuiAgent(args.launchAgent) || isClaudeApiProviderEnv(paneEnv)
   const claudeApiAccountId = claudeApiLeader
     ? resolveClaudeApiTeamAccountId({
-        launchEnv: args.baseEnv,
+        launchEnv: paneEnv,
         command: args.command,
         launch: args.launch ?? {}
       })

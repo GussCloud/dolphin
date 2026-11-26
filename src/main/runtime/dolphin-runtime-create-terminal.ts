@@ -97,6 +97,7 @@ export class DolphinRuntimeWithCreateTerminal extends DolphinRuntimeWithTerminal
             createTeamEnv: this.claudeAgentTeams.createLaunchEnvFactory({
               leaderHandle: preAllocatedHandle,
               baseEnv: teamBaseEnv,
+              paneEnv: baseEnv,
               launchAgent: launchOpts.launchAgent,
               command: launchOpts.command,
               launch: { worktreeId: workspace.id, workspacePath: cwd }

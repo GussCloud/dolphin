@@ -140,15 +140,15 @@ export function resolveClaudeApiTeamAccountId(
     Partial<Pick<ClaudeApiLaunchRequest, 'settings'>>,
   deps: ClaudeApiLaunchDeps = defaultDeps
 ): string | null {
-  const paneAccountId = readClaudeApiAccountEnv(request.launchEnv)
-  if (paneAccountId) {
-    return paneAccountId
-  }
+  // Why the full order, not the pane account first: the leader's own spawn puts a resumed
+  // transcript's owner ahead of it, and teammates must bill the account the leader runs on.
   const settings = request.settings ?? launchSource?.getSettings?.()
   try {
     return resolveRequestAccount({ ...request, settings }, deps).id
   } catch {
-    return null
+    // Why the pane account still counts: with no account service here the order cannot run, and a
+    // gone account only makes each teammate refuse, which is the same outcome as the leader's.
+    return readClaudeApiAccountEnv(request.launchEnv)
   }
 }
 

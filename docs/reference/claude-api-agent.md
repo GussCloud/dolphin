@@ -92,11 +92,22 @@ registry. A teammate pane spawns as `claude-api` (`teammateLaunchAgent`), so its
 account from the team env (the "pane env" step) and reads that account's key fresh. If the account
 was removed or has no key, that teammate is refused; it never falls back to the plan.
 
+Teammates get the key only from Dolphin's fresh spawn resolution. Claude Code itself does not
+inline it: the env it forwards on a teammate command (`CLAUDECODE=1`,
+`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`, `ANTHROPIC_BASE_URL`, `CLAUDE_CONFIG_DIR`, proxy and CA
+variables) has neither `ANTHROPIC_API_KEY` nor `ANTHROPIC_AUTH_TOKEN`. This was checked on Claude
+Code 2.1.332 by reading the CLI's teammate env forward list, not from a captured transcript. The
+forwarded `ANTHROPIC_BASE_URL` is empty for these panes, because the API-key spawn strips it.
+
 The leader's account is taken from its pane env (desktop and CLI launches, after its own spawn
-resolved it) or, for runtime-created leaders, resolved up front with the same order
-(`resolveClaudeApiTeamAccountId`). The team stays in-process (teammates share the leader's process
+resolved it) or, for runtime-created leaders, resolved up front with the same order as the
+leader's spawn, so a resumed transcript's owner outranks the pane account
+(`resolveClaudeApiTeamAccountId`). Only the pane's own env classifies a leader as API-key, never
+main's: Dolphin started from an API-key pane must not turn a plain Claude team into one. The team stays in-process (teammates share the leader's process
 and env) when it routes to a remote runtime (`DOLPHIN_PAIRING_CODE`, `DOLPHIN_ENVIRONMENT`) or when
-the leader's account cannot be decided there (`resolveAgentTeamLaunchProvider`). Detection offers
+the leader's account cannot be decided there (`resolveAgentTeamLaunchProvider`). In-process
+teammates share the leader's process env, key included; they bill the same account, as DeepSeek's
+in-process teammates do. Detection offers
 the agent with `claude-agent-teams` on the host, never from WSL.
 
 ## Known limits

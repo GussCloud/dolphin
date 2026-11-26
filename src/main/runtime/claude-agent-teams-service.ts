@@ -132,6 +132,8 @@ export class ClaudeAgentTeamsService {
   createLaunchEnvFactory(args: {
     leaderHandle: string
     baseEnv: Record<string, string | undefined>
+    /** The pane env without main's; classifies the leader. Defaults to `baseEnv`. */
+    paneEnv?: Record<string, string | undefined>
     launchAgent?: unknown
     /** Where the leader launches: an API-key leader's account may come from the worktree pin. */
     command?: string
