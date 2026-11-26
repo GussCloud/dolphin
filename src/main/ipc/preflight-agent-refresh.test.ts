@@ -254,7 +254,7 @@ describe('preflight', () => {
 
     expect(result.shellHydrationOk).toBe(false)
     expect(result.addedPathSegments).toEqual([])
-    expect(result.agents).toEqual(['claude', 'deepseek'])
+    expect(result.agents).toEqual(['claude', 'claude-api', 'deepseek'])
     // Why: drives the agent_picks `on_path:false` triage in dashboard 1562016.
     // Without these fields we cannot distinguish "hydration failed" from
     // "user genuinely doesn't have the binary."
