@@ -114,6 +114,7 @@ describe('registerFilesystemHandlers', () => {
       throw new Error('Choose which API account the Claude API agent uses')
     })
 
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the shared harness store implements every Store method the discovery handler reads.
     registerFilesystemHandlers(store as never, { prepareForClaudeApiLaunch })
 
     const result = await handlers.get('git:discoverCommitMessageModels')!(null, {
