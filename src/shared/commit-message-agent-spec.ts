@@ -1,3 +1,4 @@
+import { claudeApiCommitMessageSpecs } from './claude-api-commit-message-spec'
 import { OMP_MODEL_LIST_ARGS, parseOmpModelList } from './omp-model-list-probe'
 import type { TuiAgent } from './tui-agent'
 import { isTuiAgentEnabled } from './tui-agent-selection'
@@ -88,6 +89,16 @@ export type CommitMessageAgentCapability = {
   defaultModelId: string
 }
 
+const PRIMARY_COMMIT_MESSAGE_AGENT_SPECS = buildPrimaryCommitMessageAgentSpecs({
+  CLAUDE_THINKING_LEVELS,
+  OPENAI_THINKING_LEVELS,
+  parseClaudeModels,
+  parseCodexModels,
+  parseLineModels,
+  parsePiModels,
+  withOpenAiThinking
+})
+
 export const COMMIT_MESSAGE_AGENT_SPECS: Partial<Record<TuiAgent, CommitMessageAgentSpec>> = {
   omp: {
     id: 'omp',
@@ -112,15 +123,7 @@ export const COMMIT_MESSAGE_AGENT_SPECS: Partial<Record<TuiAgent, CommitMessageA
     models: [{ id: 'default', label: 'Config default' }],
     defaultModelId: 'default'
   },
-  ...buildPrimaryCommitMessageAgentSpecs({
-    CLAUDE_THINKING_LEVELS,
-    OPENAI_THINKING_LEVELS,
-    parseClaudeModels,
-    parseCodexModels,
-    parseLineModels,
-    parsePiModels,
-    withOpenAiThinking
-  }),
+  ...PRIMARY_COMMIT_MESSAGE_AGENT_SPECS,
   ...buildSecondaryCommitMessageAgentSpecs({
     BASIC_THINKING_LEVELS,
     OPENAI_THINKING_LEVELS,
@@ -139,18 +142,7 @@ export const COMMIT_MESSAGE_AGENT_SPECS: Partial<Record<TuiAgent, CommitMessageA
     models: [{ id: 'default', label: 'DeepSeek main model' }],
     defaultModelId: 'default'
   },
-  // Why: the Claude Code CLI on an API account's profile and key, injected locally like DeepSeek's
-  // env; no --model, so the account profile's own model setting answers.
-  'claude-api': {
-    id: 'claude-api',
-    label: 'Claude (API key)',
-    binary: 'claude',
-    promptDelivery: 'stdin',
-    buildArgs: () => ['-p', '--output-format', 'text', '--permission-mode', 'plan'],
-    modelSource: 'static',
-    models: [{ id: 'default', label: 'Claude default model' }],
-    defaultModelId: 'default'
-  }
+  ...claudeApiCommitMessageSpecs(PRIMARY_COMMIT_MESSAGE_AGENT_SPECS.claude)
 }
 
 /** Launch variants with no generation spec of their own run their base agent's CLI. */

@@ -156,7 +156,10 @@ re-labels those rows without waiting for the file to change.
 ## Source Control AI
 
 Commit messages, PR fields, branch names and workspace titles can generate with `claude-api`: its
-spec runs `claude -p` with no `--model`, so the account profile's own model answers. A default
+spec is the plain Claude spec's (`claude -p --model …`), with the same models and the same default
+(Sonnet, low effort), so an API account is billed at the model a plan generation would use. Its
+models are static: Claude's model discovery would run `claude` where an SSH host's plan login
+answers (`claude-api-commit-message-spec.ts`). A default
 agent of `claude-api` or `claude-api-agent-teams` resolves to it when Source Control AI is left on
 the default agent.
 

@@ -15,7 +15,7 @@ import { prepareClaudeApiLaunch, type ClaudeApiLaunchDeps } from '../claude-api/
 
 vi.mock('electron', () => ({ app: { getPath: () => '/user-data' } }))
 
-const params = { agentId: 'claude-api' as const, model: 'default' }
+const params = { agentId: 'claude-api' as const, model: 'sonnet' }
 const context = { firstPrompt: 'Fix login flow' }
 const MARKED_ENV = { [CLAUDE_API_PROVIDER_ENV_KEY]: CLAUDE_API_PROVIDER_ENV_VALUE }
 // Fake keys, one per account, so the test sees which account was billed.
@@ -44,12 +44,17 @@ const PLAN: ClaudeManagedAccount = {
 }
 
 describe('Claude API source control generation', () => {
-  it('runs the claude CLI in print mode without --model', () => {
+  it("offers Claude's models and default (Sonnet, low effort), without plan-side discovery", () => {
+    const plain = getCommitMessageAgentSpec('claude')
     const spec = getCommitMessageAgentSpec('claude-api')
     expect(spec?.binary).toBe('claude')
-    const args = spec?.buildArgs({ prompt: '', model: 'default' }) ?? []
-    expect(args).toContain('-p')
-    expect(args).not.toContain('--model')
+    expect(spec?.models).toEqual(plain?.models)
+    expect(spec?.defaultModelId).toBe('sonnet')
+    expect(spec?.models.find((model) => model.id === 'sonnet')?.defaultThinkingLevel).toBe('low')
+    expect(spec?.modelSource).toBe('static')
+    expect(spec?.modelDiscovery).toBeUndefined()
+    const args = spec?.buildArgs({ prompt: '', model: 'sonnet', thinkingLevel: 'low' }) ?? []
+    expect(args).toEqual(expect.arrayContaining(['-p', '--model', 'sonnet', '--effort', 'low']))
   })
 
   it('generates with claude-api when the default agent is either API-key agent', () => {
