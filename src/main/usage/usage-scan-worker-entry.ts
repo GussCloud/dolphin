@@ -57,7 +57,9 @@ function createProgressReporter(id: number): (count: number) => void {
 
 // Why: the cache is the whole transcript history; cloning it back to main on every
 // unchanged refresh only to replace an identical copy is the dominant scan cost there.
-function unchangedScanValue(providerId: 'claude' | 'deepseek' | 'codex'): UsageScanWorkerValue {
+function unchangedScanValue(
+  providerId: 'claude' | 'claude-api' | 'deepseek' | 'codex'
+): UsageScanWorkerValue {
   return { providerId, source: [], sessions: [], dailyAggregates: [], unchanged: true }
 }
 
@@ -69,6 +71,7 @@ async function runScan(
   // provider's own record type, so nothing here needs a type assertion.
   switch (request.providerId) {
     case 'claude':
+    case 'claude-api':
     case 'deepseek': {
       const result = await scanClaudeUsageFiles(
         request.worktrees,

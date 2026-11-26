@@ -98,4 +98,22 @@ describe('Claude-format usage scan sources', () => {
     ])
     expect(deepSeek.sessions.map((session) => session.sessionId)).toEqual(['deepseek-1'])
   })
+
+  it('scans only the API account profiles it is given for claude-api', async () => {
+    const home = await makeHomeWithBothCorpora()
+    const apiProfile = join(home, 'userData', 'claude-accounts', 'api-1', 'config')
+    await mkdir(join(apiProfile, 'projects', 'repo-a'), { recursive: true })
+    await writeFile(
+      join(apiProfile, 'projects', 'repo-a', 'api.jsonl'),
+      assistantTurn('api-1', 'claude-sonnet-4-6', 300)
+    )
+    const { scanClaudeUsageFiles } = await loadScannerWithHome(home)
+
+    const api = await scanClaudeUsageFiles([], [], undefined, 'claude-api', [apiProfile])
+    const noProfiles = await scanClaudeUsageFiles([], [], undefined, 'claude-api', [])
+
+    // Neither ~/.claude nor ~/.claude-deepseek belongs to the API corpus.
+    expect(api.sessions.map((session) => session.sessionId)).toEqual(['api-1'])
+    expect(noProfiles.sessions).toEqual([])
+  })
 })

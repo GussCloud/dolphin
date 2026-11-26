@@ -138,6 +138,29 @@ export async function scanClaudeUsageOnWorker(
 }
 
 /**
+ * Scan the API-key accounts' Claude-format transcripts on the shared worker.
+ * @param scan - Dispatch function, injected so tests need no real thread.
+ * @param worktrees - Worktree refs used to attribute usage.
+ * @param previous - Last scan's per-file cache.
+ * @param profileConfigDirs - The API account profiles, the whole corpus of this provider.
+ * @returns Processed files plus the session and daily projections.
+ */
+export async function scanClaudeApiUsageOnWorker(
+  scan: (body: UsageScanWorkerRequestBody) => Promise<UsageScanWorkerValue>,
+  worktrees: UsageScanWorktreeRef[],
+  previous: ClaudeUsagePersistedFile[],
+  profileConfigDirs: string[]
+): Promise<
+  ProviderScanResult<ClaudeUsagePersistedFile, ClaudeUsageSession, ClaudeUsageDailyAggregate>
+> {
+  const value = await scan({ providerId: 'claude-api', worktrees, previous, profileConfigDirs })
+  if (value.providerId !== 'claude-api') {
+    throw wrongProvider('claude-api', value.providerId)
+  }
+  return value
+}
+
+/**
  * Scan DeepSeek's Claude-format transcripts (`~/.claude-deepseek`) on the shared worker.
  * @param scan - Dispatch function, injected so tests need no real thread.
  * @param worktrees - Worktree refs used to attribute usage.

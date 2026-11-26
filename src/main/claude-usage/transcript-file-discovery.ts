@@ -4,14 +4,17 @@ import { readdir } from 'node:fs/promises'
 import { DEEPSEEK_CLAUDE_CONFIG_DIR_NAME } from '../../shared/deepseek-claude-provider'
 
 /**
- * Who wrote a Claude-format transcript corpus. DeepSeek runs the Claude Code CLI under its own
- * config dir, so its transcripts share the parser but must never land in Claude's report.
+ * Who wrote a Claude-format transcript corpus. DeepSeek and API-key accounts run the Claude Code
+ * CLI under their own config dirs, so their transcripts share the parser but must never land in
+ * the subscription's report.
  */
-export type ClaudeTranscriptUsageSource = 'claude' | 'deepseek'
+export type ClaudeTranscriptUsageSource = 'claude' | 'deepseek' | 'claude-api'
 
-const CONFIG_DIR_NAME_BY_SOURCE: Record<ClaudeTranscriptUsageSource, string> = {
+// Why null for claude-api: its corpus is only the API account profiles the caller passes.
+const CONFIG_DIR_NAME_BY_SOURCE: Record<ClaudeTranscriptUsageSource, string | null> = {
   claude: '.claude',
-  deepseek: DEEPSEEK_CLAUDE_CONFIG_DIR_NAME
+  deepseek: DEEPSEEK_CLAUDE_CONFIG_DIR_NAME,
+  'claude-api': null
 }
 
 async function walkJsonlFiles(dirPath: string): Promise<string[]> {
@@ -44,7 +47,11 @@ export function getClaudeTranscriptRoots(
   source: ClaudeTranscriptUsageSource,
   home: string = homedir()
 ): string[] {
-  const configDir = join(home, CONFIG_DIR_NAME_BY_SOURCE[source])
+  const configDirName = CONFIG_DIR_NAME_BY_SOURCE[source]
+  if (!configDirName) {
+    return []
+  }
+  const configDir = join(home, configDirName)
   return [join(configDir, 'projects'), join(configDir, 'transcripts')]
 }
 
@@ -53,7 +60,8 @@ export async function listClaudeTranscriptFiles(
   source: ClaudeTranscriptUsageSource = 'claude',
   profileConfigDirs: readonly string[] = []
 ): Promise<string[]> {
-  // Why: managed Claude accounts write into their isolated profiles, never DeepSeek's corpus.
+  // Why: managed Claude accounts write into their isolated profiles, never DeepSeek's corpus. The
+  // caller decides which profiles: plan profiles for `claude`, API account profiles for `claude-api`.
   const profileRoots =
     source === 'deepseek'
       ? []
