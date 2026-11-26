@@ -5,9 +5,9 @@ import type { RuntimeRpcFailure, RuntimeRpcResponse } from '../../../../shared/r
 import type { RuntimeStatus } from '../../../../shared/runtime-types'
 import type { Worktree } from '../../../../shared/worktree/types'
 import {
-  refuseDeepSeekLaunchWithoutHostSupport,
-  runtimeParamsLaunchDeepSeek
-} from '../../../../shared/deepseek-runtime-launch-gate'
+  refuseOwnCredentialsClaudeLaunchWithoutHostSupport,
+  runtimeParamsLaunchOwnCredentialsClaude
+} from '../../../../shared/own-credentials-claude-runtime-launch-gate'
 import {
   getClientForEnvironment,
   manuallyDisconnectedEnvironmentIds,
@@ -30,17 +30,17 @@ export type WebRuntimeEnvelopeCaller = <TResult>(
   timeoutMs?: number
 ) => Promise<RuntimeRpcResponse<TResult>>
 
-// Why sync null for non-DeepSeek calls: an await on every call would defer the enqueue and reorder callers.
-function refuseDeepSeekLaunchOnEnvironment(
+// Why sync null for other calls: an await on every call would defer the enqueue and reorder callers.
+function refuseOwnCredentialsClaudeLaunchOnEnvironment(
   environment: ReturnType<typeof resolveEnvironment>,
   method: string,
   params: unknown,
   timeoutMs: number | undefined
 ): Promise<RuntimeRpcFailure | null> | null {
-  if (!runtimeParamsLaunchDeepSeek(params)) {
+  if (!runtimeParamsLaunchOwnCredentialsClaude(params)) {
     return null
   }
-  return refuseDeepSeekLaunchWithoutHostSupport({
+  return refuseOwnCredentialsClaudeLaunchWithoutHostSupport({
     method,
     params,
     readStatus: () =>
@@ -57,10 +57,15 @@ export async function callRuntimeEnvelope<TResult = unknown>(
   if (manuallyDisconnectedEnvironmentIds.has(environment.id)) {
     return manuallyDisconnectedResponse(environment)
   }
-  const deepSeekGate = refuseDeepSeekLaunchOnEnvironment(environment, method, params, timeoutMs)
-  const deepSeekRefusal = deepSeekGate ? await deepSeekGate : null
-  if (deepSeekRefusal) {
-    return deepSeekRefusal
+  const ownCredentialsGate = refuseOwnCredentialsClaudeLaunchOnEnvironment(
+    environment,
+    method,
+    params,
+    timeoutMs
+  )
+  const ownCredentialsRefusal = ownCredentialsGate ? await ownCredentialsGate : null
+  if (ownCredentialsRefusal) {
+    return ownCredentialsRefusal
   }
   const response = await runtimeCallQueuePool.enqueue(environment.id, method, () => {
     if (manuallyDisconnectedEnvironmentIds.has(environment.id)) {
@@ -85,10 +90,15 @@ export async function callEnvironmentEnvelope<TResult = unknown>(
   if (manuallyDisconnectedEnvironmentIds.has(environment.id)) {
     return manuallyDisconnectedResponse(environment)
   }
-  const deepSeekGate = refuseDeepSeekLaunchOnEnvironment(environment, method, params, timeoutMs)
-  const deepSeekRefusal = deepSeekGate ? await deepSeekGate : null
-  if (deepSeekRefusal) {
-    return deepSeekRefusal
+  const ownCredentialsGate = refuseOwnCredentialsClaudeLaunchOnEnvironment(
+    environment,
+    method,
+    params,
+    timeoutMs
+  )
+  const ownCredentialsRefusal = ownCredentialsGate ? await ownCredentialsGate : null
+  if (ownCredentialsRefusal) {
+    return ownCredentialsRefusal
   }
   const response = await runtimeCallQueuePool.enqueue(environment.id, method, () => {
     if (manuallyDisconnectedEnvironmentIds.has(environment.id)) {

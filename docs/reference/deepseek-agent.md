@@ -36,7 +36,7 @@ so a `<id>[1m]` variant is offered whenever the window is unknown.
 - SSH: refused. The key would cross the relay into an unmanaged remote home.
 - Paired runtime hosts: allowed only when the host advertises
   `AGENT_SESSION_DEEPSEEK_RESUME_RUNTIME_CAPABILITY`. Otherwise the call is refused before it is
-  sent (`src/shared/deepseek-runtime-launch-gate.ts`). An older host drops an unknown
+  sent (`src/shared/own-credentials-claude-runtime-launch-gate.ts`). An older host drops an unknown
   `createdWithAgent` and would run plain `claude` on the host's Anthropic login, so a DeepSeek
   launch must never degrade to a plain Claude launch. Mobile hides DeepSeek when host agent
   detection is unknown.

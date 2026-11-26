@@ -14,11 +14,13 @@ import {
   clearClaudeApiKey,
   getClaudeApiKeyStatus,
   isClaudeApiKeyEncryptionAvailable,
+  readClaudeApiKey,
   saveClaudeApiKey
 } from './claude-api-key-store'
 import type { ClaudeManagedAuthLocation } from './claude-managed-auth-storage'
 import { getClaudePinnedConfigDir } from './managed-auth-path'
 import { setupClaudeApiProfile } from './profile/claude-api-profile-setup'
+import { preapproveClaudeApiKeyInProfile } from '../claude-api/claude-api-key-approval'
 import { ClaudeRuntimePathResolver } from './runtime-paths'
 
 const MAX_LABEL_LENGTH = 80
@@ -69,6 +71,7 @@ export class ClaudeApiKeyAccounts {
         userStatePath: userPaths.configPath,
         copyFromConfigDir
       })
+      await preapproveClaudeApiKeyInProfile(getClaudePinnedConfigDir(id), request.apiKey)
       const now = Date.now()
       const account: ClaudeManagedAccount = {
         id,
@@ -93,12 +96,27 @@ export class ClaudeApiKeyAccounts {
     return this.dependencies.selection.snapshot()
   }
 
-  replaceKey(accountId: string, apiKey: unknown): ClaudeApiKeyStatus {
-    this.requireApiKeyAccount(accountId)
+  async replaceKey(accountId: string, apiKey: unknown): Promise<ClaudeApiKeyStatus> {
+    const account = this.requireApiKeyAccount(accountId)
     if (typeof apiKey !== 'string') {
       throw new Error('Anthropic API key must be a string')
     }
+    let replacedKey: string | null = null
+    try {
+      replacedKey = readClaudeApiKey(accountId)
+    } catch {
+      // An unreadable old key cannot be matched; its approval simply stays.
+    }
     saveClaudeApiKey(accountId, apiKey)
+    try {
+      await preapproveClaudeApiKeyInProfile(getClaudeAccountConfigDir(account), apiKey, replacedKey)
+    } catch (error) {
+      // Why not fail: the key is saved; the next launch retries the approval.
+      console.warn(
+        '[claude-api] failed to pre-approve the replaced key',
+        error instanceof Error ? error.message : ''
+      )
+    }
     return getClaudeApiKeyStatus(accountId)
   }
 

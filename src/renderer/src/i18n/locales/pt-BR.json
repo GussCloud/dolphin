@@ -663,6 +663,7 @@
           "060d152fb5": "Trae",
           "muse_label": "Muse",
           "zcode_label": "ZCode",
+          "claude_api_label": "Claude (chave de API)",
           "deepseek_label": "DeepSeek",
           "deepseek_agent_teams_label": "DeepSeek Agent Teams",
           "d443a47995": "Prime Agent",
@@ -6579,7 +6580,7 @@
           "missingDetail": "A conta com que este workspace foi criado não está mais disponível. Os lançamentos aqui usam a conta ativa.",
           "claudePinned": "Conta do Claude: {{value0}}",
           "apiKeyRefused": "Execução recusada",
-          "apiKeyRefusedDetail": "Este workspace está fixado numa conta de API do Claude. As execuções normais do Claude aqui são recusadas, porque nunca usam uma conta de API."
+          "apiKeyRefusedDetail": "Este workspace está fixado numa conta de API do Claude. O agente Claude API cobra nela; as execuções normais do Claude aqui são recusadas, porque nunca usam uma conta de API."
         },
         "AddRepoAccountStep": {
           "title": "Conta e autor do commit",
@@ -12736,6 +12737,9 @@
           "importDone": "Importação concluída."
         },
         "ClaudeApiAccounts": {
+          "defaultAccount": "O agente Claude API usa",
+          "defaultOnly": "A única conta de API",
+          "defaultNone": "Sem padrão: escolha uma por workspace",
           "title": "Contas de API",
           "description": "Cobre o Claude numa chave de API da Anthropic em vez do seu plano. Cada conta de API tem perfil e chave próprios, e as execuções normais do Claude nunca a usam.",
           "add": "Adicionar conta de API",
@@ -17237,6 +17241,7 @@
           "fc0268e4ed": "Agentes"
         },
         "AgentAccountPicker": {
+          "claudeApiDefault": "Conta de API padrão",
           "label": "Conta",
           "active": "Conta ativa",
           "projectDefault": "Conta do projeto ({{value0}})"

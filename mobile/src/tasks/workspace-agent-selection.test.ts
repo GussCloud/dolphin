@@ -113,6 +113,12 @@ describe('workspace agent selection', () => {
       expect(isWorkspaceAgentOfferable('deepseek', new Set(['claude']))).toBe(false)
     })
 
+    it('hides the claude-api agent when host detection is unknown', () => {
+      // An older host drops the unknown agent and would run plain claude on its own login.
+      expect(isWorkspaceAgentOfferable('claude-api', null)).toBe(false)
+      expect(isWorkspaceAgentOfferable('claude-api', new Set(['claude-api']))).toBe(true)
+    })
+
     it('does not auto-pick a DeepSeek default when detection is unknown', () => {
       expect(pickWorkspaceAgent({ defaultTuiAgent: 'deepseek' }, null)).toBe('claude')
       expect(pickWorkspaceAgent({ defaultTuiAgent: 'deepseek' }, new Set(['deepseek']))).toBe(

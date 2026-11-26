@@ -14,9 +14,9 @@ import {
 } from '../../shared/remote-runtime-client'
 import { withRemoteRuntimeTailscaleHint } from '../../shared/remote-runtime-tailscale-hint'
 import {
-  refuseDeepSeekLaunchWithoutHostSupport,
-  runtimeParamsLaunchDeepSeek
-} from '../../shared/deepseek-runtime-launch-gate'
+  refuseOwnCredentialsClaudeLaunchWithoutHostSupport,
+  runtimeParamsLaunchOwnCredentialsClaude
+} from '../../shared/own-credentials-claude-runtime-launch-gate'
 import { enqueueRuntimeCall } from './runtime-environment-call-queue'
 import { getRuntimeEnvironmentStatusOwner } from './runtime-environment-request-connections'
 import {
@@ -89,8 +89,8 @@ export async function callRuntimeEnvironment(
   const environment = resolveEnvironment(userDataPath, selector)
   // Every desktop call to a paired host passes here; the web client runs the same gate.
   // Why sync check first: awaiting for every call would defer the enqueue and reorder callers.
-  const deepSeekRefusal = runtimeParamsLaunchDeepSeek(params)
-    ? await refuseDeepSeekLaunchWithoutHostSupport({
+  const ownCredentialsRefusal = runtimeParamsLaunchOwnCredentialsClaude(params)
+    ? await refuseOwnCredentialsClaudeLaunchWithoutHostSupport({
         method,
         params,
         readStatus: () =>
@@ -102,8 +102,8 @@ export async function callRuntimeEnvironment(
           )
       })
     : null
-  if (deepSeekRefusal) {
-    return deepSeekRefusal
+  if (ownCredentialsRefusal) {
+    return ownCredentialsRefusal
   }
   // Why: connection failures reject (they don't resolve as ok:false), so the
   // Tailscale hint is applied to the thrown error here — wrapping the resolved

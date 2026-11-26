@@ -1,0 +1,9 @@
+{
+  "capturedAt": "2026-11-26T12:56:40.513Z",
+  "platform": "darwin",
+  "command": ["/Users/user/.local/bin/claude"],
+  "cols": 120,
+  "rows": 40,
+  "note": "Claude Code 2.1.323 or 2.1.332 (the CLI auto-updated to 2.1.332 during this capture session; this screen prints no version), macOS, ANTHROPIC_API_KEY only, fresh CLAUDE_CONFIG_DIR with hasCompletedOnboarding; trust dialog answered Yes, then the custom API key dialog (default No). Key suffix and paths scrubbed (wrapped path removed, so bytes around it are not exact).",
+  "exitCode": 129
+}

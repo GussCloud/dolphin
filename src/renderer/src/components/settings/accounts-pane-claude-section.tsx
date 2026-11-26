@@ -34,6 +34,7 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
     setRemoveClaudeTarget,
     settings,
     systemClaudeActive,
+    updateSettings,
     visibleClaudeAccounts,
     wslCapabilitiesLoading
   } = model
@@ -137,6 +138,10 @@ export function renderClaudeAccountsSection(model: AccountsPaneSectionModel): Re
             accounts={claudeAccounts.accounts}
             claudeAction={claudeAction}
             runClaudeAccountAction={runClaudeAccountAction}
+            defaultAccountId={settings.claudeApiDefaultAccountId ?? null}
+            onDefaultAccountChange={(claudeApiDefaultAccountId) =>
+              updateSettings({ claudeApiDefaultAccountId })
+            }
           />
         ) : null}
 

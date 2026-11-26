@@ -431,6 +431,7 @@
           "mimo_code_label": "MiMo Code",
           "muse_label": "Muse",
           "zcode_label": "ZCode",
+          "claude_api_label": "Claude (clave de API)",
           "deepseek_label": "DeepSeek",
           "deepseek_agent_teams_label": "DeepSeek Agent Teams"
         },

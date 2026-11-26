@@ -340,6 +340,13 @@ export const getAgentCatalog = createLocalizedCatalog((): AgentCatalogEntry[] =>
     label: translate('auto.lib.agent.catalog.deepseek_agent_teams_label', 'DeepSeek Agent Teams'),
     cmd: getTuiAgentLaunchCommand(TUI_AGENT_CONFIG['deepseek-agent-teams'], getCatalogPlatform()),
     homepageUrl: 'https://api-docs.deepseek.com/quick_start/agent_integrations/claude_code/'
+  },
+  // Why last, like DeepSeek: it refuses to launch until an API account exists (auto-pick order).
+  {
+    id: 'claude-api',
+    label: translate('auto.lib.agent.catalog.claude_api_label', 'Claude (API key)'),
+    cmd: 'claude',
+    homepageUrl: 'https://code.claude.com/docs/en/iam'
   }
 ])
 
@@ -364,7 +371,7 @@ export function AgentIcon({
   if (!agent) {
     return <AgentLetterIcon letter="?" size={size} />
   }
-  if (agent === 'claude' || agent === 'claude-agent-teams') {
+  if (agent === 'claude' || agent === 'claude-agent-teams' || agent === 'claude-api') {
     return <ClaudeIcon size={size} />
   }
   if (agent === 'codex') {

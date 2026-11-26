@@ -72,11 +72,19 @@ function planAccount(): ClaudeManagedAccount {
   }
 }
 
+type FakeSettings = {
+  claudeManagedAccounts: ReturnType<typeof planAccount>[]
+  activeClaudeManagedAccountId: string
+  activeClaudeManagedAccountIdsByRuntime: { host: string; wsl: Record<string, string> }
+  claudeApiDefaultAccountId: string | null
+}
+
 async function createService() {
-  let settings = {
+  let settings: FakeSettings = {
     claudeManagedAccounts: [planAccount()],
     activeClaudeManagedAccountId: 'plan',
-    activeClaudeManagedAccountIdsByRuntime: { host: 'plan', wsl: {} }
+    activeClaudeManagedAccountIdsByRuntime: { host: 'plan', wsl: {} },
+    claudeApiDefaultAccountId: null
   }
   const store = {
     getSettings: () => settings,
@@ -130,7 +138,9 @@ describe('ClaudeAccountService API key accounts', () => {
     expect(readFileSync(keyPath(id), 'utf-8')).not.toContain(FAKE_KEY)
     expect(existsSync(join(profileDir(id), '.dolphin-claude-profile.json'))).toBe(true)
     expect(readJson(join(profileDir(id), '.claude.json'))).toMatchObject({
-      hasCompletedOnboarding: true
+      hasCompletedOnboarding: true,
+      // Pre-approved, so the first launch does not stop at Claude Code's API key question.
+      customApiKeyResponses: { approved: [FAKE_KEY.slice(-20)] }
     })
     expect(service.getApiKeyStatus(id)).toEqual({
       apiKeyConfigured: true,
@@ -190,14 +200,22 @@ describe('ClaudeAccountService API key accounts', () => {
     const before = readFileSync(keyPath(id), 'utf-8')
     await service.replaceApiKey(id, 'sk-ant-test-fake-2')
     expect(readFileSync(keyPath(id), 'utf-8')).not.toBe(before)
+    expect(readJson(join(profileDir(id), '.claude.json'))).toMatchObject({
+      // The replaced key's approval is dropped.
+      customApiKeyResponses: { approved: ['sk-ant-test-fake-2'.slice(-20)], rejected: [] }
+    })
   })
 
   it('deletes the key and the profile when the account is removed', async () => {
-    const { service } = await createService()
+    const { service, store } = await createService()
     const state = await service.addApiKeyAccount({ label: 'Work', apiKey: FAKE_KEY })
     const id = state.accounts.find((entry) => entry.authMethod === 'api-key')!.id
+    store.updateSettings({ claudeApiDefaultAccountId: id })
 
     await service.removeAccount(id)
+
+    // A default naming a removed account would refuse every claude-api launch.
+    expect(store.getSettings().claudeApiDefaultAccountId).toBeNull()
 
     expect(existsSync(keyPath(id))).toBe(false)
     expect(existsSync(join(paths.userData, 'claude-accounts', id))).toBe(false)

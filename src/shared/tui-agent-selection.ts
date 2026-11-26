@@ -43,9 +43,10 @@ export const TUI_AGENT_AUTO_PICK_ORDER = [
   'hermes',
   'devin',
   'openclaw',
-  // Why last: DeepSeek refuses to launch until a key is saved, so auto-pick reaches it only when nothing else is enabled.
+  // Why last: DeepSeek and the API-key agent refuse to launch until a key or account exists, so auto-pick reaches them only when nothing else is enabled.
   'deepseek',
-  'deepseek-agent-teams'
+  'deepseek-agent-teams',
+  'claude-api'
 ] as const satisfies readonly TuiAgent[]
 
 // Why: fresh installs should expose Claude Agent Teams in agent pickers; the

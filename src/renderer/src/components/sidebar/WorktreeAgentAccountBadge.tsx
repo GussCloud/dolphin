@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { translate } from '@/i18n/i18n'
 import { useAppStore } from '@/store'
+import { claudeAccountDisplayName } from '../../../../shared/claude-api-account'
 import { parseWslUncPath } from '../../../../shared/wsl-paths'
 import {
   resolveWorktreeAgentAccount,
@@ -47,8 +48,16 @@ export function WorktreeAgentAccountBadge({
   const email = unavailable
     ? null
     : accounts.find((account) => account.id === resolution.accountId)?.email
+  const apiAccount = refused
+    ? settings.claudeManagedAccounts.find((account) => account.id === resolution.accountId)
+    : undefined
   const label = refused
-    ? translate('auto.components.sidebar.WorktreeAgentAccountBadge.apiKeyRefused', 'Launch refused')
+    ? apiAccount
+      ? claudeAccountDisplayName(apiAccount)
+      : translate(
+          'auto.components.sidebar.WorktreeAgentAccountBadge.apiKeyRefused',
+          'Launch refused'
+        )
     : unavailable
       ? translate(
           'auto.components.sidebar.WorktreeAgentAccountBadge.unavailable',
@@ -58,7 +67,7 @@ export function WorktreeAgentAccountBadge({
   const tooltip = refused
     ? translate(
         'auto.components.sidebar.WorktreeAgentAccountBadge.apiKeyRefusedDetail',
-        'This workspace is pinned to a Claude API account. Plain Claude launches here are refused, because they never use an API account.'
+        'This workspace is pinned to a Claude API account. The Claude API agent bills it; plain Claude launches here are refused, because they never use an API account.'
       )
     : unavailable
       ? resolution.reason === 'missing'

@@ -3,6 +3,10 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { DEEPSEEK_PROVIDER_ENV_KEY } from '../../shared/deepseek-claude-provider'
+import {
+  CLAUDE_API_PROVIDER_ENV_KEY,
+  CLAUDE_API_PROVIDER_ENV_VALUE
+} from '../../shared/claude-api-provider'
 import { ClaudeAgentTeamsLeaderRegistry } from './claude-agent-teams-leader-registry'
 import { ClaudeAgentTeamsService } from './claude-agent-teams-service'
 import { buildClaudeAgentTeamsLaunchPlan } from './claude-agent-teams-shim-env'
@@ -81,6 +85,24 @@ describe('Agent Teams DeepSeek provider marker', () => {
       expect(claude('/shim', '/usr/bin/dolphin', ['/shim'])).toMatchObject(routing)
     }
     expect(service.getActiveTeamCount()).toBe(2)
+  })
+
+  it('never registers a team for an API-key leader, so no teammate spawns on the plan', () => {
+    const service = new ClaudeAgentTeamsService('linux')
+    for (const leader of [
+      { launchAgent: 'claude-api', baseEnv: { PATH: '/usr/bin' } },
+      {
+        launchAgent: undefined,
+        baseEnv: {
+          PATH: '/usr/bin',
+          [CLAUDE_API_PROVIDER_ENV_KEY]: CLAUDE_API_PROVIDER_ENV_VALUE
+        }
+      }
+    ]) {
+      const factory = service.createLaunchEnvFactory({ leaderHandle: 'leader', ...leader })
+      expect(factory('/shim', '/usr/bin/dolphin', ['/shim'])).toBeNull()
+    }
+    expect(service.getActiveTeamCount()).toBe(0)
   })
 
   it('turns a refused team env into an in-process launch plan', async () => {

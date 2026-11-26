@@ -7,7 +7,7 @@ import {
   isWebRuntimeSessionActive
 } from '@/runtime/web-runtime-session'
 import type { AiVaultAgent } from '../../../shared/ai-vault-types'
-import { isDeepSeekTuiAgent } from '../../../shared/deepseek-claude-provider'
+import { isOwnCredentialsClaudeTuiAgent } from '../../../shared/own-credentials-claude-provider'
 import type {
   AgentProviderSessionMetadata,
   SleepingAgentLaunchConfig
@@ -77,8 +77,10 @@ export function launchAiVaultSessionInNewTab(args: {
     ...(args.env ? { env: args.env } : {}),
     ...(args.envToDelete ? { envToDelete: args.envToDelete } : {}),
     ...(args.launchConfig ? { launchConfig: args.launchConfig, launchAgent: args.agent } : {}),
-    // Why: launchAgent is the only signal for the DeepSeek env; without it `claude --resume` runs on the Claude login.
-    ...(!args.launchConfig && isDeepSeekTuiAgent(args.agent) ? { launchAgent: args.agent } : {}),
+    // Why: launchAgent is the only signal for a provider env; without it `claude --resume` runs on the Claude login.
+    ...(!args.launchConfig && isOwnCredentialsClaudeTuiAgent(args.agent)
+      ? { launchAgent: args.agent }
+      : {}),
     ...(args.providerSession ? { resumeProviderSession: args.providerSession } : {}),
     telemetry: {
       agent_kind: tuiAgentToAgentKind(args.agent),

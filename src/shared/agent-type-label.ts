@@ -5,6 +5,7 @@ import type { AgentType } from './agent-status-types'
 const WELL_KNOWN_LABELS: Record<string, string> = {
   claude: 'Claude',
   openclaude: 'OpenClaude',
+  'claude-api': 'Claude (API key)',
   deepseek: 'DeepSeek',
   'deepseek-agent-teams': 'DeepSeek Agent Teams',
   codex: 'Codex',

@@ -6,6 +6,7 @@ export type AgentPermissionMode = 'yolo' | 'manual' | 'mixed'
 export const YOLO_TUI_AGENT_ARGS: Partial<Record<TuiAgent, string>> = {
   claude: '--dangerously-skip-permissions',
   'claude-agent-teams': '--dangerously-skip-permissions',
+  'claude-api': '--dangerously-skip-permissions',
   deepseek: '--dangerously-skip-permissions',
   'deepseek-agent-teams': '--dangerously-skip-permissions',
   openclaude: '--dangerously-skip-permissions',

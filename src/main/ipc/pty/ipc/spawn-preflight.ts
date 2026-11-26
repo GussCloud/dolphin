@@ -19,11 +19,22 @@ import {
 } from '../host-env/fresh-spawn-routing'
 import { getAppPtyId, getProvider, getRelayPtyId } from '../provider/registry'
 import type { PtyIpcSpawnState } from './spawn-state'
-import { isDeepSeekLaunchRequest } from '../../../deepseek/deepseek-launch-request'
-import { prepareDeepSeekLaunch } from '../../../deepseek/deepseek-config-home-setup'
+import { prepareOwnCredentialsClaudeLaunch } from '../../../claude-api/own-credentials-claude-launch-env'
+import { routeClaudeApiResumeEnv } from '../../../claude-api/claude-api-launch-request'
 import { readClaudeSpawnResumeSessionId } from '../../../claude-accounts/profile/claude-session-profile'
 
 export async function preparePtyIpcSpawnPreflight(ctx: PtyIpcSpawnState): Promise<void> {
+  // Why before anything reads the env: the managed-account gate must see an API resume's marker.
+  ctx.args = {
+    ...ctx.args,
+    env: routeClaudeApiResumeEnv({
+      launchAgent: ctx.args.launchAgent,
+      env: ctx.args.env,
+      command: ctx.args.command,
+      connectionId: ctx.args.connectionId,
+      settings: ctx.deps.getSettings?.()
+    })
+  }
   const args = ctx.args
   // Establish daemon identity before the first await so hidden delivery is gated before byte zero.
   ctx.provider = getProvider(args.connectionId)
@@ -254,15 +265,16 @@ export async function preparePtyIpcSpawnPreflight(ctx: PtyIpcSpawnState): Promis
           resumeSessionId: readClaudeSpawnResumeSessionId(args.command)
         })
       : null
-  ctx.deepSeekEnvPatch =
-    !ctx.preAdoptedStablePane &&
-    isDeepSeekLaunchRequest({ launchAgent: args.launchAgent, env: args.env })
-      ? await prepareDeepSeekLaunch({
-          connectionId: args.connectionId,
-          target: initialSelectionTarget,
-          settings: ctx.deps.getSettings?.(),
-          launchEnv: args.env
-        })
-      : null
+  ctx.ownCredentialsEnvPatch = ctx.preAdoptedStablePane
+    ? null
+    : await prepareOwnCredentialsClaudeLaunch({
+        launchAgent: args.launchAgent,
+        env: args.env,
+        command: args.command,
+        connectionId: args.connectionId,
+        target: initialSelectionTarget,
+        settings: ctx.deps.getSettings?.(),
+        launch: { worktreeId: args.worktreeId, workspacePath: ctx.cwd }
+      })
   ctx.spawnTiming.mark('auth')
 }

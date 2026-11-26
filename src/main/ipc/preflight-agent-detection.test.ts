@@ -164,7 +164,12 @@ describe('preflight', () => {
       throw new Error('not found')
     })
 
-    await expect(detectInstalledAgents()).resolves.toEqual(['claude', 'deepseek', 'cursor'])
+    await expect(detectInstalledAgents()).resolves.toEqual([
+      'claude',
+      'claude-api',
+      'deepseek',
+      'cursor'
+    ])
   })
 
   it('does not report Claude Agent Teams when only the Dolphin shim is present', async () => {
@@ -216,6 +221,7 @@ describe('preflight', () => {
     await expect(detectInstalledAgents()).resolves.toEqual([
       'claude',
       'claude-agent-teams',
+      'claude-api',
       'deepseek',
       'deepseek-agent-teams'
     ])
@@ -254,6 +260,7 @@ describe('preflight', () => {
     await expect(detectInstalledAgents()).resolves.toEqual([
       'claude',
       'claude-agent-teams',
+      'claude-api',
       'deepseek',
       'deepseek-agent-teams'
     ])
@@ -288,6 +295,7 @@ describe('preflight', () => {
 
     await expect(detectInstalledAgents()).resolves.toEqual([
       'claude',
+      'claude-api',
       'deepseek',
       'codex',
       'opencode'
@@ -316,7 +324,7 @@ describe('preflight', () => {
       (commands: string[]) => new Map(commands.map((cmd) => [cmd, cmd]))
     )
 
-    await expect(detectInstalledAgents()).resolves.toEqual(['claude', 'deepseek'])
+    await expect(detectInstalledAgents()).resolves.toEqual(['claude', 'claude-api', 'deepseek'])
     expect(resolveCliCommandsMock).toHaveBeenCalledTimes(1)
     expect(resolveCliCommandsMock).toHaveBeenCalledWith(expect.not.arrayContaining(['claude']))
   })

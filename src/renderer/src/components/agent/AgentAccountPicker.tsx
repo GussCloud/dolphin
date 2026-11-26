@@ -7,16 +7,14 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { translate } from '@/i18n/i18n'
-import type {
-  WorktreeAccountAgent,
-  WorktreeAgentAccountChoice
-} from '../../../../shared/worktree-agent-account'
+import type { WorktreeAgentAccountChoice } from '../../../../shared/worktree-agent-account'
+import type { AgentAccountPickerAgent } from './agent-account-picker-choices'
 
 // Radix Select forbids an empty item value, so "no pin" needs a sentinel.
 const ACTIVE_ACCOUNT_VALUE = '__active-account__'
 
 export type AgentAccountPickerProps = {
-  agent: WorktreeAccountAgent
+  agent: AgentAccountPickerAgent
   choices: readonly WorktreeAgentAccountChoice[]
   /** Null keeps the runtime's active account, or the project's default when one is set. */
   value: string | null
@@ -49,13 +47,18 @@ export function AgentAccountPicker({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value={ACTIVE_ACCOUNT_VALUE}>
-            {inheritedChoice
+            {agent === 'claude-api'
               ? translate(
-                  'auto.components.agent.AgentAccountPicker.projectDefault',
-                  'Project account ({{value0}})',
-                  { value0: inheritedChoice.email }
+                  'auto.components.agent.AgentAccountPicker.claudeApiDefault',
+                  'Default API account'
                 )
-              : translate('auto.components.agent.AgentAccountPicker.active', 'Active account')}
+              : inheritedChoice
+                ? translate(
+                    'auto.components.agent.AgentAccountPicker.projectDefault',
+                    'Project account ({{value0}})',
+                    { value0: inheritedChoice.email }
+                  )
+                : translate('auto.components.agent.AgentAccountPicker.active', 'Active account')}
           </SelectItem>
           {choices.map((choice) => (
             <SelectItem key={choice.id} value={choice.id}>

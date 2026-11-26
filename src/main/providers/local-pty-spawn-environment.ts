@@ -1,3 +1,4 @@
+import { deletePlatformEnvKeys } from '../../shared/platform-env-key-deletion'
 import { mergeGitConfigEnvProtocol } from '../../shared/git-credential-prompt-env'
 import {
   DOLPHIN_IMAGE_PROTOCOL_ENV,
@@ -36,9 +37,7 @@ export function buildLocalPtySpawnEnvironment(args: {
   stripPiProcessOwnerEnv(spawnEnv)
   removeAppImageRuntimeEnv(spawnEnv)
   removeInheritedNoColor(spawnEnv)
-  for (const key of spawn.envToDelete ?? []) {
-    delete spawnEnv[key]
-  }
+  deletePlatformEnvKeys(spawnEnv, spawn.envToDelete)
   if (spawn.env?.TERM) {
     spawnEnv.TERM = spawn.env.TERM
   }
@@ -75,9 +74,7 @@ export function enforceLocalPtySpawnEnvironmentOverrides(
   finalEnv: Record<string, string>
 ): void {
   stripPiProcessOwnerEnv(finalEnv)
-  for (const key of spawn.envToDelete ?? []) {
-    delete finalEnv[key]
-  }
+  deletePlatformEnvKeys(finalEnv, spawn.envToDelete)
   if (spawn.env?.TERM) {
     finalEnv.TERM = spawn.env.TERM
   }

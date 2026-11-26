@@ -1,3 +1,4 @@
+import { isClaudeApiProviderEnv, isClaudeApiTuiAgent } from '../../shared/claude-api-provider'
 import { randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
 import { splitTmuxCommand } from '../../shared/claude-agent-teams-tmux-compat'
 import { ClaudeAgentTeamsTmuxDispatcher } from './claude-agent-teams-tmux-dispatcher'
@@ -131,8 +132,11 @@ export class ClaudeAgentTeamsService {
     shimPathDirs: string[]
   ) => Record<string, string> | null {
     const deepSeekProvider = isDeepSeekTuiAgent(args.launchAgent)
+    // Why: teammates of an API-key leader are not wired yet; a team would spawn them on the plan.
+    const claudeApiLeader =
+      isClaudeApiTuiAgent(args.launchAgent) || isClaudeApiProviderEnv(args.baseEnv)
     return (shimDir, shimBin, shimPathDirs) =>
-      deepSeekProvider && routesAgentTeamToRemoteRuntime(args.baseEnv)
+      claudeApiLeader || (deepSeekProvider && routesAgentTeamToRemoteRuntime(args.baseEnv))
         ? null
         : this.createLaunchEnv({
             leaderHandle: args.leaderHandle,

@@ -92,13 +92,14 @@ describe('WorktreeAgentAccountBadge', () => {
     expect(badge?.getAttribute('aria-label')).toBe('Claude account: claude-pinned@example.test')
   })
 
-  it('says plain Claude launches are refused, not redirected, for a pin to an API account', () => {
+  it('names the API account and says plain Claude launches are refused, not redirected', () => {
     const { container } = render(
       <WorktreeAgentAccountBadge worktree={{ agentAccountId: 'claude-api', path: '/repos/a' }} />
     )
     const badge = container.querySelector('[data-worktree-agent-account]')
     expect(badge?.getAttribute('data-worktree-agent-account')).toBe('refused')
-    expect(badge?.textContent).toBe('Launch refused')
+    // The Claude API agent bills this pin, so the badge names it instead of only a refusal.
+    expect(badge?.textContent).toBe('Work API')
     expect(badge?.getAttribute('aria-label')).toContain('are refused')
     expect(badge?.getAttribute('aria-label')).not.toContain('active account')
   })

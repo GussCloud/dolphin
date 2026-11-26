@@ -2,7 +2,7 @@ import { normalizeRuntimePathForComparison } from '../../../../shared/cross-plat
 import { splitWorktreeIdForFilesystem } from '../../../../shared/worktree/id'
 import type { IPtyProvider } from '../../../providers/types'
 import { beginTerminalInstall } from '../../watcher-removal-gate'
-import { isDeepSeekLaunchRequest } from '../../../deepseek/deepseek-launch-request'
+import { isOwnCredentialsClaudeLaunchRequest } from '../../../claude-api/own-credentials-claude-launch-request'
 
 export function isClaudeLaunchCommand(command: string | undefined): boolean {
   if (!command) {
@@ -14,7 +14,8 @@ export function isClaudeLaunchCommand(command: string | undefined): boolean {
 }
 
 /** Fresh local spawns that go through the managed Claude account gate (auth patch, switch lock).
- *  DeepSeek panes run the same `claude` binary against another API, so they are never gated. */
+ *  DeepSeek and API-key panes run the same `claude` binary on credentials Dolphin injects, so they
+ *  are never gated: the gate would strip their key and hand them a plan account's profile. */
 export function isManagedClaudeAuthLaunch(args: {
   command: string | undefined
   launchAgent: unknown
@@ -25,7 +26,7 @@ export function isManagedClaudeAuthLaunch(args: {
   return (
     !args.preAdoptedStablePane &&
     !args.connectionId &&
-    !isDeepSeekLaunchRequest({ launchAgent: args.launchAgent, env: args.env }) &&
+    !isOwnCredentialsClaudeLaunchRequest({ launchAgent: args.launchAgent, env: args.env }) &&
     isClaudeLaunchCommand(args.command)
   )
 }

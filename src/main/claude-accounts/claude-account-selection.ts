@@ -64,6 +64,9 @@ export class ClaudeAccountSelection {
       // Why first: a throw here rolls the account back while its profile still exists.
       if (isClaudeApiKeyAccount(account)) {
         clearClaudeApiKey(accountId)
+        if (settings.claudeApiDefaultAccountId === accountId) {
+          this.store.updateSettings({ claudeApiDefaultAccountId: null })
+        }
       }
       // Why: a linked folder is the user's own; unlinking must never touch it.
       if (!account.linkedConfigDir) {
