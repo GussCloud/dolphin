@@ -5,6 +5,7 @@ import {
   CLAUDE_API_UNREADABLE_KEY_MESSAGE,
   CLAUDE_API_WSL_UNSUPPORTED_MESSAGE,
   prepareClaudeApiLaunch,
+  resolveClaudeApiTeamAccountId,
   type ClaudeApiLaunchDeps,
   type ClaudeApiLaunchRequest
 } from './claude-api-launch'
@@ -112,5 +113,36 @@ describe('prepareClaudeApiLaunch', () => {
       })
     )
     expect(env.DOLPHIN_CLAUDE_API_ACCOUNT).toBe('api2')
+  })
+})
+
+describe('resolveClaudeApiTeamAccountId', () => {
+  it("follows a resumed transcript's owner over the pane account, as the leader's spawn does", () => {
+    const API2 = { ...API1, id: 'api2' }
+    const accountId = resolveClaudeApiTeamAccountId(
+      {
+        settings: { claudeManagedAccounts: [API1, API2] },
+        launchEnv: { DOLPHIN_CLAUDE_API_ACCOUNT: 'api1' },
+        command: 'claude --resume 11111111-2222-3333-4444-555555555555',
+        launch: {}
+      },
+      deps({ holdsSession: (configDir) => configDir.includes('api2') })
+    )
+    expect(accountId).toBe('api2')
+  })
+
+  it('keeps the pane account when nothing outranks it', () => {
+    const API2 = { ...API1, id: 'api2' }
+    expect(
+      resolveClaudeApiTeamAccountId(
+        {
+          settings: { claudeManagedAccounts: [API1, API2], claudeApiDefaultAccountId: 'api1' },
+          launchEnv: { DOLPHIN_CLAUDE_API_ACCOUNT: 'api2' },
+          command: 'claude',
+          launch: {}
+        },
+        deps()
+      )
+    ).toBe('api2')
   })
 })

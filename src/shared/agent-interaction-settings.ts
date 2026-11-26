@@ -47,7 +47,9 @@ export type AgentInteractionSettings = {
 }
 
 /** A partial update as `mergeAgentInteractionSettings` applies it: nested objects merge. */
-export type AgentInteractionSettingsPatch = Partial<Pick<AgentInteractionSettings, 'enabled' | 'volume'>> & {
+export type AgentInteractionSettingsPatch = Partial<
+  Pick<AgentInteractionSettings, 'enabled' | 'volume'>
+> & {
   avatar?: Partial<AgentInteractionAvatarSettings>
   events?: Partial<Record<AgentInteractionKind, Partial<AgentInteractionEventSettings>>>
 }
@@ -144,7 +146,10 @@ export function normalizeAgentInteractionSettings(value: unknown): AgentInteract
 }
 
 /** Applies a partial update; nested objects merge so flipping one event keeps its siblings. */
-export function mergeAgentInteractionSettings(current: unknown, patch: unknown): AgentInteractionSettings {
+export function mergeAgentInteractionSettings(
+  current: unknown,
+  patch: unknown
+): AgentInteractionSettings {
   // Why normalize first: a state object built before this field existed has no value to merge into.
   const base = normalizeAgentInteractionSettings(current)
   const update = readRecord(patch)

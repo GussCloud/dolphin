@@ -1,3 +1,4 @@
+import { claudeApiTuiAgentConfigSources } from './claude-api-tui-agent-config'
 import type { TuiAgent } from './tui-agent'
 import {
   CLI_COMMAND_NAME,
@@ -123,10 +124,8 @@ const CLAUDE_AGENT_TEAMS_CONFIG_SOURCE: TuiAgentConfigSource = {
 const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
   claude: CLAUDE_CONFIG_SOURCE,
   'claude-agent-teams': CLAUDE_AGENT_TEAMS_CONFIG_SOURCE,
+  ...claudeApiTuiAgentConfigSources(CLAUDE_CONFIG_SOURCE, CLAUDE_AGENT_TEAMS_CONFIG_SOURCE),
   // Why: DeepSeek is the Claude Code CLI pointed at another API; PTY spawn injects the provider env.
-  // Why: the API-key agent is the Claude Code CLI; PTY spawn injects the account profile and key.
-  // Not offered from WSL detection: its launch is refused there.
-  'claude-api': { ...CLAUDE_CONFIG_SOURCE, detectUnsupportedRuntimes: ['wsl'] },
   deepseek: CLAUDE_CONFIG_SOURCE,
   'deepseek-agent-teams': CLAUDE_AGENT_TEAMS_CONFIG_SOURCE,
   openclaude: {

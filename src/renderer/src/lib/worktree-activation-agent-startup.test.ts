@@ -215,12 +215,38 @@ describe('ensureWorktreeHasInitialTerminal', () => {
     })
     expect(store.queueTabStartupCommand).toHaveBeenCalledWith('tab-1', {
       command: 'claude',
+      launchAgent: 'claude',
       telemetry: {
         agent_kind: 'claude-code',
         launch_source: 'new_workspace_composer',
         request_kind: 'new'
       }
     })
+  })
+
+  it('queues the API-key agent a telemetry-only startup names, so main never launches plain claude', () => {
+    const store = createMockStore()
+
+    // A CLI/runtime-built startup reaches activation with telemetry but no launchAgent.
+    ensureWorktreeHasInitialTerminal(
+      store,
+      'wt-1',
+      {
+        command: 'claude',
+        telemetry: {
+          agent_kind: 'claude-api-agent-teams',
+          launch_source: 'new_workspace_composer',
+          request_kind: 'new'
+        }
+      },
+      undefined,
+      undefined
+    )
+
+    expect(store.queueTabStartupCommand).toHaveBeenCalledWith(
+      'tab-1',
+      expect.objectContaining({ launchAgent: 'claude-api-agent-teams' })
+    )
   })
 
   it('stamps the tab agent from startup launchAgent without telemetry', () => {

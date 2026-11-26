@@ -2,12 +2,15 @@ import { DEEPSEEK_PROVIDER_ENV_KEY } from './deepseek-claude-provider'
 import type { TuiAgent } from './tui-agent'
 
 /** The Claude Code CLI billed to a per-account Anthropic API key, inside that account's profile. */
-export const CLAUDE_API_TUI_AGENTS = ['claude-api'] as const satisfies readonly TuiAgent[]
+export const CLAUDE_API_TUI_AGENTS = [
+  'claude-api',
+  'claude-api-agent-teams'
+] as const satisfies readonly TuiAgent[]
 
 export type ClaudeApiTuiAgent = (typeof CLAUDE_API_TUI_AGENTS)[number]
 
 export function isClaudeApiTuiAgent(agent: unknown): agent is ClaudeApiTuiAgent {
-  return agent === 'claude-api'
+  return agent === 'claude-api' || agent === 'claude-api-agent-teams'
 }
 
 /** Same marker key as DeepSeek: one pane runs one provider. */
@@ -64,5 +67,16 @@ export function buildClaudeApiClaudeEnv(args: {
     [CLAUDE_API_PROVIDER_ENV_KEY]: CLAUDE_API_PROVIDER_ENV_VALUE,
     [CLAUDE_API_ACCOUNT_ENV_KEY]: args.accountId,
     ANTHROPIC_API_KEY: args.apiKey
+  }
+}
+
+/**
+ * The env an API-key Agent Team carries: only the non-secret marker and the leader's account, so
+ * each teammate spawn reads that account's key fresh. The key itself never enters a team env.
+ */
+export function buildClaudeApiTeamEnv(accountId: string): Record<string, string> {
+  return {
+    [CLAUDE_API_PROVIDER_ENV_KEY]: CLAUDE_API_PROVIDER_ENV_VALUE,
+    [CLAUDE_API_ACCOUNT_ENV_KEY]: accountId
   }
 }

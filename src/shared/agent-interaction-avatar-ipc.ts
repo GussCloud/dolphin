@@ -15,7 +15,10 @@ export type AgentInteractionAvatarSoundResult =
 
 export type AgentInteractionAvatarImageResult =
   | { ok: true; data: Uint8Array; mimeType: string }
-  | { ok: false; reason: 'default' | 'invalid-path' | 'unsupported-type' | 'too-large' | 'read-failed' }
+  | {
+      ok: false
+      reason: 'default' | 'invalid-path' | 'unsupported-type' | 'too-large' | 'read-failed'
+    }
 
 /** Bounds what the main window may claim to be showing at once; it shows one or two. */
 export const AGENT_INTERACTION_VIEWED_WORKTREES_MAX = 8

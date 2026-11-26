@@ -642,6 +642,7 @@
           "opencode2_label": "OpenCode 2",
           "zcode_label": "ZCode",
           "claude_api_label": "Claude (clé API)",
+          "claude_api_agent_teams_label": "Claude Agent Teams (clé API)",
           "deepseek_label": "DeepSeek",
           "deepseek_agent_teams_label": "DeepSeek Agent Teams"
         },

@@ -41,7 +41,12 @@ describe('classifyAgentInteractionTransition', () => {
     ).toEqual(['task-interrupted'])
     expect(
       done({
-        mainAgent: { state: 'done', outcome: 'failure', failureKind: 'rate_limit', stateStartedAt: 2 }
+        mainAgent: {
+          state: 'done',
+          outcome: 'failure',
+          failureKind: 'rate_limit',
+          stateStartedAt: 2
+        }
       })
     ).toEqual(['task-failed'])
   })
@@ -50,7 +55,12 @@ describe('classifyAgentInteractionTransition', () => {
     const retryable = row({
       state: 'done',
       stateStartedAt: 2,
-      mainAgent: { state: 'done', outcome: 'failure', failureKind: 'server_error', stateStartedAt: 2 }
+      mainAgent: {
+        state: 'done',
+        outcome: 'failure',
+        failureKind: 'server_error',
+        stateStartedAt: 2
+      }
     })
     expect(
       classifyAgentInteractionTransition(row(), row({ state: 'done', sessionBoundary: true }))
@@ -75,7 +85,10 @@ describe('classifyAgentInteractionTransition', () => {
       'task-started'
     ])
     expect(
-      classifyAgentInteractionTransition(done, row({ stateStartedAt: 2, workingMode: 'monitoring' }))
+      classifyAgentInteractionTransition(
+        done,
+        row({ stateStartedAt: 2, workingMode: 'monitoring' })
+      )
     ).toEqual([])
     expect(
       classifyAgentInteractionTransition(row({ state: 'blocked' }), row({ stateStartedAt: 2 }))
@@ -104,7 +117,10 @@ describe('classifyAgentInteractionTransition', () => {
 
   it('never announces a hydrated row, and a first sighting only for live attention or a start', () => {
     expect(
-      classifyAgentInteractionTransition(undefined, row({ state: 'blocked', restoredUnconfirmed: true }))
+      classifyAgentInteractionTransition(
+        undefined,
+        row({ state: 'blocked', restoredUnconfirmed: true })
+      )
     ).toEqual([])
     expect(classifyAgentInteractionTransition(undefined, row({ state: 'done' }))).toEqual([])
     expect(classifyAgentInteractionTransition(undefined, row({ state: 'blocked' }))).toEqual([

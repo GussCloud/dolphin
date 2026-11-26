@@ -144,7 +144,9 @@ export const COMMIT_MESSAGE_AGENT_SPECS: Partial<Record<TuiAgent, CommitMessageA
 /** Launch variants with no generation spec of their own run their base agent's CLI. */
 const SOURCE_CONTROL_AGENT_BASE: Partial<Record<TuiAgent, TuiAgent>> = {
   'claude-agent-teams': 'claude',
-  'deepseek-agent-teams': 'deepseek'
+  'deepseek-agent-teams': 'deepseek',
+  // Why: no API-key generation spec yet, so the base resolves to unavailable, never plain claude.
+  'claude-api-agent-teams': 'claude-api'
 }
 
 export const DEFAULT_COMMIT_MESSAGE_AGENT_ID: TuiAgent = 'claude'

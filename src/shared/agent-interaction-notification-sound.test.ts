@@ -27,13 +27,16 @@ describe('agent interaction notification sound ownership', () => {
     const request = { source: 'agent-task-complete' } as const
     expect(isNotificationSoundOwnedByAgentInteraction(undefined, request)).toBe(false)
     expect(
-      isNotificationSoundOwnedByAgentInteraction(mergeAgentInteractionSettings(undefined, {}), request)
+      isNotificationSoundOwnedByAgentInteraction(
+        mergeAgentInteractionSettings(undefined, {}),
+        request
+      )
     ).toBe(false)
     const enabled = mergeAgentInteractionSettings(undefined, { enabled: true })
     expect(isNotificationSoundOwnedByAgentInteraction(enabled, request)).toBe(true)
-    expect(
-      isNotificationSoundOwnedByAgentInteraction(enabled, { source: 'terminal-bell' })
-    ).toBe(false)
+    expect(isNotificationSoundOwnedByAgentInteraction(enabled, { source: 'terminal-bell' })).toBe(
+      false
+    )
     const eventOff = mergeAgentInteractionSettings(enabled, {
       events: { 'task-done': { enabled: false } }
     })

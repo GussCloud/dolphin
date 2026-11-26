@@ -63,6 +63,8 @@ export type ClaudeApiLaunchSource = {
   worktreeSource: WorktreeAccountMetaSource
   /** An account's profile dir; owned by the account service so this module stays Electron-free. */
   configDirFor: (account: ClaudeManagedAccount) => string
+  /** Current settings, for callers (Agent Teams) that do not hold them. */
+  getSettings?: () => ClaudeApiLaunchSettings | undefined
 }
 
 let launchSource: ClaudeApiLaunchSource | null = null
@@ -130,6 +132,42 @@ export function findClaudeApiResumeOwner(
 }
 
 /**
+ * The API account an Agent Teams leader bills, for its team env; null when it cannot be decided
+ * here (the leader's own spawn then refuses with the reason, and teammates stay in-process).
+ */
+export function resolveClaudeApiTeamAccountId(
+  request: Pick<ClaudeApiLaunchRequest, 'launchEnv' | 'command' | 'launch'> &
+    Partial<Pick<ClaudeApiLaunchRequest, 'settings'>>,
+  deps: ClaudeApiLaunchDeps = defaultDeps
+): string | null {
+  // Why the full order, not the pane account first: the leader's own spawn puts a resumed
+  // transcript's owner ahead of it, and teammates must bill the account the leader runs on.
+  const settings = request.settings ?? launchSource?.getSettings?.()
+  try {
+    return resolveRequestAccount({ ...request, settings }, deps).id
+  } catch {
+    // Why the pane account still counts: with no account service here the order cannot run, and a
+    // gone account only makes each teammate refuse, which is the same outcome as the leader's.
+    return readClaudeApiAccountEnv(request.launchEnv)
+  }
+}
+
+function resolveRequestAccount(
+  request: Pick<ClaudeApiLaunchRequest, 'settings' | 'launchEnv' | 'command' | 'launch'>,
+  deps: ClaudeApiLaunchDeps
+): ClaudeManagedAccount {
+  const settings = request.settings ?? {}
+  const source = deps.worktreeSource()
+  return resolveClaudeApiLaunchAccount(settings, {
+    resumeOwnerAccountId: findClaudeApiResumeOwner(settings, request.command, deps)?.id ?? null,
+    paneAccountId: readClaudeApiAccountEnv(request.launchEnv),
+    worktreePinAccountId: source
+      ? (findLaunchWorktree(source, request.launch)?.meta.agentAccountId ?? null)
+      : null
+  })
+}
+
+/**
  * The env a `claude-api` launch needs: the account's profile as CLAUDE_CONFIG_DIR and its key.
  * Throws a user-facing error whenever that is impossible; it never falls back to another login.
  */
@@ -146,14 +184,7 @@ export async function prepareClaudeApiLaunch(
     throw new Error(CLAUDE_API_WSL_UNSUPPORTED_MESSAGE)
   }
   const settings = request.settings ?? {}
-  const source = deps.worktreeSource()
-  const account = resolveClaudeApiLaunchAccount(settings, {
-    resumeOwnerAccountId: findClaudeApiResumeOwner(settings, request.command, deps)?.id ?? null,
-    paneAccountId: readClaudeApiAccountEnv(request.launchEnv),
-    worktreePinAccountId: source
-      ? (findLaunchWorktree(source, request.launch)?.meta.agentAccountId ?? null)
-      : null
-  })
+  const account = resolveRequestAccount(request, deps)
   let apiKey: string | null
   try {
     apiKey = deps.readApiKey(account.id)

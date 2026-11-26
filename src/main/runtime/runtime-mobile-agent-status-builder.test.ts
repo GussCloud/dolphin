@@ -72,7 +72,6 @@ describe('mobile agent status builder', () => {
     expect(result).toEqual({ agentStatus: expect.objectContaining({ agentType: 'deepseek' }) })
   })
 
-
   it('keeps provider-session identity from a terminal-handle row rejoin', () => {
     const retained: RuntimeAgentRowSnapshot = {
       paneKey: 'old-tab:old-leaf',

@@ -9,6 +9,7 @@ export const TUI_AGENT_DISPLAY_NAMES: Record<TuiAgent, string> = {
   claude: 'Claude',
   'claude-agent-teams': 'Claude Agent Teams',
   'claude-api': 'Claude (API key)',
+  'claude-api-agent-teams': 'Claude Agent Teams (API key)',
   deepseek: 'DeepSeek',
   'deepseek-agent-teams': 'DeepSeek Agent Teams',
   openclaude: 'OpenClaude',

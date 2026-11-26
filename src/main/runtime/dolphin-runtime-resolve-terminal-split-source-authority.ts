@@ -29,7 +29,7 @@ import {
 import { resolveGitBashPath } from '../git-bash'
 import { overlayPlatformEnv } from '../../shared/platform-env-overlay'
 import { isOwnCredentialsClaudeProviderEnv } from '../../shared/own-credentials-claude-provider'
-import { isClaudeApiProviderEnv } from '../../shared/claude-api-provider'
+import { isClaudeApiProviderEnv, readClaudeApiAccountEnv } from '../../shared/claude-api-provider'
 import { isDeepSeekProviderEnv } from '../../shared/deepseek-claude-provider'
 import { routesAgentTeamToRemoteRuntime } from './claude-agent-teams-service'
 
@@ -217,6 +217,9 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
     // Why the pane env, not the overlay: a provider marker in main's own env must not reclassify Claude.
     // DeepSeek and API-key panes own their credentials, so a managed account's auth never applies.
     const ownCredentialsProvider = isOwnCredentialsClaudeProviderEnv(args.baseEnv)
+    const claudeApiAccountId = isClaudeApiProviderEnv(args.baseEnv)
+      ? readClaudeApiAccountEnv(args.baseEnv)
+      : null
     const auth =
       args.prepareAuth && !ownCredentialsProvider && this.prepareClaudeAuth
         ? await this.prepareClaudeAuth(undefined, {
@@ -239,9 +242,8 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
     }
     if (
       (ownCredentialsProvider && routesAgentTeamToRemoteRuntime(baseEnv)) ||
-      // Why: teammate panes of an API-key leader are not wired yet; a registered team would spawn
-      // them through the plan's gate, so they stay in the leader's process and env.
-      isClaudeApiProviderEnv(args.baseEnv) ||
+      // Why: an API-key leader whose account is unknown has no account to hand its teammates.
+      (isClaudeApiProviderEnv(args.baseEnv) && !claudeApiAccountId) ||
       !canLaunchAgentTeamPanes({
         hostShell,
         leaderIsWsl,
@@ -267,7 +269,8 @@ export class DolphinRuntimeWithResolveTerminalSplitSourceAuthority extends Dolph
       shimPathDirs,
       hostShell: hostShell ?? undefined,
       paneKey: args.paneKey ?? this.getPaneKeyForTerminalHandle(args.handle) ?? undefined,
-      deepSeekProvider: isDeepSeekProviderEnv(args.baseEnv)
+      deepSeekProvider: isDeepSeekProviderEnv(args.baseEnv),
+      ...(claudeApiAccountId ? { claudeApiAccountId } : {})
     })
     const env = auth ? { ...auth.envPatch, ...launch.env } : launch.env
     return envToDelete ? { env, envToDelete } : { env }

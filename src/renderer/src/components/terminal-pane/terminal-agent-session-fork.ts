@@ -14,6 +14,7 @@ import { preflightAgentTrust } from '@/lib/agent-trust-preflight'
 import { slugifyForWorkspaceName } from '../../../../shared/workspace-name'
 import { FLOATING_TERMINAL_WORKTREE_ID } from '../../../../shared/constants'
 import type { TuiAgent } from '../../../../shared/tui-agent'
+import { resolvePaneRelaunchAgent } from '../../../../shared/own-credentials-claude-provider'
 import { getLocalProjectExecutionRuntimeContext } from '@/lib/local-preflight-context'
 import { translate } from '@/i18n/i18n'
 import { planAgentSessionLaunch } from '@/lib/agent-session-launch-plan'
@@ -98,7 +99,7 @@ export function prepareAgentSessionForkFromPane({
   const tabAgent = resolveTuiAgent(
     state.tabsByWorktree[worktreeId]?.find((tab) => tab.id === tabId)?.launchAgent
   )
-  const agent = sourceAgent ?? tabAgent
+  const agent = resolvePaneRelaunchAgent(sourceAgent, tabAgent)
   // Why: v1 is a context fork, not a process clone. Capturing scrollback keeps
   // SSH and local panes on the same path because both expose xterm state here.
   const prompt = buildAgentSessionForkPrompt({

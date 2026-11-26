@@ -222,6 +222,7 @@ describe('preflight', () => {
       'claude',
       'claude-agent-teams',
       'claude-api',
+      'claude-api-agent-teams',
       'deepseek',
       'deepseek-agent-teams'
     ])
@@ -261,6 +262,7 @@ describe('preflight', () => {
       'claude',
       'claude-agent-teams',
       'claude-api',
+      'claude-api-agent-teams',
       'deepseek',
       'deepseek-agent-teams'
     ])

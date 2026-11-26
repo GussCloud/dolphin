@@ -5,7 +5,8 @@ import type { TuiAgent } from './tui-agent'
 /** Agents whose CLI accepts `--append-system-prompt`; only these expose the setting. */
 export const TUI_AGENTS_WITH_SESSION_INSTRUCTIONS: readonly TuiAgent[] = [
   'claude-agent-teams',
-  'deepseek-agent-teams'
+  'deepseek-agent-teams',
+  'claude-api-agent-teams'
 ]
 
 // Why a cap: the text rides on the launch command line, and Windows caps one at ~8K (cmd).
@@ -27,7 +28,8 @@ const AGENT_TEAMS_SESSION_INSTRUCTIONS =
 const DEFAULT_TUI_AGENT_SESSION_INSTRUCTIONS: Partial<Record<TuiAgent, string>> = {
   'claude-agent-teams': AGENT_TEAMS_SESSION_INSTRUCTIONS,
   // Why: same Claude Code Agent Teams launch, only the API endpoint differs.
-  'deepseek-agent-teams': AGENT_TEAMS_SESSION_INSTRUCTIONS
+  'deepseek-agent-teams': AGENT_TEAMS_SESSION_INSTRUCTIONS,
+  'claude-api-agent-teams': AGENT_TEAMS_SESSION_INSTRUCTIONS
 }
 
 const SYSTEM_PROMPT_FLAG_PATTERN = /(^|\s)--(?:append-)?system-prompt(?:-file)?(?:\s|=|$)/

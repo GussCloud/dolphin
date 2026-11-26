@@ -11,6 +11,7 @@ export const AGENT_KIND_VALUES = [
   'claude-code',
   'claude-agent-teams',
   'claude-api',
+  'claude-api-agent-teams',
   'deepseek',
   'deepseek-agent-teams',
   'openclaude',
