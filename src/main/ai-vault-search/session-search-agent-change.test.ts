@@ -52,12 +52,8 @@ it('re-reads an unchanged file whose agent changed, so no row keeps the old agen
   const second = await runSessionSearchIndexPass(store, asApi, { rows: rows() })
 
   expect(second.stats.fullParses).toBe(1)
-  const sessions = harness.read(
-    (db) =>
-      db.prepare('SELECT agent, resume_command AS resumeCommand FROM sessions').all() as {
-        agent: string
-        resumeCommand: string
-      }[]
+  const sessions = harness.read((db) =>
+    db.prepare('SELECT agent, resume_command AS resumeCommand FROM sessions').all()
   )
   expect(sessions).toEqual([{ agent: 'claude-api', resumeCommand: '' }])
 })
