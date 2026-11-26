@@ -72,12 +72,19 @@ function planAccount(): ClaudeManagedAccount {
   }
 }
 
+type FakeSettings = {
+  claudeManagedAccounts: ReturnType<typeof planAccount>[]
+  activeClaudeManagedAccountId: string
+  activeClaudeManagedAccountIdsByRuntime: { host: string; wsl: Record<string, string> }
+  claudeApiDefaultAccountId: string | null
+}
+
 async function createService() {
-  let settings = {
+  let settings: FakeSettings = {
     claudeManagedAccounts: [planAccount()],
     activeClaudeManagedAccountId: 'plan',
     activeClaudeManagedAccountIdsByRuntime: { host: 'plan', wsl: {} },
-    claudeApiDefaultAccountId: null as string | null
+    claudeApiDefaultAccountId: null
   }
   const store = {
     getSettings: () => settings,

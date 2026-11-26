@@ -7,15 +7,6 @@ import { waitForActiveWorktree, waitForSessionReady } from './helpers/store'
 // A fake key: the spec never touches a real one, and the fake CLI only reports whether it matched.
 const FAKE_KEY = 'sk-ant-test-fake-claude-api-launch'
 
-type ReportedEnv = {
-  configDir: string
-  provider: string
-  accountId: string
-  keyMatches: boolean
-  authToken: string
-  baseUrl: string
-}
-
 function appPath(electronApp: ElectronApplication, name: 'home' | 'userData'): Promise<string> {
   return electronApp.evaluate(({ app }, which) => app.getPath(which), name)
 }
@@ -104,7 +95,8 @@ test.describe('Claude API agent launch', () => {
       .poll(
         async () => {
           try {
-            return JSON.parse(await readFile(report, 'utf8')) as ReportedEnv
+            const reported: unknown = JSON.parse(await readFile(report, 'utf8'))
+            return reported
           } catch {
             return null
           }

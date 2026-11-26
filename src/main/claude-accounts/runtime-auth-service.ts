@@ -1,4 +1,4 @@
-import { registerClaudeApiWorktreeSource } from '../claude-api/claude-api-launch'
+import { registerClaudeApiLaunchSource } from '../claude-api/claude-api-launch'
 import type { Store } from '../persistence'
 import {
   getSelectedClaudeAccountIdForTarget,
@@ -41,7 +41,10 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
     super(store)
     this.initializeLastSyncedState()
     registerClaudeLaunchConfigDirResolver((launch) => this.resolveLaunchConfigDir(launch))
-    registerClaudeApiWorktreeSource(this.store)
+    registerClaudeApiLaunchSource({
+      worktreeSource: this.store,
+      configDirFor: getClaudeAccountConfigDir
+    })
     registerClaudeProfileRootSources({
       managedAccountsRoot: getClaudeManagedAccountsRoot,
       // Why default excluded: readers already scan ~/.claude as the system profile.

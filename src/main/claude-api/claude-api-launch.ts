@@ -2,7 +2,6 @@ import { buildClaudeApiClaudeEnv, readClaudeApiAccountEnv } from '../../shared/c
 import { isClaudeApiKeyAccount } from '../../shared/claude-api-account'
 import type { GlobalSettings } from '../../shared/global-settings-types'
 import type { ClaudeManagedAccount } from '../../shared/managed-account-types'
-import { getClaudeAccountConfigDir } from '../claude-accounts/claude-account-config-dir'
 import { readClaudeApiKey } from '../claude-accounts/claude-api-key-store'
 import { installClaudeProfileHooks } from '../claude-accounts/profile/claude-profile-hooks'
 import {
@@ -55,11 +54,30 @@ export type ClaudeApiLaunchDeps = {
   ) => Promise<void>
 }
 
-let worktreeSource: WorktreeAccountMetaSource | null = null
+export const CLAUDE_API_ACCOUNTS_UNAVAILABLE_MESSAGE =
+  'Claude accounts are not available in this process, so the Claude API agent cannot start.'
 
-/** Installed by the runtime auth service, which owns the store holding worktree pins. */
-export function registerClaudeApiWorktreeSource(next: WorktreeAccountMetaSource | null): void {
-  worktreeSource = next
+/** What the launch needs from the process that owns Claude accounts. */
+export type ClaudeApiLaunchSource = {
+  /** The store holding worktree pins. */
+  worktreeSource: WorktreeAccountMetaSource
+  /** An account's profile dir; owned by the account service so this module stays Electron-free. */
+  configDirFor: (account: ClaudeManagedAccount) => string
+}
+
+let launchSource: ClaudeApiLaunchSource | null = null
+
+/** Installed by the runtime auth service; every process has at most one. */
+export function registerClaudeApiLaunchSource(next: ClaudeApiLaunchSource | null): void {
+  launchSource = next
+}
+
+function requireLaunchSource(): ClaudeApiLaunchSource {
+  // Why refuse: without the account service there is no profile to run in, and no fallback is safe.
+  if (!launchSource) {
+    throw new Error(CLAUDE_API_ACCOUNTS_UNAVAILABLE_MESSAGE)
+  }
+  return launchSource
 }
 
 async function prepareClaudeApiProfile(
@@ -88,9 +106,9 @@ async function prepareClaudeApiProfile(
 
 const defaultDeps: ClaudeApiLaunchDeps = {
   readApiKey: readClaudeApiKey,
-  configDirFor: getClaudeAccountConfigDir,
+  configDirFor: (account) => requireLaunchSource().configDirFor(account),
   holdsSession: claudeConfigDirHoldsSession,
-  worktreeSource: () => worktreeSource,
+  worktreeSource: () => requireLaunchSource().worktreeSource,
   prepareProfile: prepareClaudeApiProfile
 }
 
@@ -100,15 +118,14 @@ export function findClaudeApiResumeOwner(
   command: string | undefined,
   deps: Pick<ClaudeApiLaunchDeps, 'configDirFor' | 'holdsSession'> = defaultDeps
 ): ClaudeManagedAccount | null {
-  const sessionId = readClaudeSpawnResumeSessionId(command)
-  if (!sessionId) {
+  const apiAccounts = (settings?.claudeManagedAccounts ?? []).filter(isClaudeApiKeyAccount)
+  const sessionId = apiAccounts.length > 0 ? readClaudeSpawnResumeSessionId(command) : null
+  // Why: with no account service in this process a plain resume keeps its own path.
+  if (!sessionId || (deps === defaultDeps && !launchSource)) {
     return null
   }
   return (
-    (settings?.claudeManagedAccounts ?? []).find(
-      (account) =>
-        isClaudeApiKeyAccount(account) && deps.holdsSession(deps.configDirFor(account), sessionId)
-    ) ?? null
+    apiAccounts.find((account) => deps.holdsSession(deps.configDirFor(account), sessionId)) ?? null
   )
 }
 

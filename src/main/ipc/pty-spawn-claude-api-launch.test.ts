@@ -10,6 +10,7 @@ import {
 } from '../../shared/claude-api-provider'
 import type { ClaudeManagedAccount } from '../../shared/managed-account-types'
 import { registerPtyHandlers } from './pty'
+import { registerClaudeApiLaunchSource } from '../claude-api/claude-api-launch'
 
 const readClaudeApiKeyMock = vi.hoisted(() => vi.fn())
 const holdsSessionMock = vi.hoisted(() => vi.fn())
@@ -152,6 +153,10 @@ describe('claude-api PTY spawn', () => {
   }
 
   beforeEach(() => {
+    registerClaudeApiLaunchSource({
+      worktreeSource: { getWorktreeMeta: () => undefined, getAllWorktreeMeta: () => ({}) },
+      configDirFor: (entry) => `/home/me/.dolphin/claude-accounts/${entry.id}/config`
+    })
     readClaudeApiKeyMock.mockReset()
     readClaudeApiKeyMock.mockReturnValue(FAKE_KEY)
     holdsSessionMock.mockReset()
@@ -163,6 +168,7 @@ describe('claude-api PTY spawn', () => {
   })
 
   afterEach(() => {
+    registerClaudeApiLaunchSource(null)
     vi.unstubAllEnvs()
   })
 
@@ -230,6 +236,17 @@ describe('claude-api PTY spawn', () => {
         launchAgent: 'claude-api'
       })
     ).rejects.toThrow('has no API key')
+    expect(spawnMock).not.toHaveBeenCalled()
+  })
+
+  it('refuses when this process has no Claude account service', async () => {
+    registerClaudeApiLaunchSource(null)
+    await expect(
+      spawn(managedClaudeAuth(), [account('api1', 'api-key')], {
+        command: 'claude',
+        launchAgent: 'claude-api'
+      })
+    ).rejects.toThrow('not available in this process')
     expect(spawnMock).not.toHaveBeenCalled()
   })
 
