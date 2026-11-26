@@ -33,6 +33,7 @@ describe('COMMIT_MESSAGE_AGENT_SPECS', () => {
       'amp',
       'antigravity',
       'claude',
+      'claude-api',
       'codex',
       'copilot',
       'cursor',
@@ -155,8 +156,8 @@ describe('COMMIT_MESSAGE_AGENT_SPECS', () => {
     expect(resolveCommitMessageAgentChoice(null, 'claude-agent-teams', [])).toBe('claude')
     expect(resolveCommitMessageAgentChoice(null, 'deepseek', [])).toBe('deepseek')
     expect(resolveCommitMessageAgentChoice(null, 'deepseek-agent-teams', [])).toBe('deepseek')
-    // Why: no API-key generation spec yet; it must be unavailable, never the plan's `claude`.
-    expect(resolveCommitMessageAgentChoice(null, 'claude-api', [])).toBeNull()
+    expect(resolveCommitMessageAgentChoice(null, 'claude-api', [])).toBe('claude-api')
+    expect(resolveCommitMessageAgentChoice(null, 'claude-api-agent-teams', [])).toBe('claude-api')
   })
 
   it('gives every model with thinking levels a valid default', () => {
