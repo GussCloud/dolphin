@@ -55,6 +55,9 @@ function remoteRateLimits(
   const hidden = new Set(
     claude.accounts.filter((account) => isClaudeApiKeyAccount(account)).map((account) => account.id)
   )
+  if (hidden.size === 0) {
+    return rateLimits
+  }
   return {
     ...rateLimits,
     inactiveClaudeAccounts: rateLimits.inactiveClaudeAccounts.filter(

@@ -16,6 +16,9 @@ function keyFiles(home: string): string[] {
 }
 
 test.describe('Claude API accounts', () => {
+  // Why: Linux CI has no keyring, so safeStorage is unavailable and the key save is (rightly) refused.
+  test.use({ dolphinAppExtraArgs: process.platform === 'linux' ? ['--password-store=basic'] : [] })
+
   test('adds an API account with an encrypted key, marks it, and removes it with its key', async ({
     electronApp,
     appPage

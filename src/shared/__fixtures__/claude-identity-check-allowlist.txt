@@ -122,3 +122,4 @@ src/shared/deepseek-status-identity.ts 4
 src/shared/native-chat-agent-support.ts 2
 src/shared/structured-agent-session-mutation.ts 1
 src/shared/terminal-title-agent-type.ts 1
+src/shared/worktree-agent-account.ts 1
