@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
+  CLAUDE_API_AGENT_TEAMS_HOST_UPDATE_REQUIRED_CODE,
   CLAUDE_API_HOST_UPDATE_REQUIRED_CODE,
   DEEPSEEK_HOST_UPDATE_REQUIRED_CODE,
   ownCredentialsClaudeAgentHostRefusal,
@@ -14,6 +15,8 @@ import { DEEPSEEK_PROVIDER_ENV_KEY, DEEPSEEK_PROVIDER_ENV_VALUE } from './deepse
 import { CLAUDE_API_PROVIDER_ENV_KEY, CLAUDE_API_PROVIDER_ENV_VALUE } from './claude-api-provider'
 import {
   CLAUDE_API_AGENT_RUNTIME_CAPABILITY,
+  CLAUDE_API_AGENT_TEAMS_HOST_UPDATE_REQUIRED_MESSAGE,
+  CLAUDE_API_AGENT_TEAMS_RUNTIME_CAPABILITY,
   CLAUDE_API_HOST_UPDATE_REQUIRED_MESSAGE
 } from './claude-api-runtime-capability'
 
@@ -178,5 +181,46 @@ describe('claude-api on a paired host', () => {
       ownCredentialsClaudeAgentHostRefusal('claude-api', [CLAUDE_API_AGENT_RUNTIME_CAPABILITY])
     ).toBeNull()
     expect(ownCredentialsClaudeAgentHostRefusal('claude', [])).toBeNull()
+  })
+})
+
+describe('claude-api-agent-teams on a paired host', () => {
+  const v1Only = [CLAUDE_API_AGENT_RUNTIME_CAPABILITY]
+  const both = [CLAUDE_API_AGENT_RUNTIME_CAPABILITY, CLAUDE_API_AGENT_TEAMS_RUNTIME_CAPABILITY]
+
+  it('refuses a host that knows claude-api but not its teams mode', async () => {
+    // Why: such a host drops the unknown teams agent and runs plain claude on its plan.
+    const refusal = await refuseOwnCredentialsClaudeLaunchWithoutHostSupport({
+      method: 'worktree.create',
+      params: {
+        createdWithAgent: 'claude-api-agent-teams',
+        startupCommand: 'dolphin claude-teams'
+      },
+      readStatus: status(v1Only)
+    })
+    expect(refusal?.error).toEqual({
+      code: CLAUDE_API_AGENT_TEAMS_HOST_UPDATE_REQUIRED_CODE,
+      message: CLAUDE_API_AGENT_TEAMS_HOST_UPDATE_REQUIRED_MESSAGE
+    })
+    expect(ownCredentialsClaudeAgentHostRefusal('claude-api-agent-teams', v1Only)).toBe(
+      CLAUDE_API_AGENT_TEAMS_HOST_UPDATE_REQUIRED_MESSAGE
+    )
+  })
+
+  it('refuses a host with neither capability, naming the teams support', () => {
+    expect(ownCredentialsClaudeAgentHostRefusal('claude-api-agent-teams', [])).toBe(
+      CLAUDE_API_AGENT_TEAMS_HOST_UPDATE_REQUIRED_MESSAGE
+    )
+  })
+
+  it('lets it through only with both capabilities, and leaves plain claude-api on v1', async () => {
+    await expect(
+      refuseOwnCredentialsClaudeLaunchWithoutHostSupport({
+        method: 'terminal.create',
+        params: { launchAgent: 'claude-api-agent-teams' },
+        readStatus: status(both)
+      })
+    ).resolves.toBeNull()
+    expect(ownCredentialsClaudeAgentHostRefusal('claude-api', v1Only)).toBeNull()
   })
 })

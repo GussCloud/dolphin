@@ -14,18 +14,23 @@ import {
 } from './protocol-version'
 import {
   CLAUDE_API_AGENT_RUNTIME_CAPABILITY,
+  CLAUDE_API_AGENT_TEAMS_HOST_UPDATE_REQUIRED_MESSAGE,
+  CLAUDE_API_AGENT_TEAMS_RUNTIME_CAPABILITY,
   CLAUDE_API_HOST_UPDATE_REQUIRED_MESSAGE
 } from './claude-api-runtime-capability'
 import type { RuntimeRpcFailure, RuntimeRpcResponse } from './runtime-rpc-envelope'
 
 export const DEEPSEEK_HOST_UPDATE_REQUIRED_CODE = 'deepseek_host_update_required'
 export const CLAUDE_API_HOST_UPDATE_REQUIRED_CODE = 'claude_api_host_update_required'
+export const CLAUDE_API_AGENT_TEAMS_HOST_UPDATE_REQUIRED_CODE =
+  'claude_api_agent_teams_host_update_required'
 
 /** A provider that runs `claude` on its own credentials; an older host would run plain `claude`. */
 type OwnCredentialsClaudeProvider = {
   isAgent: (agent: unknown) => boolean
-  markerKey: string
-  markerValue: string
+  /** Absent when the agent id is the only signal (a teams mode shares its base's marker). */
+  markerKey?: string
+  markerValue?: string
   capability: string
   code: string
   message: string
@@ -39,6 +44,14 @@ const PROVIDERS: readonly OwnCredentialsClaudeProvider[] = [
     capability: AGENT_SESSION_DEEPSEEK_RESUME_RUNTIME_CAPABILITY,
     code: DEEPSEEK_HOST_UPDATE_REQUIRED_CODE,
     message: DEEPSEEK_HOST_UPDATE_REQUIRED_MESSAGE
+  },
+  // Why first and both matching: the teams agent needs the base agent and its teams mode, and the
+  // refusal should name the missing teams support.
+  {
+    isAgent: (agent) => agent === 'claude-api-agent-teams',
+    capability: CLAUDE_API_AGENT_TEAMS_RUNTIME_CAPABILITY,
+    code: CLAUDE_API_AGENT_TEAMS_HOST_UPDATE_REQUIRED_CODE,
+    message: CLAUDE_API_AGENT_TEAMS_HOST_UPDATE_REQUIRED_MESSAGE
   },
   {
     isAgent: isClaudeApiTuiAgent,
@@ -67,6 +80,7 @@ function paramsLaunchProvider(
   provider: OwnCredentialsClaudeProvider
 ): boolean {
   const hasMarker = (value: unknown): boolean =>
+    provider.markerKey !== undefined &&
     readRecord(value)?.[provider.markerKey] === provider.markerValue
   return (
     AGENT_IDENTITY_KEYS.some((key) => provider.isAgent(record[key])) ||
@@ -89,13 +103,11 @@ export function ownCredentialsClaudeAgentHostRefusal(
   agent: unknown,
   capabilities: unknown
 ): string | null {
-  const provider = PROVIDERS.find((entry) => entry.isAgent(agent))
-  if (!provider) {
-    return null
-  }
-  return Array.isArray(capabilities) && capabilities.includes(provider.capability)
-    ? null
-    : provider.message
+  const advertised = Array.isArray(capabilities) ? capabilities : []
+  const unsupported = PROVIDERS.find(
+    (provider) => provider.isAgent(agent) && !advertised.includes(provider.capability)
+  )
+  return unsupported?.message ?? null
 }
 
 /** True when these runtime RPC params would start DeepSeek or the API-key agent on the host. */
