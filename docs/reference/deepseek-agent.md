@@ -76,8 +76,9 @@ time (`withHostDisplayAgentType` in `src/main/agent-hooks/server/`), and stamps
 `displayAgentType: 'deepseek'` on the row payload when the event's transcript path has a
 `.claude-deepseek` segment. An event with no transcript path (OSC, inferred rows) keeps the
 row's stamp; a plain Claude transcript or a different `agentType` clears it. The event's own
-stamp is never trusted. The rule is `resolveDeepSeekDisplayAgentType` in
-`src/shared/deepseek-status-identity.ts`.
+stamp is never trusted. The rule is `resolveClaudeDisplayAgentType` in
+`src/shared/claude-status-display-identity.ts`, shared with the `claude-api` agent
+([`claude-api-agent.md`](./claude-api-agent.md)).
 
 The stamp is persisted with the row and travels as one optional field (rule 1 of
 [`remote-wire-compatibility.md`](./remote-wire-compatibility.md)); unknown values normalize to
@@ -124,7 +125,8 @@ that line runs on the Claude login. Resume in a native chat is not offered (Clau
 
 Remote clients that do not advertise `ai-vault.deepseek-sessions.v1` get no DeepSeek rows or hits
 from `aiVault.listSessions` / `aiVault.searchSessions`: an older client's search schema is a closed
-agent enum and would refuse the whole page.
+agent enum and would refuse the whole page (`src/main/ai-vault/ai-vault-client-agent-projection.ts`,
+one gate per agent).
 
 ## Claude Code updates
 

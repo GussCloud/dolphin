@@ -110,6 +110,40 @@ teammates share the leader's process env, key included; they bill the same accou
 in-process teammates do. Detection offers
 the agent with `claude-agent-teams` on the host, never from WSL.
 
+## Status, session history and usage
+
+API profiles have no fixed folder name (`<userData>/claude-accounts/<id>/config`), so every rule
+below asks the host's account list which profiles bill an API key
+(`src/main/claude-accounts/profile/claude-profile-roots.ts`: `listClaudePlanProfileConfigDirs`,
+`listClaudeApiProfileConfigDirs`, `isClaudeApiProfilePath`). Readers that attribute a session to
+an agent use that split; trust revocation, worktree retirement and native chat keep reading every
+profile.
+
+- **Status.** Hooks reach the hook server as `claude` and keep every Claude status rule. The hook
+  host stamps `displayAgentType: 'claude-api'` when the event's transcript is under an API profile
+  (`withHostDisplayAgentType`, rule `resolveClaudeDisplayAgentType` in
+  `src/shared/claude-status-display-identity.ts`, shared with DeepSeek). The event's own stamp is
+  never trusted. Readers (renderer, `worktree ps`, mobile rows and session tabs, work presence) show
+  `claude-api`. The renderer fallback for hosts that send no stamp cannot see the account list, so it
+  only keeps an existing `claude-api` row; that is harmless because only a host of this build runs
+  the agent. Old readers normalize the unknown value to absent and keep showing Claude (rule 1 of
+  [`remote-wire-compatibility.md`](./remote-wire-compatibility.md)); old mobile builds show the raw
+  id with the generic "CL" badge.
+- **AI Vault.** `claude-api` is its own AI Vault agent, scanning only API profiles' `projects/` on the
+  local host (no WSL, no SSH: the agent never runs there). Claude's source scans only plan profiles,
+  so a transcript belongs to exactly one agent; subagent listing, scoped discovery, delete and the
+  search index use the same roots. Resume goes through the startup plan with `launchAgent:
+  'claude-api'`, which bills the account whose profile holds the transcript; there is no copyable
+  resume line and `dolphin search` prints none. A paired host is asked to resume only when it
+  advertises `agent-session.claude-api-resume.v1`. Remote clients that do not advertise
+  `ai-vault.claude-api-sessions.v1` get no `claude-api` rows or hits.
+- **Usage.** Settings > Stats has its own "Claude (API)" provider (`ClaudeApiUsageStore`, cache
+  `dolphin-claude-api-usage.json`), scanning only API profiles; the subscription Claude scan skips
+  them. Unlike DeepSeek, cost is computed with Claude's pricing table, labelled as estimated from
+  list prices (the invoice can differ: discounts, batch pricing). The Overview adds its tokens and
+  cost as a separate provider line. Usage is summed across API accounts and covers the local host
+  only.
+
 ## Known limits
 
 - The key is in the pane's env, so the shell the pane runs keeps it after `claude` exits: a plain
@@ -127,4 +161,4 @@ the agent with `claude-agent-teams` on the host, never from WSL.
 
 - Source Control AI has no `claude-api` spec, so a `claude-api` or `claude-api-agent-teams` default
   resolves to "unavailable", never to plain `claude`.
-- Status rows are labelled `claude`; usage and cost are not split per API account.
+- Usage and cost are summed across API accounts, not split per account.
