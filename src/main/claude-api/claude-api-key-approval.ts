@@ -2,7 +2,7 @@ import { join } from 'node:path'
 import { asJsonObject, updateJsonObjectFile } from '../claude-accounts/profile/claude-profile-json'
 
 // Why: Claude Code asks "Detected a custom API key in your environment" with No as the default, and
-// answering Yes stores the key's last 20 characters here. Captured on Claude Code 2.1.323:
+// answering Yes stores the key's last 20 characters here. Captured on Claude Code 2.1.332:
 // src/main/runtime/__fixtures__/claude-api-key-{detected-prompt,preapproved-ready}.txt.
 const APPROVAL_KEY = 'customApiKeyResponses'
 const KEY_SUFFIX_LENGTH = 20

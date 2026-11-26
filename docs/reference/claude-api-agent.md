@@ -62,7 +62,7 @@ At each launch, best effort (a failure degrades status or the first prompt, neve
   first Enter would reject the key. Answering Yes writes
   `customApiKeyResponses: { approved: [key.slice(-20)], rejected: [] }`; the function writes the
   same, removes the suffix from `rejected`, and on key replacement drops the old key's suffix.
-  Captured on Claude Code 2.1.323 (macOS):
+  Captured on Claude Code 2.1.332 (macOS):
   `src/main/runtime/__fixtures__/claude-api-key-detected-prompt.txt` (dialog) and
   `claude-api-key-preapproved-ready.txt` (pre-approved: no dialog, ready prompt);
   `claude-api-key-approval.test.ts` pins the dialog text against them.
