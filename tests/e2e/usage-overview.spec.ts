@@ -27,7 +27,8 @@ test.describe('usage overview', () => {
     await expect(appPage.getByTestId('usage-overview-pane')).toBeVisible()
     await expect(appPage.getByRole('heading', { name: 'Usage Overview' })).toBeVisible()
     await expect(appPage.getByRole('heading', { name: 'Providers' })).toBeVisible()
-    await expect(appPage.getByRole('button', { name: 'Enable Claude' })).toBeVisible()
+    await expect(appPage.getByRole('button', { name: 'Enable Claude', exact: true })).toBeVisible()
+    await expect(appPage.getByRole('button', { name: 'Enable Claude (API)' })).toBeVisible()
     await expect(appPage.getByRole('button', { name: 'Enable Codex' })).toBeVisible()
     await expect(appPage.getByRole('button', { name: 'Enable OpenCode' })).toBeVisible()
 
