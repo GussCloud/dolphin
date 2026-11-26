@@ -201,7 +201,8 @@ describe('ClaudeAccountService API key accounts', () => {
     await service.replaceApiKey(id, 'sk-ant-test-fake-2')
     expect(readFileSync(keyPath(id), 'utf-8')).not.toBe(before)
     expect(readJson(join(profileDir(id), '.claude.json'))).toMatchObject({
-      customApiKeyResponses: { approved: [FAKE_KEY.slice(-20), 'sk-ant-test-fake-2'.slice(-20)] }
+      // The replaced key's approval is dropped.
+      customApiKeyResponses: { approved: ['sk-ant-test-fake-2'.slice(-20)], rejected: [] }
     })
   })
 

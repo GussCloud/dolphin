@@ -15,6 +15,9 @@ export const CLAUDE_API_NO_DEFAULT_ACCOUNT_MESSAGE =
   'Choose which API account the Claude API agent uses: set a default in Settings > Accounts, or pick one for this workspace.'
 export const CLAUDE_API_ACCOUNT_GONE_MESSAGE =
   'The API account chosen for this launch no longer exists. Pick another API account and start the agent again.'
+// Why this wording: a worktree pin is set only at creation, so the fix is a new workspace or another agent.
+export const CLAUDE_API_PINNED_ACCOUNT_GONE_MESSAGE =
+  'This workspace is pinned to an account that no longer exists, so the Claude API agent will not pick another one. Create a new workspace with an API account, or start another agent here.'
 
 /** Where the account of a launch came from; the order is the precedence. */
 export type ClaudeApiLaunchAccountChoice = {
@@ -62,16 +65,15 @@ export function resolveClaudeApiLaunchAccount(
       ...(settings.codexManagedAccounts ?? [])
     ].some((account) => account.id === pin)
     if (!belongsToOtherAgent) {
-      throw new Error(CLAUDE_API_ACCOUNT_GONE_MESSAGE)
+      throw new Error(CLAUDE_API_PINNED_ACCOUNT_GONE_MESSAGE)
     }
   }
+  // Why a stale default reads as unset: it is a global preference, not this launch's choice, and
+  // removing the account already clears it; the single-account rule or the refusal below decides.
   const defaultId = settings.claudeApiDefaultAccountId?.trim()
-  if (defaultId) {
-    const account = byId(defaultId)
-    if (!account) {
-      throw new Error(CLAUDE_API_ACCOUNT_GONE_MESSAGE)
-    }
-    return account
+  const defaultAccount = defaultId ? byId(defaultId) : undefined
+  if (defaultAccount) {
+    return defaultAccount
   }
   if (accounts.length === 1) {
     return accounts[0]!

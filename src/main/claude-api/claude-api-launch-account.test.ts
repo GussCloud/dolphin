@@ -4,7 +4,10 @@ import {
   CLAUDE_API_ACCOUNT_GONE_MESSAGE,
   CLAUDE_API_NO_ACCOUNT_MESSAGE,
   CLAUDE_API_NO_DEFAULT_ACCOUNT_MESSAGE,
-  resolveClaudeApiLaunchAccount
+  CLAUDE_API_PINNED_ACCOUNT_GONE_MESSAGE,
+  resolveClaudeApiLaunchAccount,
+  type ClaudeApiLaunchAccountChoice,
+  type ClaudeApiLaunchAccountSettings
 } from './claude-api-launch-account'
 
 function account(id: string, authMethod?: 'api-key'): ClaudeManagedAccount {
@@ -21,74 +24,109 @@ function account(id: string, authMethod?: 'api-key'): ClaudeManagedAccount {
   return authMethod ? { ...base, authMethod } : base
 }
 
-const NONE = { resumeOwnerAccountId: null, paneAccountId: null, worktreePinAccountId: null }
+const NONE: ClaudeApiLaunchAccountChoice = {
+  resumeOwnerAccountId: null,
+  paneAccountId: null,
+  worktreePinAccountId: null
+}
 const PLAN = account('plan')
 const API1 = account('api1', 'api-key')
 const API2 = account('api2', 'api-key')
+const API3 = account('api3', 'api-key')
+const ALL: ClaudeApiLaunchAccountSettings = {
+  claudeManagedAccounts: [PLAN, API1, API2, API3],
+  codexManagedAccounts: [],
+  claudeApiDefaultAccountId: 'api3'
+}
 
-describe('resolveClaudeApiLaunchAccount', () => {
-  it('uses the only API account, never the plan account', () => {
-    expect(resolveClaudeApiLaunchAccount({ claudeManagedAccounts: [PLAN, API1] }, NONE).id).toBe(
+function resolve(
+  settings: ClaudeApiLaunchAccountSettings,
+  choice: Partial<ClaudeApiLaunchAccountChoice> = {}
+): string {
+  return resolveClaudeApiLaunchAccount(settings, { ...NONE, ...choice }).id
+}
+
+describe('resolveClaudeApiLaunchAccount precedence', () => {
+  it('1. the resumed session owner wins over everything else', () => {
+    expect(
+      resolve(ALL, {
+        resumeOwnerAccountId: 'api1',
+        paneAccountId: 'api2',
+        worktreePinAccountId: 'api3'
+      })
+    ).toBe('api1')
+  })
+
+  it('2. the pane account wins over the pin and the default', () => {
+    expect(resolve(ALL, { paneAccountId: 'api2', worktreePinAccountId: 'api1' })).toBe('api2')
+  })
+
+  it('3. the worktree pin wins over the default', () => {
+    expect(resolve(ALL, { worktreePinAccountId: 'api1' })).toBe('api1')
+  })
+
+  it('4. the default applies when nothing else chooses', () => {
+    expect(resolve(ALL)).toBe('api3')
+  })
+
+  it('5. the only API account applies without a default', () => {
+    expect(resolve({ claudeManagedAccounts: [PLAN, API1] })).toBe('api1')
+  })
+
+  it('6. refuses to guess between several API accounts, or with none', () => {
+    expect(() => resolve({ claudeManagedAccounts: [API1, API2] })).toThrow(
+      CLAUDE_API_NO_DEFAULT_ACCOUNT_MESSAGE
+    )
+    expect(() => resolve({ claudeManagedAccounts: [PLAN] })).toThrow(CLAUDE_API_NO_ACCOUNT_MESSAGE)
+  })
+})
+
+describe('resolveClaudeApiLaunchAccount never bills the plan', () => {
+  it('skips a plan-account pin and falls to the default or the single API account', () => {
+    expect(resolve(ALL, { worktreePinAccountId: 'plan' })).toBe('api3')
+    expect(resolve({ claudeManagedAccounts: [PLAN, API1] }, { worktreePinAccountId: 'plan' })).toBe(
       'api1'
     )
   })
 
-  it('refuses with no API account even when a plan account exists', () => {
-    expect(() => resolveClaudeApiLaunchAccount({ claudeManagedAccounts: [PLAN] }, NONE)).toThrow(
-      CLAUDE_API_NO_ACCOUNT_MESSAGE
+  it('refuses a plan-account pin when no API account exists', () => {
+    expect(() =>
+      resolve({ claudeManagedAccounts: [PLAN] }, { worktreePinAccountId: 'plan' })
+    ).toThrow(CLAUDE_API_NO_ACCOUNT_MESSAGE)
+  })
+
+  it('refuses a plan account named by the pane or a resume', () => {
+    expect(() => resolve(ALL, { paneAccountId: 'plan' })).toThrow(CLAUDE_API_ACCOUNT_GONE_MESSAGE)
+    expect(() => resolve(ALL, { resumeOwnerAccountId: 'plan' })).toThrow(
+      CLAUDE_API_ACCOUNT_GONE_MESSAGE
     )
   })
 
-  it('refuses to guess between several API accounts without a default', () => {
+  it('treats a default naming the plan account as unset', () => {
+    expect(
+      resolve({ claudeManagedAccounts: [PLAN, API1], claudeApiDefaultAccountId: 'plan' })
+    ).toBe('api1')
+  })
+})
+
+describe('resolveClaudeApiLaunchAccount stale choices', () => {
+  it('refuses a pin naming no account and says how to recover', () => {
+    expect(() => resolve(ALL, { worktreePinAccountId: 'gone' })).toThrow(
+      CLAUDE_API_PINNED_ACCOUNT_GONE_MESSAGE
+    )
+    expect(CLAUDE_API_PINNED_ACCOUNT_GONE_MESSAGE).toMatch(/new workspace/)
+  })
+
+  it('refuses a pane account that is gone', () => {
+    expect(() => resolve(ALL, { paneAccountId: 'gone' })).toThrow(CLAUDE_API_ACCOUNT_GONE_MESSAGE)
+  })
+
+  it('treats a default naming a removed account as unset', () => {
+    expect(
+      resolve({ claudeManagedAccounts: [PLAN, API1], claudeApiDefaultAccountId: 'gone' })
+    ).toBe('api1')
     expect(() =>
-      resolveClaudeApiLaunchAccount({ claudeManagedAccounts: [API1, API2] }, NONE)
+      resolve({ claudeManagedAccounts: [API1, API2], claudeApiDefaultAccountId: 'gone' })
     ).toThrow(CLAUDE_API_NO_DEFAULT_ACCOUNT_MESSAGE)
-  })
-
-  it('takes the default, then a worktree pin over it, then the pane account over both', () => {
-    const settings = {
-      claudeManagedAccounts: [PLAN, API1, API2],
-      claudeApiDefaultAccountId: 'api1'
-    }
-    expect(resolveClaudeApiLaunchAccount(settings, NONE).id).toBe('api1')
-    expect(
-      resolveClaudeApiLaunchAccount(settings, { ...NONE, worktreePinAccountId: 'api2' }).id
-    ).toBe('api2')
-    expect(
-      resolveClaudeApiLaunchAccount(settings, {
-        ...NONE,
-        worktreePinAccountId: 'api2',
-        paneAccountId: 'api1'
-      }).id
-    ).toBe('api1')
-    expect(
-      resolveClaudeApiLaunchAccount(settings, {
-        ...NONE,
-        paneAccountId: 'api1',
-        resumeOwnerAccountId: 'api2'
-      }).id
-    ).toBe('api2')
-  })
-
-  it('ignores a pin of another agent and keeps the default', () => {
-    const settings = {
-      claudeManagedAccounts: [PLAN, API1],
-      codexManagedAccounts: [],
-      claudeApiDefaultAccountId: 'api1'
-    }
-    expect(
-      resolveClaudeApiLaunchAccount(settings, { ...NONE, worktreePinAccountId: 'plan' }).id
-    ).toBe('api1')
-  })
-
-  it.each([
-    [{ ...NONE, paneAccountId: 'gone' }, {}],
-    [{ ...NONE, paneAccountId: 'plan' }, {}],
-    [{ ...NONE, worktreePinAccountId: 'gone' }, {}],
-    [NONE, { claudeApiDefaultAccountId: 'gone' }]
-  ])('refuses a chosen account that is gone instead of billing another (%#)', (choice, extra) => {
-    expect(() =>
-      resolveClaudeApiLaunchAccount({ claudeManagedAccounts: [PLAN, API1], ...extra }, choice)
-    ).toThrow(CLAUDE_API_ACCOUNT_GONE_MESSAGE)
   })
 })

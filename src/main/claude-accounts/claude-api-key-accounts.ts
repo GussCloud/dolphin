@@ -14,6 +14,7 @@ import {
   clearClaudeApiKey,
   getClaudeApiKeyStatus,
   isClaudeApiKeyEncryptionAvailable,
+  readClaudeApiKey,
   saveClaudeApiKey
 } from './claude-api-key-store'
 import type { ClaudeManagedAuthLocation } from './claude-managed-auth-storage'
@@ -100,9 +101,15 @@ export class ClaudeApiKeyAccounts {
     if (typeof apiKey !== 'string') {
       throw new Error('Anthropic API key must be a string')
     }
+    let replacedKey: string | null = null
+    try {
+      replacedKey = readClaudeApiKey(accountId)
+    } catch {
+      // An unreadable old key cannot be matched; its approval simply stays.
+    }
     saveClaudeApiKey(accountId, apiKey)
     try {
-      await preapproveClaudeApiKeyInProfile(getClaudeAccountConfigDir(account), apiKey)
+      await preapproveClaudeApiKeyInProfile(getClaudeAccountConfigDir(account), apiKey, replacedKey)
     } catch (error) {
       // Why not fail: the key is saved; the next launch retries the approval.
       console.warn(

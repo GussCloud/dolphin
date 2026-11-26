@@ -126,6 +126,7 @@ docs/**
 !docs/reference/autonomous-goals.md
 !docs/reference/antigravity-readiness-evidence.md
 !docs/reference/deepseek-agent.md
+!docs/reference/claude-api-agent.md
 !docs/reference/git-compatibility.md
 !docs/reference/headless-linux-server.md
 !docs/reference/ime-regression-checklist.md
