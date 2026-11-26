@@ -118,7 +118,7 @@ src/shared/ai-vault-session-title.ts 1
 src/shared/autonomous-coordinator-launch-env.ts 2
 src/shared/claude-agent-teams-tmux-compat.ts 1
 src/shared/claude-compact-completion.ts 3
-src/shared/deepseek-status-identity.ts 4
+src/shared/claude-status-display-identity.ts 4
 src/shared/native-chat-agent-support.ts 2
 src/shared/structured-agent-session-mutation.ts 1
 src/shared/terminal-title-agent-type.ts 1

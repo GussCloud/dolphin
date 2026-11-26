@@ -3,11 +3,11 @@ import { shareCompatibleTitleIdentityGroup } from './agent-title-owner'
 import { getAgentResumeArgv, isResumableTuiAgent } from './agent-session-resume'
 import {
   isClaudeHookAgentType,
-  isClaudeTitleOfDeepSeekPane,
+  isClaudeTitleOfOwnCredentialsPane,
   isDeepSeekClaudeTranscriptPath,
-  resolveDeepSeekDisplayAgentType,
+  resolveClaudeDisplayAgentType,
   toHookHostAgentType
-} from './deepseek-status-identity'
+} from './claude-status-display-identity'
 import { normalizeAgentStatusPayload, pickParsedAgentStatusPayload } from './agent-status-types'
 import { TUI_AGENT_CONFIG } from './tui-agent-config'
 import {
@@ -34,20 +34,20 @@ describe('isDeepSeekClaudeTranscriptPath', () => {
   })
 })
 
-describe('resolveDeepSeekDisplayAgentType', () => {
+describe('resolveClaudeDisplayAgentType', () => {
   const deepseekPath = '/home/me/.claude-deepseek/projects/x/s.jsonl'
   const claudePath = '/home/me/.claude/projects/x/s.jsonl'
 
   it('decides from the event transcript path when there is one', () => {
     expect(
-      resolveDeepSeekDisplayAgentType({
+      resolveClaudeDisplayAgentType({
         agentType: 'claude',
         transcriptPath: deepseekPath,
         previousDisplayAgentType: undefined
       })
     ).toBe('deepseek')
     expect(
-      resolveDeepSeekDisplayAgentType({
+      resolveClaudeDisplayAgentType({
         agentType: 'claude',
         transcriptPath: claudePath,
         previousDisplayAgentType: 'deepseek'
@@ -57,19 +57,70 @@ describe('resolveDeepSeekDisplayAgentType', () => {
 
   it('keeps the previous stamp only for a transcript-less Claude Code event', () => {
     expect(
-      resolveDeepSeekDisplayAgentType({
+      resolveClaudeDisplayAgentType({
         agentType: 'claude',
         transcriptPath: undefined,
         previousDisplayAgentType: 'deepseek'
       })
     ).toBe('deepseek')
     expect(
-      resolveDeepSeekDisplayAgentType({
+      resolveClaudeDisplayAgentType({
         agentType: 'codex',
         transcriptPath: deepseekPath,
         previousDisplayAgentType: 'deepseek'
       })
     ).toBeUndefined()
+  })
+})
+
+describe('resolveClaudeDisplayAgentType for API-key profiles', () => {
+  const apiPath = '/data/claude-accounts/api-1/config/projects/x/s.jsonl'
+  const isApi = (path: string): boolean => path.startsWith('/data/claude-accounts/api-1/config/')
+
+  it('stamps claude-api only when the host says the transcript is in an API profile', () => {
+    expect(
+      resolveClaudeDisplayAgentType({
+        agentType: 'claude',
+        transcriptPath: apiPath,
+        previousDisplayAgentType: undefined,
+        isClaudeApiTranscriptPath: isApi
+      })
+    ).toBe('claude-api')
+    // A reader without the host's account list (the renderer fallback) never starts one.
+    expect(
+      resolveClaudeDisplayAgentType({
+        agentType: 'claude',
+        transcriptPath: apiPath,
+        previousDisplayAgentType: undefined
+      })
+    ).toBeUndefined()
+    expect(
+      resolveClaudeDisplayAgentType({
+        agentType: 'claude',
+        transcriptPath: '/home/me/.claude/projects/x/s.jsonl',
+        previousDisplayAgentType: 'claude-api',
+        isClaudeApiTranscriptPath: isApi
+      })
+    ).toBeUndefined()
+  })
+
+  it('keeps a claude-api stamp across a transcript-less event, and DeepSeek wins its own dir', () => {
+    expect(
+      resolveClaudeDisplayAgentType({
+        agentType: 'claude',
+        transcriptPath: undefined,
+        previousDisplayAgentType: 'claude-api',
+        isClaudeApiTranscriptPath: isApi
+      })
+    ).toBe('claude-api')
+    expect(
+      resolveClaudeDisplayAgentType({
+        agentType: 'claude',
+        transcriptPath: '/home/me/.claude-deepseek/projects/x/s.jsonl',
+        previousDisplayAgentType: undefined,
+        isClaudeApiTranscriptPath: () => true
+      })
+    ).toBe('deepseek')
   })
 })
 
@@ -85,6 +136,10 @@ describe('displayAgentType on the status wire', () => {
     expect(
       normalizeAgentStatusPayload({ state: 'working', displayAgentType: 'gpt' })
     ).not.toHaveProperty('displayAgentType')
+    expect(
+      normalizeAgentStatusPayload({ state: 'working', displayAgentType: 'claude-api' })
+        ?.displayAgentType
+    ).toBe('claude-api')
     // An old host sends no field; the row is still admitted.
     expect(normalizeAgentStatusPayload({ state: 'done' })).not.toHaveProperty('displayAgentType')
   })
@@ -96,12 +151,16 @@ describe('DeepSeek hook host identity', () => {
     expect(toHookHostAgentType('claude')).toBe('claude')
     expect(toHookHostAgentType('codex')).toBe('codex')
     expect(isClaudeHookAgentType('deepseek')).toBe(true)
+    expect(toHookHostAgentType('claude-api')).toBe('claude')
+    expect(isClaudeHookAgentType('claude-api')).toBe(true)
     expect(isClaudeHookAgentType('openclaude')).toBe(false)
   })
 
   it('treats a Claude title in a DeepSeek pane as the same identity, not pane reuse', () => {
-    expect(isClaudeTitleOfDeepSeekPane('claude', 'deepseek-agent-teams')).toBe(true)
+    expect(isClaudeTitleOfOwnCredentialsPane('claude', 'deepseek-agent-teams')).toBe(true)
     expect(shareCompatibleTitleIdentityGroup('claude', 'deepseek')).toBe(true)
+    expect(isClaudeTitleOfOwnCredentialsPane('claude-api', 'claude')).toBe(true)
+    expect(shareCompatibleTitleIdentityGroup('claude', 'claude-api')).toBe(true)
     expect(shareCompatibleTitleIdentityGroup('claude', 'claude-agent-teams')).toBe(false)
     expect(shareCompatibleTitleIdentityGroup('codex', 'deepseek')).toBe(false)
   })

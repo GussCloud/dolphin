@@ -90,6 +90,9 @@ describe('agentDisplayLabel', () => {
 describe('agentRowIdentity', () => {
   it('shows the host display stamp over the harness, and the harness from old hosts', () => {
     expect(agentRowIdentity(row({ displayAgentType: 'deepseek' }))).toBe('deepseek')
+    expect(agentRowIdentity(row({ displayAgentType: 'claude-api' }))).toBe('claude-api')
+    // An older mobile build without a claude-api entry still gets a readable fallback label.
+    expect(agentIdentityLabel('claude-api')).toBe('CL')
     expect(agentRowIdentity(row())).toBe('claude')
     expect(agentRowIdentity(row({ agentType: null }))).toBeNull()
   })

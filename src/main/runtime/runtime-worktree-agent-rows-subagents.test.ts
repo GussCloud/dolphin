@@ -123,6 +123,11 @@ describe('worktree ps agent row display identity', () => {
     expect(row).toMatchObject({ agentType: 'claude', displayAgentType: 'deepseek' })
   })
 
+  it('publishes a claude-api stamp the same way', () => {
+    const [row] = rowsFor(hookRow({ displayAgentType: 'claude-api' }))
+    expect(row).toMatchObject({ agentType: 'claude', displayAgentType: 'claude-api' })
+  })
+
   it('omits the field for a row the host did not stamp', () => {
     expect(rowsFor(hookRow())[0]).not.toHaveProperty('displayAgentType')
   })

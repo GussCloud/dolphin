@@ -127,6 +127,13 @@ describe('buildWorkPresenceSnapshot', () => {
     expect(snapshot.projects[0]?.agents[0]?.cli).toBe('deepseek')
   })
 
+  it('names an API-key row claude-api from the host display stamp', () => {
+    const snapshot = snapshotOf([
+      summary({ agents: [agentRow('tab-1:leaf-a', { displayAgentType: 'claude-api' })] })
+    ])
+    expect(snapshot.projects[0]?.agents[0]?.cli).toBe('claude-api')
+  })
+
   it('leaves out rows the store would not display', () => {
     const stale = NOW - AGENT_STATUS_STALE_AFTER_MS - 1
     const snapshot = snapshotOf([

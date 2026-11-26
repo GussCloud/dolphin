@@ -1,10 +1,11 @@
 import { resolveAgentPaneAuthorityKey } from '@/store/slices/agent-pane-authority'
 import type { AppState } from '../../store/types'
 import { titleHasAgentName } from '../../../../shared/agent-detection'
-import { resolveDeepSeekDisplayAgentType } from '../../../../shared/deepseek-status-identity'
-import type {
-  AgentStatusIpcPayload,
-  ParsedAgentStatusPayload
+import { resolveClaudeDisplayAgentType } from '../../../../shared/claude-status-display-identity'
+import {
+  normalizeAgentStatusDisplayAgentType,
+  type AgentStatusIpcPayload,
+  type ParsedAgentStatusPayload
 } from '../../../../shared/agent-status-types'
 import { makePaneKey, parsePaneKey } from '../../../../shared/stable-pane-id'
 import type { useAppStore } from '../../store'
@@ -107,17 +108,19 @@ export function resolveHookPayloadAgentType(
     return payload
   }
   // Why: the host's stamp decides; the shared rule only runs here for old hosts that send none.
-  // The transcript path is per-event host evidence; the tab's launch agent can be stale.
+  // The transcript path is per-event host evidence; the tab's launch agent can be stale. Without
+  // the host's account list this fallback can only keep a `claude-api` row, never start one.
   const displayAgentType =
     payload.displayAgentType ??
-    resolveDeepSeekDisplayAgentType({
+    resolveClaudeDisplayAgentType({
       agentType: payload.agentType,
       transcriptPath: claudeSession?.transcriptPath,
-      previousDisplayAgentType:
-        claudeSession?.existingAgentType === 'deepseek' ? 'deepseek' : undefined
+      previousDisplayAgentType: normalizeAgentStatusDisplayAgentType(
+        claudeSession?.existingAgentType
+      )
     })
-  if (displayAgentType === 'deepseek') {
-    return { ...payload, agentType: 'deepseek' }
+  if (displayAgentType) {
+    return { ...payload, agentType: displayAgentType }
   }
   if (!terminalTitle || !titleHasAgentName(terminalTitle, 'openclaude')) {
     return payload

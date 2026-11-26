@@ -30,6 +30,12 @@ describe('selectRuntimeHookAgentRowForPane resume identity', () => {
     expect(lookup.agentType).toBe('deepseek')
   })
 
+  it('publishes a host-stamped API-key session as claude-api, so a resume bills the API key', () => {
+    const lookup = selectRuntimeHookAgentRowForPane([hookRow({ displayAgentType: 'claude-api' })])
+    expect(lookup.providerSessionAgentType).toBe('claude-api')
+    expect(lookup.agentType).toBe('claude-api')
+  })
+
   it('keeps an unstamped Claude session as claude', () => {
     const lookup = selectRuntimeHookAgentRowForPane([hookRow()])
     expect(lookup.providerSessionAgentType).toBe('claude')
