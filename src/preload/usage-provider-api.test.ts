@@ -9,6 +9,7 @@ describe('usage provider preload API', () => {
     for (const prefix of [
       'claudeUsage',
       'deepSeekUsage',
+      'claudeApiUsage',
       'codexUsage',
       'openCodeUsage',
       'museUsage'

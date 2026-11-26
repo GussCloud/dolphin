@@ -11,6 +11,7 @@ import {
   withoutEnvCommand
 } from './tui-agent-startup-shell'
 import type { AiVaultAgent, AiVaultSession } from './ai-vault-types'
+import { isOwnCredentialsClaudeTuiAgent } from './own-credentials-claude-provider'
 
 export function buildAiVaultResumeCommand(args: {
   agent: AiVaultAgent
@@ -25,9 +26,9 @@ export function buildAiVaultResumeCommand(args: {
 }): string {
   const { agent, sessionId, cwd, platform, commandOverride, codexHome, resumeFilePath, shell } =
     args
-  // Why: no runnable line exists for DeepSeek. A bare `claude --resume` resumes on the Claude
-  // login; only a Dolphin spawn with launchAgent 'deepseek' gets the DeepSeek env (startup plan).
-  if (agent === 'deepseek') {
+  // Why: no runnable line exists for DeepSeek or an API-key session. A bare `claude --resume`
+  // resumes on the Claude login; only a Dolphin spawn with that launchAgent gets the agent's env.
+  if (isOwnCredentialsClaudeTuiAgent(agent)) {
     return ''
   }
   const baseCommand = commandOverride?.trim() || defaultAiVaultResumeCommandBase(agent)
@@ -224,9 +225,10 @@ function buildAgentResumeInvocation(
     case 'cline':
       return `${baseCommand} --id ${sessionArg}`
     case 'claude':
-    // Why: listed for exhaustiveness only; buildAiVaultResumeCommand returns '' for DeepSeek first.
+    // Why: listed for exhaustiveness only; buildAiVaultResumeCommand returns '' for these first.
     // falls through
     case 'deepseek':
+    case 'claude-api':
     case 'cursor':
     case 'gemini':
     case 'grok':

@@ -1,4 +1,5 @@
 import { CLAUDE_API_RUNTIME_CAPABILITIES } from './claude-api-runtime-capability'
+import { AI_VAULT_GATED_AGENT_RUNTIME_CAPABILITIES } from './ai-vault-agent-runtime-capabilities'
 import {
   MOBILE_REMOTE_UPDATE_CAPABILITY,
   REMOTE_SERVER_UPDATE_CAPABILITY
@@ -244,11 +245,6 @@ export const AGENT_SESSION_ZCODE_RESUME_RUNTIME_CAPABILITY =
 // createdWithAgent and runs the `claude` startup command on the host's own Anthropic login.
 export const AGENT_SESSION_DEEPSEEK_RESUME_RUNTIME_CAPABILITY =
   'agent-session.deepseek-resume.v1' as const
-// Why: a client advertising this knows the `deepseek` AI Vault agent. An older client's search reply
-// schema is a closed enum that refuses the whole page on one DeepSeek hit, so the host withholds
-// DeepSeek rows and hits from remote clients that do not advertise it (lost, never shown as Claude).
-export const AI_VAULT_DEEPSEEK_SESSIONS_RUNTIME_CAPABILITY =
-  'ai-vault.deepseek-sessions.v1' as const
 export const DEEPSEEK_HOST_UPDATE_REQUIRED_MESSAGE =
   'DeepSeek needs a newer Dolphin on this host. Update it and try again.'
 // Why: older runtimes strip mutation owner fields, so clients must fence writes before RPC.
@@ -315,7 +311,7 @@ export const NATIVE_REMOTE_RUNTIME_CLIENT_CAPABILITIES = [
   AUTOMATION_OWNER_FENCING_RUNTIME_CAPABILITY,
   AUTOMATION_CREATE_IDEMPOTENCY_RUNTIME_CAPABILITY,
   AGENT_LAUNCH_RUNTIME_CAPABILITY,
-  AI_VAULT_DEEPSEEK_SESSIONS_RUNTIME_CAPABILITY
+  ...AI_VAULT_GATED_AGENT_RUNTIME_CAPABILITIES
 ] as const
 
 // Electron clients can decode client-hosted page placement; becoming a page
@@ -412,7 +408,7 @@ export const RUNTIME_CAPABILITIES = [
   AGENT_SESSION_MUSE_RESUME_RUNTIME_CAPABILITY,
   AGENT_SESSION_ZCODE_RESUME_RUNTIME_CAPABILITY,
   AGENT_SESSION_DEEPSEEK_RESUME_RUNTIME_CAPABILITY,
-  AI_VAULT_DEEPSEEK_SESSIONS_RUNTIME_CAPABILITY,
+  ...AI_VAULT_GATED_AGENT_RUNTIME_CAPABILITIES,
   ...CLAUDE_API_RUNTIME_CAPABILITIES,
   FILE_MUTATION_OWNERSHIP_RUNTIME_CAPABILITY,
   GITHUB_MARK_PR_READY_RUNTIME_CAPABILITY,

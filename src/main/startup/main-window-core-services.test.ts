@@ -24,6 +24,7 @@ const {
       stats: {},
       claudeUsage: {},
       deepSeekUsage: {},
+      claudeApiUsage: {},
       codexUsage: {},
       openCodeUsage: {},
       museUsage: {},

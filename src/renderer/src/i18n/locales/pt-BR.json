@@ -4393,7 +4393,8 @@
           "eb6a066185": "claude",
           "eee19cfade": "visão geral",
           "grokUsageTab": "Grok",
-          "trackingSince": "Rastreando desde {{value0}}"
+          "trackingSince": "Rastreando desde {{value0}}",
+          "claudeApiUsageTab": "Claude (API)"
         },
         "UsageOverviewPane": {
           "22ed1b7669": "sessões",
@@ -4415,7 +4416,8 @@
           "55c910f4f1": "- alguns preços de modelo não estão disponíveis",
           "enableMuse": "Ativar Muse",
           "noLocalUsageYetWithDeepSeek": "Nenhum uso local de Claude, DeepSeek, Codex, OpenCode ou Muse encontrado ainda. A visão geral será preenchida após a próxima sessão do agente escrever logs de tokens.",
-          "enableDeepSeek": "Ativar DeepSeek"
+          "enableDeepSeek": "Ativar DeepSeek",
+          "enableClaudeApi": "Ativar Claude (API)"
         },
         "share": {
           "card": {
@@ -4454,7 +4456,8 @@
             "a3b6c7d8e9": "uso do grok",
             "9f2a3b4c5d": "xai",
             "museKeyword": "muse",
-            "deepseekKeyword": "deepseek"
+            "deepseekKeyword": "deepseek",
+            "claudeApiKeyword": "chave de api"
           }
         },
         "usage": {
@@ -4462,7 +4465,8 @@
             "model": {
               "bc474051e5": "OpenCode",
               "eb220d193b": "Codex",
-              "544d6d4c16": "Claude"
+              "544d6d4c16": "Claude",
+              "claudeApi": "Claude (API)"
             },
             "sections": {
               "9564a3b21b": "sessões -",
@@ -4541,6 +4545,17 @@
           "options": "Opções de uso do DeepSeek",
           "refresh": "Atualizar uso do DeepSeek",
           "empty": "Nenhum uso local do DeepSeek encontrado ainda para este escopo."
+        },
+        "ClaudeApiUsagePane": {
+          "title": "Rastreamento de uso do Claude (API)",
+          "enable": "Ativar análise de uso do Claude (API)",
+          "disabledDescription": "Lê os logs de uso locais das suas contas de API do Claude para mostrar estatísticas de tokens, modelos, sessões e custo estimado.",
+          "allScope": "Todo o uso local do Claude (API)",
+          "options": "Opções de uso do Claude (API)",
+          "refresh": "Atualizar uso do Claude (API)",
+          "empty": "Nenhum uso local do Claude (API) encontrado ainda neste escopo.",
+          "cost": "Custo est. (preço de tabela)",
+          "costNote": "O custo é estimado pelos preços de tabela da Anthropic; sua fatura pode ser diferente."
         }
       },
       "sparse": {

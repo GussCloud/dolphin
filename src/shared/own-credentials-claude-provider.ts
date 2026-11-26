@@ -1,6 +1,6 @@
 import { isClaudeApiProviderEnv, isClaudeApiTuiAgent } from './claude-api-provider'
 import { isDeepSeekProviderEnv, isDeepSeekTuiAgent } from './deepseek-claude-provider'
-import { isClaudeHookAgentType } from './deepseek-status-identity'
+import { isClaudeHookAgentType } from './claude-status-display-identity'
 import type { TuiAgent } from './tui-agent'
 
 // Why one predicate: DeepSeek and the API-key agent run the same `claude` binary on credentials

@@ -35,6 +35,7 @@ export function initializeMainProcessAccountServices(): void {
     !store ||
     !state.claudeUsage ||
     !state.deepSeekUsage ||
+    !state.claudeApiUsage ||
     !state.codexUsage ||
     !state.openCodeUsage ||
     !state.museUsage

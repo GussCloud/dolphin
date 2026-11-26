@@ -11,7 +11,7 @@ import {
 import {
   isClaudeHookAgentType,
   toHookHostAgentType
-} from '../../../../shared/deepseek-status-identity'
+} from '../../../../shared/claude-status-display-identity'
 import { isExplicitAgentStatusFresh } from '@/lib/agent-status'
 
 export type AgentQuestionAnsweredInference = {

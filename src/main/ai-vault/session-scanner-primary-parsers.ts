@@ -38,8 +38,13 @@ type ParserSessionOptions = {
   executionHostPlatform?: NodeJS.Platform | null
 }
 
-/** Agents whose transcripts are Claude Code JSONL; DeepSeek runs the same CLI under its own config dir. */
-export type ClaudeTranscriptAgent = Extract<AiVaultAgent, 'claude' | 'deepseek'>
+/** Agents whose transcripts are Claude Code JSONL: DeepSeek and API-key sessions run the same CLI
+ *  under their own config dirs. */
+export type ClaudeTranscriptAgent = Extract<AiVaultAgent, 'claude' | 'deepseek' | 'claude-api'>
+
+export function isClaudeTranscriptAgent(agent: unknown): agent is ClaudeTranscriptAgent {
+  return agent === 'claude' || agent === 'deepseek' || agent === 'claude-api'
+}
 
 // Parse state kept resumable so the scan cache can append newly written
 // transcript lines without re-reading the whole (potentially huge) file.

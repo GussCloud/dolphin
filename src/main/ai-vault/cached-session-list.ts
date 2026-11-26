@@ -11,7 +11,10 @@ import type { AiVaultScanOptions } from './session-scanner-types'
 import { prepareOpenCodeWslReaders } from './opencode-wsl-runtime-preparation'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host'
 import { AiVaultScanCoordinator } from './ai-vault-scan-coordinator'
-import { listClaudeProfileProjectsDirs } from '../claude-accounts/profile/claude-profile-roots'
+import {
+  listClaudeApiProfileProjectsDirs,
+  listClaudePlanProfileProjectsDirs
+} from '../claude-accounts/profile/claude-profile-roots'
 import {
   aiVaultSessionDepthCovers,
   requestedAiVaultSessionDepth,
@@ -61,7 +64,10 @@ export async function localAiVaultScanRoots(): Promise<
   Required<
     Pick<
       AiVaultScanOptions,
-      'additionalCodexSessionsDirs' | 'additionalClaudeProjectsDirs' | 'wslHomeDirs'
+      | 'additionalCodexSessionsDirs'
+      | 'additionalClaudeProjectsDirs'
+      | 'claudeApiProjectsDirs'
+      | 'wslHomeDirs'
     >
   > &
     Pick<AiVaultScanOptions, 'executionHostId' | 'wslOpenCodeReaders'>
@@ -72,7 +78,9 @@ export async function localAiVaultScanRoots(): Promise<
   ])
   return {
     additionalCodexSessionsDirs: additionalCodexHomes.map((homePath) => join(homePath, 'sessions')),
-    additionalClaudeProjectsDirs: listClaudeProfileProjectsDirs(),
+    // Why split: each transcript belongs to one agent, so plan rows never list API-billed sessions.
+    additionalClaudeProjectsDirs: listClaudePlanProfileProjectsDirs(),
+    claudeApiProjectsDirs: listClaudeApiProfileProjectsDirs(),
     wslHomeDirs,
     wslOpenCodeReaders: await prepareOpenCodeWslReaders(wslHomeDirs),
     // Why: this scan is always host-local; callers addressing this host by a

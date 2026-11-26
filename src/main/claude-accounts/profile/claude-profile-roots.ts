@@ -1,5 +1,5 @@
 import { existsSync, readdirSync } from 'node:fs'
-import { join } from 'node:path'
+import { isAbsolute, join, relative, resolve } from 'node:path'
 import { CLAUDE_PROFILE_MARKER } from '../pinned-config-dir/claude-pinned-config-layout'
 
 type ClaudeProfileRootSources = {
@@ -7,11 +7,17 @@ type ClaudeProfileRootSources = {
   managedAccountsRoot: () => string | null
   /** Folders users linked as accounts, other than `~/.claude`. */
   linkedConfigDirs: () => readonly string[]
+  /** Ids of the accounts billed to an API key; their isolated profiles belong to `claude-api`. */
+  apiKeyAccountIds: () => readonly string[]
+  /** Ids of the subscription (plan) accounts; their isolated profiles belong to `claude`. */
+  planAccountIds: () => readonly string[]
 }
 
 let sources: ClaudeProfileRootSources = {
   managedAccountsRoot: () => null,
-  linkedConfigDirs: () => []
+  linkedConfigDirs: () => [],
+  apiKeyAccountIds: () => [],
+  planAccountIds: () => []
 }
 
 /** Installed by the runtime auth service; kept as a port so plain-Node runtimes need no Electron. */
@@ -19,26 +25,94 @@ export function registerClaudeProfileRootSources(next: ClaudeProfileRootSources)
   sources = next
 }
 
+function listIsolatedProfileConfigDirs(): { configDir: string; accountId: string }[] {
+  const root = sources.managedAccountsRoot()
+  if (!root) {
+    return []
+  }
+  let accountIds: string[]
+  try {
+    accountIds = readdirSync(root)
+  } catch {
+    return []
+  }
+  return accountIds
+    .map((accountId) => ({ accountId, configDir: join(root, accountId, 'config') }))
+    .filter(({ configDir }) => existsSync(join(configDir, CLAUDE_PROFILE_MARKER)))
+}
+
 /**
- * Config dirs of the Claude account profiles on this host, isolated or linked. Each holds its own
- * `projects/` history, which readers of `~/.claude` would otherwise never see.
+ * Config dirs of every Claude account profile on this host, isolated or linked, API accounts
+ * included. Each holds its own `projects/` history, which readers of `~/.claude` would otherwise
+ * never see. Readers that attribute a session to an agent use the plan/API split below instead.
  */
 export function listClaudeProfileConfigDirs(): string[] {
-  const root = sources.managedAccountsRoot()
-  let accountIds: string[] = []
-  if (root) {
-    try {
-      accountIds = readdirSync(root)
-    } catch {
-      accountIds = []
-    }
-  }
-  const isolated = accountIds
-    .map((accountId) => join(root ?? '', accountId, 'config'))
-    .filter((configDir) => existsSync(join(configDir, CLAUDE_PROFILE_MARKER)))
-  return [...new Set([...isolated, ...sources.linkedConfigDirs()])]
+  return [
+    ...new Set([
+      ...listIsolatedProfileConfigDirs().map(({ configDir }) => configDir),
+      ...sources.linkedConfigDirs()
+    ])
+  ]
+}
+
+/**
+ * Profiles plain `claude` runs in: the plan accounts' and the linked folders. A profile whose account
+ * is no longer in settings (a remove that left the folder) belongs to neither agent: dropping it
+ * from history and stats is better than billing-mislabelling it.
+ */
+export function listClaudePlanProfileConfigDirs(): string[] {
+  const planIds = new Set(sources.planAccountIds())
+  return [
+    ...new Set([
+      ...listIsolatedProfileConfigDirs()
+        .filter(({ accountId }) => planIds.has(accountId))
+        .map(({ configDir }) => configDir),
+      ...sources.linkedConfigDirs()
+    ])
+  ]
+}
+
+/** Profiles of the accounts billed to an API key, where every `claude-api` session lives. */
+export function listClaudeApiProfileConfigDirs(): string[] {
+  const apiIds = new Set(sources.apiKeyAccountIds())
+  return listIsolatedProfileConfigDirs()
+    .filter(({ accountId }) => apiIds.has(accountId))
+    .map(({ configDir }) => configDir)
 }
 
 export function listClaudeProfileProjectsDirs(): string[] {
   return listClaudeProfileConfigDirs().map((configDir) => join(configDir, 'projects'))
+}
+
+export function listClaudePlanProfileProjectsDirs(): string[] {
+  return listClaudePlanProfileConfigDirs().map((configDir) => join(configDir, 'projects'))
+}
+
+export function listClaudeApiProfileProjectsDirs(): string[] {
+  return listClaudeApiProfileConfigDirs().map((configDir) => join(configDir, 'projects'))
+}
+
+function isPathInside(child: string, parent: string): boolean {
+  const rel = relative(resolve(parent), resolve(child))
+  return rel !== '' && !rel.startsWith('..') && !isAbsolute(rel)
+}
+
+/**
+ * Whether a host path (a hook's transcript) sits under an API account's profile. Decided from this
+ * host's account list, so a path alone never claims the API identity for a dir that is not one.
+ */
+export function isClaudeApiProfilePath(path: string | null | undefined): boolean {
+  if (!path || !isAbsolute(path)) {
+    return false
+  }
+  const root = sources.managedAccountsRoot()
+  if (!root) {
+    return false
+  }
+  const normalize = (value: string): string =>
+    process.platform === 'win32' ? value.toLowerCase() : value
+  const candidate = normalize(path)
+  return sources
+    .apiKeyAccountIds()
+    .some((accountId) => isPathInside(candidate, normalize(join(root, accountId, 'config'))))
 }

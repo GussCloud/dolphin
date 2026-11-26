@@ -31,7 +31,13 @@ import type { UsageScanWorktreeRef } from './usage-provider-contract'
  * than `UsageProviderId`: a `plugin:` provider supplies its own scan function,
  * which is not in this bundle and cannot be named on the wire.
  */
-export type UsageScanWorkerProviderId = 'claude' | 'deepseek' | 'codex' | 'opencode' | 'muse'
+export type UsageScanWorkerProviderId =
+  | 'claude'
+  | 'claude-api'
+  | 'deepseek'
+  | 'codex'
+  | 'opencode'
+  | 'muse'
 
 /** Request body per provider; `previous` is that provider's own per-source cache. */
 export type UsageScanWorkerRequestBody =
@@ -41,6 +47,13 @@ export type UsageScanWorkerRequestBody =
       previous: ClaudeUsagePersistedFile[]
       /** Isolated account profiles; the worker has no Electron to find them itself. */
       profileConfigDirs?: string[]
+    }
+  | {
+      // API-key accounts run Claude Code in their own profiles; only those profiles are scanned.
+      providerId: 'claude-api'
+      worktrees: UsageScanWorktreeRef[]
+      previous: ClaudeUsagePersistedFile[]
+      profileConfigDirs: string[]
     }
   | {
       // DeepSeek transcripts are Claude Code's format under `~/.claude-deepseek`.
@@ -65,7 +78,7 @@ export type UsageScanWorkerRequest = UsageScanWorkerRequestBody & { id: number }
  */
 export type UsageScanWorkerValue =
   | {
-      providerId: 'claude' | 'deepseek'
+      providerId: 'claude' | 'claude-api' | 'deepseek'
       source: ClaudeUsagePersistedFile[]
       sessions: ClaudeUsageSession[]
       dailyAggregates: ClaudeUsageDailyAggregate[]

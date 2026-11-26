@@ -1,4 +1,4 @@
-import type { AiVaultSession } from '../../shared/ai-vault-types'
+import type { AiVaultAgent, AiVaultSession } from '../../shared/ai-vault-types'
 import type { ResumableSessionParseState } from './session-scanner-types'
 import type { SessionSidecarObservation } from './session-sidecar-stat'
 import type { TranscriptMessageChannel } from './session-transcript-channel'
@@ -35,6 +35,19 @@ export type SessionParseCacheEntry = {
   // onto it. In-memory only: without it a sibling change costs one re-parse.
   foldSession?: AiVaultSession | null
   resume: SessionParseResumePoint | null
+  // The agent the parse stamped (row id, resume command, resume state). In-memory only; a
+  // persisted entry falls back to `session.agent`.
+  agent?: AiVaultAgent
+}
+
+/** A cached parse is reusable only for the agent it was stamped for: a transcript's agent can change
+ *  between builds (API-key profiles moved from `claude` to `claude-api`), never within one parse. */
+export function sessionParseCacheEntryMatchesAgent(
+  entry: Pick<SessionParseCacheEntry, 'agent' | 'session'>,
+  agent: AiVaultAgent
+): boolean {
+  const cachedAgent = entry.agent ?? entry.session?.agent
+  return cachedAgent === undefined || cachedAgent === agent
 }
 
 const cache = new Map<string, SessionParseCacheEntry>()

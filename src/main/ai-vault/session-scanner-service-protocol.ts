@@ -15,6 +15,7 @@ import type { SessionSearchScanRoots } from '../ai-vault-search/session-search-s
 import type { ReadAiVaultFirstUserPromptArgs } from './session-first-user-prompt-read'
 import type { SessionParseCachePersistenceOptions } from './session-parse-cache-persistence'
 import type { AiVaultWorkerScanOptions } from './session-scanner-worker-protocol'
+import type { ClaudeTranscriptAgent } from './session-scanner-primary-parsers'
 
 export const AI_VAULT_SERVICE_PROTOCOL_VERSION = 1
 
@@ -43,7 +44,7 @@ const AI_VAULT_SERVICE_OPERATIONS: ReadonlySet<string> = new Set<AiVaultServiceO
 ])
 
 export type AiVaultServiceSubagentRequest = {
-  agent: 'claude' | 'deepseek' | 'omp'
+  agent: ClaudeTranscriptAgent | 'omp'
   parentFilePath: string
 }
 

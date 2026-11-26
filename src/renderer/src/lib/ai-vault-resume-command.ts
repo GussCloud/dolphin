@@ -24,6 +24,7 @@ import { CLIENT_PLATFORM } from '@/lib/new-workspace'
 import { buildAgentResumeStartupPlan } from '@/lib/tui-agent-startup'
 import { getExecutionHostIdForWorktree } from '@/lib/worktree-runtime-owner'
 import { LOCAL_EXECUTION_HOST_ID, parseExecutionHostId } from '../../../shared/execution-host'
+import { isOwnCredentialsClaudeTuiAgent } from '../../../shared/own-credentials-claude-provider'
 import {
   getAiVaultResumeWorkspacePath,
   resolveAiVaultResumeStartupShell
@@ -133,8 +134,8 @@ function buildAiVaultResumeForWorktree(
     args.session.resumeCommand &&
     args.session.agent !== 'omp' &&
     // Why: the host's prebuilt `claude --resume` carries no launch agent, so the spawn would
-    // skip the DeepSeek env and run on the host's Claude login. The plan below keeps it.
-    args.session.agent !== 'deepseek' &&
+    // skip the DeepSeek or API-key env and run on the host's Claude login. The plan below keeps it.
+    !isOwnCredentialsClaudeTuiAgent(args.session.agent) &&
     !(args.session.agent === 'codex' && args.session.codexHome === null) &&
     !args.commandOverride?.trim()
   ) {

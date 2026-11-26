@@ -42,6 +42,24 @@ describe('resolveHookPayloadAgentType for DeepSeek panes', () => {
     ).toBe('codex')
   })
 
+  it('follows a claude-api stamp, and keeps it for a transcript-less event on that row', () => {
+    expect(
+      resolveHookPayloadAgentType({ ...claudeRow, displayAgentType: 'claude-api' }, 'Claude Code')
+        .agentType
+    ).toBe('claude-api')
+    expect(
+      resolveHookPayloadAgentType(claudeRow, undefined, { existingAgentType: 'claude-api' })
+        .agentType
+    ).toBe('claude-api')
+    // Without the host's account list a transcript path alone never claims the API identity.
+    expect(
+      resolveHookPayloadAgentType(claudeRow, 'Claude Code', {
+        transcriptPath: '/data/claude-accounts/api-1/config/projects/x/s.jsonl',
+        existingAgentType: 'claude-api'
+      }).agentType
+    ).toBe('claude')
+  })
+
   it('still routes OpenClaude by title', () => {
     expect(resolveHookPayloadAgentType(claudeRow, 'OpenClaude').agentType).toBe('openclaude')
   })

@@ -4316,7 +4316,8 @@
           "eb6a066185": "claude",
           "eee19cfade": "vue d'ensemble",
           "grokUsageTab": "Grok",
-          "trackingSince": "Suivi depuis {{value0}}"
+          "trackingSince": "Suivi depuis {{value0}}",
+          "claudeApiUsageTab": "Claude (API)"
         },
         "UsageOverviewPane": {
           "22ed1b7669": "sessions",
@@ -4338,7 +4339,8 @@
           "55c910f4f1": "- certains prix de modèles sont indisponibles",
           "enableMuse": "Activer Muse",
           "noLocalUsageYetWithDeepSeek": "Aucune utilisation locale de Claude, DeepSeek, Codex, OpenCode ou Muse trouvée pour l'instant. L'aperçu se remplira dès que la prochaine session d'agent écrira des journaux de tokens.",
-          "enableDeepSeek": "Activer DeepSeek"
+          "enableDeepSeek": "Activer DeepSeek",
+          "enableClaudeApi": "Activer Claude (API)"
         },
         "share": {
           "card": {
@@ -4377,7 +4379,8 @@
             "a3b6c7d8e9": "utilisation grok",
             "9f2a3b4c5d": "xai",
             "museKeyword": "muse",
-            "deepseekKeyword": "deepseek"
+            "deepseekKeyword": "deepseek",
+            "claudeApiKeyword": "clé api"
           }
         },
         "usage": {
@@ -4385,7 +4388,8 @@
             "model": {
               "bc474051e5": "OpenCode",
               "eb220d193b": "Codex",
-              "544d6d4c16": "Claude"
+              "544d6d4c16": "Claude",
+              "claudeApi": "Claude (API)"
             },
             "sections": {
               "9564a3b21b": "sessions -",
@@ -4464,6 +4468,17 @@
           "options": "Options d'utilisation DeepSeek",
           "refresh": "Actualiser l'utilisation DeepSeek",
           "empty": "Aucune utilisation locale de DeepSeek trouvée pour l'instant dans ce périmètre."
+        },
+        "ClaudeApiUsagePane": {
+          "title": "Suivi de l'utilisation de Claude (API)",
+          "enable": "Activer l'analyse d'utilisation de Claude (API)",
+          "disabledDescription": "Lit les journaux d'utilisation locaux de vos comptes API Claude pour afficher les statistiques de jetons, modèles, sessions et coût estimé.",
+          "allScope": "Toute l'utilisation locale de Claude (API)",
+          "options": "Options d'utilisation de Claude (API)",
+          "refresh": "Actualiser l'utilisation de Claude (API)",
+          "empty": "Aucune utilisation locale de Claude (API) trouvée pour cette portée.",
+          "cost": "Coût est. (prix catalogue)",
+          "costNote": "Le coût est estimé à partir des prix catalogue d'Anthropic ; votre facture peut différer."
         }
       },
       "sparse": {
@@ -12506,7 +12521,10 @@
           "newKey": "Nouvelle clé API Anthropic",
           "replaceSave": "Enregistrer",
           "badge": "Clé API",
-          "row": "Facturé sur une clé API Anthropic"
+          "row": "Facturé sur une clé API Anthropic",
+          "defaultAccount": "L'agent Claude API utilise",
+          "defaultOnly": "Le seul compte API",
+          "defaultNone": "Aucun par défaut : choisissez-en un par espace de travail"
         }
       },
       "right": {
@@ -16987,6 +17005,9 @@
         "AgentSettingsDialog": {
           "50cdb57c03": "Gérez les agents IA, définissez-en un par défaut et personnalisez les commandes.",
           "fc0268e4ed": "Agents"
+        },
+        "AgentAccountPicker": {
+          "claudeApiDefault": "Compte API par défaut"
         }
       },
       "activity": {

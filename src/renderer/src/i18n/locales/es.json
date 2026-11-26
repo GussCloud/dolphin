@@ -3859,7 +3859,8 @@
           "908c470587": "codex",
           "eb6a066185": "claude",
           "eee19cfade": "resumen",
-          "grokUsageTab": "Grok"
+          "grokUsageTab": "Grok",
+          "claudeApiUsageTab": "Claude (API)"
         },
         "UsageOverviewPane": {
           "22ed1b7669": "sesiones",
@@ -3881,7 +3882,8 @@
           "55c910f4f1": "- algunos precios de modelos no están disponibles",
           "enableMuse": "Activar Muse",
           "noLocalUsageYetWithDeepSeek": "Aún no se encontró uso local de Claude, DeepSeek, Codex, OpenCode ni Muse. El resumen se completará después de que la próxima sesión de agente escriba registros de tokens.",
-          "enableDeepSeek": "Activar DeepSeek"
+          "enableDeepSeek": "Activar DeepSeek",
+          "enableClaudeApi": "Activar Claude (API)"
         },
         "share": {
           "card": {
@@ -3920,7 +3922,8 @@
             "a3b6c7d8e9": "uso de grok",
             "9f2a3b4c5d": "xai",
             "museKeyword": "muse",
-            "deepseekKeyword": "deepseek"
+            "deepseekKeyword": "deepseek",
+            "claudeApiKeyword": "clave de api"
           }
         },
         "usage": {
@@ -3928,7 +3931,8 @@
             "model": {
               "bc474051e5": "OpenCode",
               "eb220d193b": "Codex",
-              "544d6d4c16": "Claude"
+              "544d6d4c16": "Claude",
+              "claudeApi": "Claude (API)"
             },
             "sections": {
               "9564a3b21b": "sesiones -",
@@ -4001,6 +4005,17 @@
           "options": "Opciones de uso de DeepSeek",
           "refresh": "Actualizar uso de DeepSeek",
           "empty": "Aún no se ha encontrado ningún uso local de DeepSeek para este ámbito."
+        },
+        "ClaudeApiUsagePane": {
+          "title": "Seguimiento de uso de Claude (API)",
+          "enable": "Activar análisis de uso de Claude (API)",
+          "disabledDescription": "Lee los registros de uso locales de tus cuentas de API de Claude para mostrar estadísticas de tokens, modelos, sesiones y costo estimado.",
+          "allScope": "Todo el uso local de Claude (API)",
+          "options": "Opciones de uso de Claude (API)",
+          "refresh": "Actualizar uso de Claude (API)",
+          "empty": "Aún no se encontró uso local de Claude (API) en este ámbito.",
+          "cost": "Costo est. (precios de lista)",
+          "costNote": "El costo se estima con los precios de lista de Anthropic; tu factura puede diferir."
         }
       },
       "sparse": {
@@ -10840,7 +10855,10 @@
           "newKey": "Nueva clave de API de Anthropic",
           "replaceSave": "Guardar",
           "badge": "Clave de API",
-          "row": "Facturada a una clave de API de Anthropic"
+          "row": "Facturada a una clave de API de Anthropic",
+          "defaultAccount": "El agente Claude API usa",
+          "defaultOnly": "La única cuenta de API",
+          "defaultNone": "Sin predeterminada: elige una por espacio de trabajo"
         }
       },
       "right": {
@@ -14800,6 +14818,9 @@
         "AgentSettingsDialog": {
           "50cdb57c03": "Administre agents de IA, establezca un valor predeterminado y personalice comandos.",
           "fc0268e4ed": "Agentes"
+        },
+        "AgentAccountPicker": {
+          "claudeApiDefault": "Cuenta de API predeterminada"
         }
       },
       "activity": {

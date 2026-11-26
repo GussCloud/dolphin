@@ -4,7 +4,10 @@ import {
   invalidateAiVaultSessionListCache
 } from '../ai-vault/cached-session-list'
 import { deleteAiVaultSessionFile } from '../ai-vault/session-delete'
-import { listClaudeProfileProjectsDirs } from '../claude-accounts/profile/claude-profile-roots'
+import {
+  listClaudeApiProfileProjectsDirs,
+  listClaudePlanProfileProjectsDirs
+} from '../claude-accounts/profile/claude-profile-roots'
 import { invalidateSessionParseCacheEntry } from '../ai-vault/session-scanner-parse-cache'
 import { invalidateAiVaultBackgroundCache } from '../ai-vault/session-scanner-background'
 import type { AiVaultAgent } from '../../shared/ai-vault-types'
@@ -43,7 +46,10 @@ export async function deleteAiVaultSession(
     filePath: args?.filePath ?? '',
     executionHostId: args?.executionHostId,
     wslHomeDirs,
-    rootOptions: { additionalClaudeProjectsDirs: listClaudeProfileProjectsDirs() }
+    rootOptions: {
+      additionalClaudeProjectsDirs: listClaudePlanProfileProjectsDirs(),
+      claudeApiProjectsDirs: listClaudeApiProfileProjectsDirs()
+    }
   })
 
   if (result.outcome === 'deleted') {

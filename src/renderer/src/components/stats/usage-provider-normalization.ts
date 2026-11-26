@@ -34,6 +34,17 @@ export function createClaudeProvider(input: UsageOverviewInput['claude']): Usage
   )
 }
 
+/** API-key turns are real API billing, so they keep the list-price estimate the store computed. */
+export function createClaudeApiProvider(
+  input: UsageOverviewInput['claude-api']
+): UsageProviderOverview {
+  return createClaudeTranscriptProvider(
+    'claude-api',
+    translate('auto.components.stats.usage.overview.model.claudeApi', 'Claude (API)'),
+    input
+  )
+}
+
 export function createDeepSeekProvider(
   input: UsageOverviewInput['deepseek']
 ): UsageProviderOverview {
@@ -49,7 +60,7 @@ export function createDeepSeekProvider(
 }
 
 function createClaudeTranscriptProvider(
-  id: 'claude' | 'deepseek',
+  id: 'claude' | 'claude-api' | 'deepseek',
   label: string,
   input: UsageOverviewInput['claude']
 ): UsageProviderOverview {

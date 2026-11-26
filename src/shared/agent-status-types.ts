@@ -198,7 +198,15 @@ export type AgentStatusPayload = {
 }
 
 /** Presentation identities a host may stamp over `agentType`; unknown values normalize to absent. */
-export type AgentStatusDisplayAgentType = 'deepseek'
+export type AgentStatusDisplayAgentType = 'deepseek' | 'claude-api'
+
+const DISPLAY_AGENT_TYPES: readonly AgentStatusDisplayAgentType[] = ['deepseek', 'claude-api']
+
+export function normalizeAgentStatusDisplayAgentType(
+  value: unknown
+): AgentStatusDisplayAgentType | undefined {
+  return DISPLAY_AGENT_TYPES.find((known) => known === value)
+}
 
 /**
  * Result of `parseAgentStatusPayload`: prompt is always a string (empty when omitted) so
@@ -401,7 +409,9 @@ function normalizeAgentStatusObject(parsed: unknown): ParsedAgentStatusPayload |
     turnCompletedAt: normalizeTurnCompletedAtField(obj.turnCompletedAt, state),
     subagents: normalizeSubagentsField(obj.subagents),
     mainAgent: normalizeMainAgentStatusField(obj.mainAgent),
-    ...(obj.displayAgentType === 'deepseek' ? { displayAgentType: 'deepseek' as const } : {})
+    ...(normalizeAgentStatusDisplayAgentType(obj.displayAgentType)
+      ? { displayAgentType: normalizeAgentStatusDisplayAgentType(obj.displayAgentType) }
+      : {})
   }
 }
 

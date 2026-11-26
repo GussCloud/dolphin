@@ -19,7 +19,7 @@ import type {
   MuseUsageSummary
 } from '../../../../shared/muse-usage-types'
 
-export type UsageProviderId = 'claude' | 'deepseek' | 'codex' | 'opencode' | 'muse'
+export type UsageProviderId = 'claude' | 'claude-api' | 'deepseek' | 'codex' | 'opencode' | 'muse'
 
 export type UsageProviderOverview = {
   id: UsageProviderId
@@ -49,6 +49,7 @@ export type UsageOverviewDailyPoint = {
   day: string
   totalTokens: number
   claudeTokens: number
+  claudeApiTokens: number
   deepSeekTokens: number
   codexTokens: number
   openCodeTokens: number
@@ -84,6 +85,8 @@ export type UsageOverviewInput = {
     summary: ClaudeUsageSummary | null
     daily: ClaudeUsageDailyPoint[]
   }
+  // API-key accounts run Claude Code, so their report has Claude's shape (priced at list prices).
+  'claude-api': UsageOverviewInput['claude']
   // DeepSeek runs Claude Code, so its report has Claude's shape (never priced).
   deepseek: UsageOverviewInput['claude']
   codex: {

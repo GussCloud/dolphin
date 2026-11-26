@@ -79,6 +79,7 @@ import { recoverPendingProfileProjectMoves } from '../dolphin-profiles/profile-p
 import { initStatsPath } from '../stats/collector'
 import { initClaudeUsagePath } from '../claude-usage/store'
 import { initDeepSeekUsagePath } from '../deepseek-usage/store'
+import { initClaudeApiUsagePath } from '../claude-api-usage/store'
 import { initCodexUsagePath } from '../codex-usage/store'
 import { initOpenCodeUsagePath } from '../opencode-usage/store'
 import { initMuseUsagePath } from '../muse-usage/store'
@@ -327,6 +328,7 @@ function initializeMainProcessPreflight(options: MainProcessPreflightOptions): b
   initStatsPath()
   initClaudeUsagePath()
   initDeepSeekUsagePath()
+  initClaudeApiUsagePath()
   initCodexUsagePath()
   initOpenCodeUsagePath()
   initMuseUsagePath()

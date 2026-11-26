@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest'
  *
  * DeepSeek runs the same Claude Code CLI, so every new Claude-only branch is a decision about
  * whether DeepSeek gets it too. Each listed file is pinned to its exact count of such checks:
- * adding one fails here until someone decides (shared predicate in deepseek-status-identity.ts,
+ * adding one fails here until someone decides (shared predicate in claude-status-display-identity.ts,
  * or a deliberate Claude-only check) and updates the count; removing one requires lowering it.
  */
 const ALLOWLIST_PATH = join(__dirname, '__fixtures__', 'claude-identity-check-allowlist.txt')
@@ -112,7 +112,7 @@ describe('Claude identity check ratchet', () => {
     expect(
       grown,
       'New Claude identity check. Decide whether DeepSeek (same Claude Code CLI) needs it: use ' +
-        'isClaudeHookAgentType/toHookHostAgentType from src/shared/deepseek-status-identity.ts, or ' +
+        'isClaudeHookAgentType/toHookHostAgentType from src/shared/claude-status-display-identity.ts, or ' +
         'keep it Claude-only on purpose — then raise the count in ' +
         'src/shared/__fixtures__/claude-identity-check-allowlist.txt.'
     ).toEqual([])

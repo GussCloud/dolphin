@@ -4,7 +4,10 @@ import { createAntigravitySessionResumeState } from './session-scanner-antigravi
 import { createCodexSessionResumeState } from './session-scanner-codex-parser'
 import { createDroidSessionResumeState } from './session-scanner-droid-parser'
 import { createMessageGraphSessionResumeState } from './session-scanner-graph-parsers'
-import { createClaudeSessionResumeState } from './session-scanner-primary-parsers'
+import {
+  createClaudeSessionResumeState,
+  isClaudeTranscriptAgent
+} from './session-scanner-primary-parsers'
 import { createGeminiJsonlSessionResumeState } from './session-scanner-gemini-parsers'
 import { createCopilotSessionResumeState } from './session-scanner-copilot-parser'
 import { createCursorSessionResumeState } from './session-scanner-cursor-parser'
@@ -14,6 +17,7 @@ import type { ResumableSessionParseState, SessionFileCandidate } from './session
 import { refreshCachedCodexTitle } from './session-scanner-codex-cached-title'
 import {
   getSessionParseCacheEntry,
+  sessionParseCacheEntryMatchesAgent,
   storeSessionParseCacheEntry,
   type SessionParseCacheEntry
 } from './session-parse-cache-store'
@@ -50,7 +54,8 @@ function resumableStateFactoryFor(
 ): ((messages: TranscriptMessageSink) => ResumableSessionParseState) | null {
   switch (candidate.agent) {
     case 'claude':
-    case 'deepseek': {
+    case 'deepseek':
+    case 'claude-api': {
       const agent = candidate.agent
       return (messages) => createClaudeSessionResumeState(candidate.file, messages, agent)
     }
@@ -157,6 +162,7 @@ function sessionParseCacheCoversTranscript(
   return (
     entry !== undefined &&
     entry.platform === platform &&
+    sessionParseCacheEntryMatchesAgent(entry, candidate.agent) &&
     entry.mtimeMs === file.mtimeMs &&
     (entry.sizeBytes === null || file.sizeBytes === undefined || entry.sizeBytes === file.sizeBytes)
   )
@@ -201,7 +207,10 @@ async function parseCachedInLane(
     const read = await readResumableTranscript({
       candidate,
       platform,
-      resume: entry?.platform === platform ? entry.resume : null,
+      resume:
+        entry?.platform === platform && sessionParseCacheEntryMatchesAgent(entry, candidate.agent)
+          ? entry.resume
+          : null,
       stateFactory,
       stats
     })
@@ -216,7 +225,8 @@ async function parseCachedInLane(
       // re-merges it without re-reading the transcript.
       sidecar: enriched.refused ? 'unknown' : file.sidecar,
       foldSession: read.session,
-      resume: read.resume
+      resume: read.resume,
+      agent: candidate.agent
     })
     return enriched.session
   }
@@ -235,7 +245,8 @@ async function parseCachedInLane(
     // sibling is recorded as unknown, so the next scan re-merges.
     sidecar: enriched.refused ? 'unknown' : file.sidecar,
     foldSession: session,
-    resume: null
+    resume: null,
+    agent: candidate.agent
   })
   return enriched.session
 }
@@ -254,12 +265,11 @@ async function reuseCachedSession(
   // subagent finishing). The mtime+size key can't see that, so refresh the
   // cheap directory count on reuse.
   if (entry.session && entry.session.messageCount === 0) {
-    const subagentTranscriptCount =
-      candidate.agent === 'claude' || candidate.agent === 'deepseek'
-        ? await countSubagentTranscripts(candidate.file.path)
-        : candidate.agent === 'omp'
-          ? await countOmpSubagentTranscripts(candidate.file.path)
-          : null
+    const subagentTranscriptCount = isClaudeTranscriptAgent(candidate.agent)
+      ? await countSubagentTranscripts(candidate.file.path)
+      : candidate.agent === 'omp'
+        ? await countOmpSubagentTranscripts(candidate.file.path)
+        : null
     if (
       subagentTranscriptCount !== null &&
       subagentTranscriptCount !== entry.session.subagentTranscriptCount

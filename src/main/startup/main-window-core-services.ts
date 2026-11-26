@@ -30,6 +30,7 @@ export function attachMainWindowCoreServices(
   const stats = state.stats
   const claudeUsage = state.claudeUsage
   const deepSeekUsage = state.deepSeekUsage
+  const claudeApiUsage = state.claudeApiUsage
   const codexUsage = state.codexUsage
   const openCodeUsage = state.openCodeUsage
   const museUsage = state.museUsage
@@ -46,6 +47,7 @@ export function attachMainWindowCoreServices(
     !stats ||
     !claudeUsage ||
     !deepSeekUsage ||
+    !claudeApiUsage ||
     !codexUsage ||
     !openCodeUsage ||
     !museUsage ||
@@ -65,6 +67,7 @@ export function attachMainWindowCoreServices(
     stats,
     claudeUsage,
     deepSeekUsage,
+    claudeApiUsage,
     codexUsage,
     openCodeUsage,
     museUsage,

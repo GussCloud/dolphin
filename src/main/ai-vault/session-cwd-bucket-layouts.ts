@@ -3,7 +3,7 @@ import { encodeClaudeProjectPaths, isClaudeProjectDirInScope } from './claude-pr
 
 /** An agent that keeps one directory per cwd, named by a lossy encoding of that cwd. */
 export type CwdBucketLayout = {
-  agent: Extract<AiVaultAgent, 'claude' | 'deepseek' | 'pi'>
+  agent: Extract<AiVaultAgent, 'claude' | 'deepseek' | 'claude-api' | 'pi'>
   encodeScopePrefixes: (scopePath: string) => string[]
   isDirInScope: (dirName: string, prefixes: ReadonlySet<string>) => boolean
   /** True when one transcript's cwd stands for its whole bucket (Claude Code); false re-checks each file. */
@@ -20,6 +20,11 @@ export const CLAUDE_CWD_BUCKET_LAYOUT: CwdBucketLayout = {
 export const DEEPSEEK_CWD_BUCKET_LAYOUT: CwdBucketLayout = {
   ...CLAUDE_CWD_BUCKET_LAYOUT,
   agent: 'deepseek'
+}
+
+export const CLAUDE_API_CWD_BUCKET_LAYOUT: CwdBucketLayout = {
+  ...CLAUDE_CWD_BUCKET_LAYOUT,
+  agent: 'claude-api'
 }
 
 // Pi names each bucket `--<cwd without leading slash, with / \ : as ->--`;

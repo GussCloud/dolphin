@@ -23,6 +23,7 @@ import type {
 } from '../muse-usage/types'
 import type { UsageScanWorktreeRef } from './usage-provider-contract'
 import {
+  scanClaudeApiUsageOnWorker,
   scanClaudeUsageOnWorker,
   scanCodexUsageOnWorker,
   scanDeepSeekUsageOnWorker,
@@ -30,7 +31,10 @@ import {
   scanOpenCodeUsageOnWorker,
   UsageScanWorkerClient
 } from './usage-scan-worker-client'
-import { listClaudeProfileConfigDirs } from '../claude-accounts/profile/claude-profile-roots'
+import {
+  listClaudeApiProfileConfigDirs,
+  listClaudePlanProfileConfigDirs
+} from '../claude-accounts/profile/claude-profile-roots'
 
 // Why: resolve the built worker entry and own the process-wide shared client, so
 // the client class stays free of runtime-layout concerns and each usage store
@@ -77,7 +81,37 @@ export async function scanClaudeUsageFilesViaWorker(
     (body) => getSharedClient().scan(body),
     worktrees,
     previous,
-    listClaudeProfileConfigDirs()
+    // Why plan only: API account profiles bill an API key and are their own provider.
+    listClaudePlanProfileConfigDirs()
+  )
+  return {
+    processedFiles: value.source,
+    sessions: value.sessions,
+    dailyAggregates: value.dailyAggregates,
+    ...(value.unchanged ? { unchanged: true } : {})
+  }
+}
+
+/**
+ * Scan the API-key accounts' Claude-format transcripts through the shared worker client.
+ * @param worktrees - Worktree refs used to attribute usage.
+ * @param previous - Last scan's per-file cache.
+ * @returns The same projection `scanClaudeUsageFiles(..., 'claude-api')` returns, off the main thread.
+ */
+export async function scanClaudeApiUsageFilesViaWorker(
+  worktrees: UsageScanWorktreeRef[],
+  previous: ClaudeUsagePersistedFile[] = []
+): Promise<{
+  processedFiles: ClaudeUsagePersistedFile[]
+  sessions: ClaudeUsageSession[]
+  dailyAggregates: ClaudeUsageDailyAggregate[]
+  unchanged?: boolean
+}> {
+  const value = await scanClaudeApiUsageOnWorker(
+    (body) => getSharedClient().scan(body),
+    worktrees,
+    previous,
+    listClaudeApiProfileConfigDirs()
   )
   return {
     processedFiles: value.source,

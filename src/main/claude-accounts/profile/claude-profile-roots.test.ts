@@ -4,6 +4,11 @@ import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { CLAUDE_PROFILE_MARKER } from '../pinned-config-dir/claude-pinned-config-layout'
 import {
+  isClaudeApiProfilePath,
+  listClaudeApiProfileConfigDirs,
+  listClaudeApiProfileProjectsDirs,
+  listClaudePlanProfileConfigDirs,
+  listClaudePlanProfileProjectsDirs,
   listClaudeProfileConfigDirs,
   listClaudeProfileProjectsDirs,
   registerClaudeProfileRootSources
@@ -16,7 +21,9 @@ describe('listClaudeProfileConfigDirs', () => {
     state.userData = mkdtempSync(join(tmpdir(), 'dolphin-profile-roots-'))
     registerClaudeProfileRootSources({
       managedAccountsRoot: () => join(state.userData, 'claude-accounts'),
-      linkedConfigDirs: () => ['/linked/.claude-empresa']
+      linkedConfigDirs: () => ['/linked/.claude-empresa'],
+      apiKeyAccountIds: () => ['api'],
+      planAccountIds: () => ['work']
     })
   })
 
@@ -42,5 +49,89 @@ describe('listClaudeProfileConfigDirs', () => {
 
   it('lists only linked folders before any isolated profile exists', () => {
     expect(listClaudeProfileConfigDirs()).toEqual(['/linked/.claude-empresa'])
+  })
+
+  it('splits API account profiles from the plan profiles, so a transcript has one owner', () => {
+    const root = join(state.userData, 'claude-accounts')
+    for (const id of ['work', 'api']) {
+      mkdirSync(join(root, id, 'config'), { recursive: true })
+      writeFileSync(join(root, id, 'config', CLAUDE_PROFILE_MARKER), '{"version":1}\n')
+    }
+
+    expect(listClaudeProfileConfigDirs().sort()).toEqual(
+      [join(root, 'api', 'config'), join(root, 'work', 'config'), '/linked/.claude-empresa'].sort()
+    )
+    expect(listClaudePlanProfileConfigDirs()).toEqual([
+      join(root, 'work', 'config'),
+      '/linked/.claude-empresa'
+    ])
+    expect(listClaudePlanProfileProjectsDirs()).not.toContain(
+      join(root, 'api', 'config', 'projects')
+    )
+    expect(listClaudeApiProfileConfigDirs()).toEqual([join(root, 'api', 'config')])
+    expect(listClaudeApiProfileProjectsDirs()).toEqual([join(root, 'api', 'config', 'projects')])
+  })
+})
+
+describe('orphaned profiles', () => {
+  it('counts a profile whose account left settings as neither plan nor API', () => {
+    const userData = mkdtempSync(join(tmpdir(), 'dolphin-profile-orphan-'))
+    try {
+      const root = join(userData, 'claude-accounts')
+      for (const id of ['work', 'api', 'removed-api']) {
+        mkdirSync(join(root, id, 'config'), { recursive: true })
+        writeFileSync(join(root, id, 'config', CLAUDE_PROFILE_MARKER), '{"version":1}\n')
+      }
+      registerClaudeProfileRootSources({
+        managedAccountsRoot: () => root,
+        linkedConfigDirs: () => [],
+        apiKeyAccountIds: () => ['api'],
+        planAccountIds: () => ['work']
+      })
+
+      expect(listClaudePlanProfileConfigDirs()).toEqual([join(root, 'work', 'config')])
+      expect(listClaudeApiProfileConfigDirs()).toEqual([join(root, 'api', 'config')])
+      // Readers that need every profile (trust revocation, retirement) still see it.
+      expect(listClaudeProfileConfigDirs()).toContain(join(root, 'removed-api', 'config'))
+    } finally {
+      rmSync(userData, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('isClaudeApiProfilePath', () => {
+  const root = join(tmpdir(), 'dolphin-api-path', 'claude-accounts')
+
+  beforeEach(() => {
+    registerClaudeProfileRootSources({
+      managedAccountsRoot: () => root,
+      linkedConfigDirs: () => [],
+      apiKeyAccountIds: () => ['api'],
+      planAccountIds: () => ['work']
+    })
+  })
+
+  it('accepts a transcript under an API account profile only', () => {
+    expect(isClaudeApiProfilePath(join(root, 'api', 'config', 'projects', 'b', 's.jsonl'))).toBe(
+      true
+    )
+    expect(isClaudeApiProfilePath(join(root, 'work', 'config', 'projects', 'b', 's.jsonl'))).toBe(
+      false
+    )
+    expect(isClaudeApiProfilePath(join(root, 'api', 'auth', 's.jsonl'))).toBe(false)
+    expect(isClaudeApiProfilePath(join(root, 'api', 'config'))).toBe(false)
+    expect(isClaudeApiProfilePath(join(root, 'api', 'config', '..', '..', 'x.jsonl'))).toBe(false)
+    expect(isClaudeApiProfilePath('api/config/projects/s.jsonl')).toBe(false)
+    expect(isClaudeApiProfilePath(undefined)).toBe(false)
+  })
+
+  it('claims nothing before the account service registers its sources', () => {
+    registerClaudeProfileRootSources({
+      managedAccountsRoot: () => null,
+      linkedConfigDirs: () => [],
+      apiKeyAccountIds: () => ['api'],
+      planAccountIds: () => ['work']
+    })
+    expect(isClaudeApiProfilePath(join(root, 'api', 'config', 'projects', 's.jsonl'))).toBe(false)
   })
 })

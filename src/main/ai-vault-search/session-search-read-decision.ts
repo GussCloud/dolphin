@@ -56,6 +56,11 @@ export function sessionSearchReadDecision(args: {
   if (heldOut(row, file.mtimeMs)) {
     return 'skip'
   }
+  if (row.sessionAgent !== null && row.sessionAgent !== candidate.agent) {
+    // The same file now belongs to another agent (API-key profiles left `claude` for
+    // `claude-api`): the stored row's agent, id and resume command are the old agent's.
+    return 'whole'
+  }
   if (row.state === 'due') {
     // The index is behind on a span no append reaches: a declined append, or a
     // window that widened to admit this file.

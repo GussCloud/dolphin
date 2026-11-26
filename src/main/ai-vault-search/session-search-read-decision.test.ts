@@ -33,6 +33,7 @@ function row(overrides: Partial<SessionSearchFileRow> = {}): SessionSearchFileRo
     state: 'current',
     failCount: 0,
     failedMtimeMs: null,
+    sessionAgent: 'claude',
     ...overrides
   }
 }
@@ -114,4 +115,10 @@ it('starts trying again the moment a held-out file changes', () => {
       row: row({ state: 'failed', failCount: 9, failedMtimeMs: MTIME })
     })
   ).toBe('any')
+})
+
+it('reads a file from the start when its stored session belongs to another agent', () => {
+  expect(decide({ row: row({ sessionAgent: 'deepseek' }) })).toBe('whole')
+  // No session yet (a read that never finished) is not a different agent.
+  expect(decide({ row: row({ sessionAgent: null }) })).toBe('skip')
 })

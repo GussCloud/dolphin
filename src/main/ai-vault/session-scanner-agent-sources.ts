@@ -127,6 +127,13 @@ export const AI_VAULT_AGENT_SOURCES: AiVaultAgentSourceTable = {
     extensions: ['.jsonl'],
     directoryPredicate: (name) => name !== SUBAGENT_DIR_NAME
   },
+  // Same layout in API account profiles: host-only (the agent never runs in WSL or over SSH), and
+  // Claude's entry scans only plan profiles, so an API-billed transcript is never listed as Claude.
+  'claude-api': {
+    rootDirs: (options) => [...(options.claudeApiProjectsDirs ?? [])],
+    extensions: ['.jsonl'],
+    directoryPredicate: (name) => name !== SUBAGENT_DIR_NAME
+  },
   codex: {
     rootDirs: (options, wslHomeDirs) =>
       uniqueCodexSessionsDirs([

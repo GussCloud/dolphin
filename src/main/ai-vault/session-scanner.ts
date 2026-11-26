@@ -29,6 +29,7 @@ import { canStopParsingSessions } from './session-scan-cutoff'
 import { discoverInScopeCwdBucketFiles } from './session-scanner-scope-discovery'
 import {
   CLAUDE_CWD_BUCKET_LAYOUT,
+  CLAUDE_API_CWD_BUCKET_LAYOUT,
   DEEPSEEK_CWD_BUCKET_LAYOUT,
   PI_CWD_BUCKET_LAYOUT
 } from './session-cwd-bucket-layouts'
@@ -173,6 +174,7 @@ function mergeSessions(
 const CWD_BUCKET_LAYOUTS = [
   CLAUDE_CWD_BUCKET_LAYOUT,
   DEEPSEEK_CWD_BUCKET_LAYOUT,
+  CLAUDE_API_CWD_BUCKET_LAYOUT,
   PI_CWD_BUCKET_LAYOUT
 ]
 

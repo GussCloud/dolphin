@@ -82,6 +82,7 @@ import {
 import { isCompanionPopoutRenderer } from '../../window/companion-popout-renderers'
 import type { ClaudeUsageStore } from '../../claude-usage/store'
 import type { DeepSeekUsageStore } from '../../deepseek-usage/store'
+import type { ClaudeApiUsageStore } from '../../claude-api-usage/store'
 import type { CodexUsageStore } from '../../codex-usage/store'
 import type { OpenCodeUsageStore } from '../../opencode-usage/store'
 import type { MuseUsageStore } from '../../muse-usage/store'
@@ -124,6 +125,7 @@ export function registerCoreHandlers(
   stats: StatsCollector,
   claudeUsage: ClaudeUsageStore,
   deepSeekUsage: DeepSeekUsageStore,
+  claudeApiUsage: ClaudeApiUsageStore,
   codexUsage: CodexUsageStore,
   openCodeUsage: OpenCodeUsageStore,
   museUsage: MuseUsageStore,
@@ -159,6 +161,7 @@ export function registerCoreHandlers(
   registerUsageProviderHandlers({
     claudeUsage,
     deepSeekUsage,
+    claudeApiUsage,
     codexUsage,
     openCodeUsage,
     museUsage

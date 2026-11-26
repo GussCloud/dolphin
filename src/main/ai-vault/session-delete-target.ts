@@ -15,6 +15,7 @@ import {
 } from '../../shared/execution-host'
 import { isPathInsideOrEqual } from '../../shared/cross-platform-path'
 import { AI_VAULT_AGENT_SOURCES, isDiscoverableSessionFile } from './session-scanner-agent-sources'
+import { isClaudeTranscriptAgent } from './session-scanner-primary-parsers'
 import { subagentTranscriptsDirFor } from './session-scanner-subagent-transcripts'
 import type { AiVaultScanOptions } from './session-scanner-types'
 
@@ -117,8 +118,9 @@ function sessionDeleteRemovals(args: {
     return [{ path: sessionDir, kind: 'directory', roots }]
   }
 
-  // DeepSeek shares Claude Code's layout; matchedRoot keeps its companions in `~/.claude-deepseek`.
-  if (agent === 'claude' || agent === 'deepseek') {
+  // DeepSeek and API-key sessions share Claude Code's layout; matchedRoot keeps their companions
+  // in their own config dir.
+  if (isClaudeTranscriptAgent(agent)) {
     const sessionId = basename(resolvedPath, extname(resolvedPath))
     // A degenerate stem ('.' from `..jsonl`, or empty) would resolve the session
     // dir to the project dir and trash every session in it.

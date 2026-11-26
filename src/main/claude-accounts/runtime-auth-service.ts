@@ -7,9 +7,9 @@ import {
 import { ClaudeRuntimeAuthSync } from './runtime-auth/runtime-auth-sync'
 import type { WorktreeLaunchLocation } from '../worktree-launch-owner'
 import { resolveClaudeLaunchAccountOverride } from './worktree-claude-account-override'
-import { getClaudeManagedAccountsRoot, isClaudePinnedConfigDirPath } from './managed-auth-path'
+import { isClaudePinnedConfigDirPath } from './managed-auth-path'
 import { getClaudeAccountConfigDir, isDefaultClaudeConfigDir } from './claude-account-config-dir'
-import { registerClaudeProfileRootSources } from './profile/claude-profile-roots'
+import { registerClaudeProfileRootSourcesFromStore } from './profile/claude-profile-root-sources'
 import type {
   ClaudeLaunchLocation,
   ClaudeRuntimeAuthPreparation
@@ -46,18 +46,7 @@ export class ClaudeRuntimeAuthService extends ClaudeRuntimeAuthSync {
       configDirFor: getClaudeAccountConfigDir,
       getSettings: () => this.store.getSettings()
     })
-    registerClaudeProfileRootSources({
-      managedAccountsRoot: getClaudeManagedAccountsRoot,
-      // Why default excluded: readers already scan ~/.claude as the system profile.
-      linkedConfigDirs: () =>
-        this.store
-          .getSettings()
-          .claudeManagedAccounts.flatMap((account) =>
-            account.linkedConfigDir && !isDefaultClaudeConfigDir(account.linkedConfigDir)
-              ? [account.linkedConfigDir]
-              : []
-          )
-    })
+    registerClaudeProfileRootSourcesFromStore(this.store)
     void this.safeSyncForCurrentSelection()
   }
 

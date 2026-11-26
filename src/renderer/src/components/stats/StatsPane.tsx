@@ -4,6 +4,7 @@ import { useAppStore } from '../../store'
 import { StatCard } from './StatCard'
 import { ClaudeUsagePane } from './ClaudeUsagePane'
 import { DeepSeekUsagePane } from './DeepSeekUsagePane'
+import { ClaudeApiUsagePane } from './ClaudeApiUsagePane'
 import { CodexUsagePane } from './CodexUsagePane'
 import { GrokUsagePane } from './GrokUsagePane'
 import { OpenCodeUsagePane } from './OpenCodeUsagePane'
@@ -54,7 +55,15 @@ function formatTrackingSince(timestamp: number | null): string {
   })
 }
 
-type UsageTab = 'overview' | 'claude' | 'deepseek' | 'codex' | 'opencode' | 'muse' | 'grok'
+type UsageTab =
+  | 'overview'
+  | 'claude'
+  | 'claude-api'
+  | 'deepseek'
+  | 'codex'
+  | 'opencode'
+  | 'muse'
+  | 'grok'
 
 const USAGE_ANALYTICS_OPTIONS = [
   {
@@ -67,6 +76,12 @@ const USAGE_ANALYTICS_OPTIONS = [
     id: 'claude',
     get label() {
       return translate('auto.components.stats.StatsPane.85457c02fe', 'Claude')
+    }
+  },
+  {
+    id: 'claude-api',
+    get label() {
+      return translate('auto.components.stats.StatsPane.claudeApiUsageTab', 'Claude (API)')
     }
   },
   {
@@ -218,6 +233,8 @@ export function StatsPane(): React.JSX.Element {
             <UsageOverviewPane />
           ) : activeUsageTab === 'claude' ? (
             <ClaudeUsagePane />
+          ) : activeUsageTab === 'claude-api' ? (
+            <ClaudeApiUsagePane />
           ) : activeUsageTab === 'deepseek' ? (
             <DeepSeekUsagePane />
           ) : activeUsageTab === 'codex' ? (

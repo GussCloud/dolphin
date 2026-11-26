@@ -41,6 +41,7 @@ export const AI_VAULT_DELETABLE_AGENTS = [
   'omp',
   'claude',
   'deepseek',
+  'claude-api',
   'rovo',
   'grok',
   'cline'

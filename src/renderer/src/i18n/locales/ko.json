@@ -4211,7 +4211,8 @@
           "eb6a066185": "claude",
           "eee19cfade": "개요",
           "grokUsageTab": "Grok",
-          "trackingSince": "{{value0}} 이후 추적 중"
+          "trackingSince": "{{value0}} 이후 추적 중",
+          "claudeApiUsageTab": "Claude (API)"
         },
         "UsageOverviewPane": {
           "22ed1b7669": "세션",
@@ -4233,7 +4234,8 @@
           "55c910f4f1": "- 일부 모델 가격 확인 불가",
           "enableMuse": "Muse 사용",
           "noLocalUsageYetWithDeepSeek": "아직 로컬 Claude, DeepSeek, Codex, OpenCode 또는 Muse 사용량을 찾지 못했습니다. 다음 에이전트 세션이 토큰 로그를 기록하면 개요가 채워집니다.",
-          "enableDeepSeek": "DeepSeek 사용"
+          "enableDeepSeek": "DeepSeek 사용",
+          "enableClaudeApi": "Claude (API) 사용"
         },
         "share": {
           "card": {
@@ -4272,7 +4274,8 @@
             "a3b6c7d8e9": "grok 사용량",
             "9f2a3b4c5d": "xai",
             "museKeyword": "muse",
-            "deepseekKeyword": "deepseek"
+            "deepseekKeyword": "deepseek",
+            "claudeApiKeyword": "api 키"
           }
         },
         "usage": {
@@ -4280,7 +4283,8 @@
             "model": {
               "bc474051e5": "OpenCode",
               "eb220d193b": "Codex",
-              "544d6d4c16": "Claude"
+              "544d6d4c16": "Claude",
+              "claudeApi": "Claude (API)"
             },
             "sections": {
               "9564a3b21b": "세션 -",
@@ -4359,6 +4363,17 @@
           "options": "DeepSeek 사용 옵션",
           "refresh": "DeepSeek 사용량 새로고침",
           "empty": "이 범위에 대한 로컬 DeepSeek 사용량이 아직 없습니다."
+        },
+        "ClaudeApiUsagePane": {
+          "title": "Claude (API) 사용량 추적",
+          "enable": "Claude (API) 사용량 분석 사용",
+          "disabledDescription": "Claude API 계정의 로컬 사용 로그를 읽어 토큰, 모델, 세션 및 예상 비용 통계를 표시합니다.",
+          "allScope": "모든 로컬 Claude (API) 사용량",
+          "options": "Claude (API) 사용량 옵션",
+          "refresh": "Claude (API) 사용량 새로 고침",
+          "empty": "이 범위에서 아직 로컬 Claude (API) 사용량이 없습니다.",
+          "cost": "예상 비용 (정가)",
+          "costNote": "비용은 Anthropic 정가 기준 추정치이며 실제 청구 금액과 다를 수 있습니다."
         }
       },
       "sparse": {
@@ -12401,7 +12416,10 @@
           "newKey": "새 Anthropic API 키",
           "replaceSave": "저장",
           "badge": "API 키",
-          "row": "Anthropic API 키로 청구"
+          "row": "Anthropic API 키로 청구",
+          "defaultAccount": "Claude API 에이전트가 사용하는 계정",
+          "defaultOnly": "유일한 API 계정",
+          "defaultNone": "기본값 없음: 워크스페이스마다 선택"
         }
       },
       "right": {
@@ -16882,6 +16900,9 @@
         "AgentSettingsDialog": {
           "50cdb57c03": "AI agents를 관리하고, 기본값을 설정하고, 명령을 사용자 정의하세요.",
           "fc0268e4ed": "에이전트"
+        },
+        "AgentAccountPicker": {
+          "claudeApiDefault": "기본 API 계정"
         }
       },
       "activity": {

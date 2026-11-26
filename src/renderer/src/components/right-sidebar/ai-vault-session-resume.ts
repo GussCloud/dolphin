@@ -13,6 +13,7 @@ import type { AppState } from '@/store/types'
 import { getIndexedWorktreeMap } from '@/store/worktree-repo-index'
 import { translate } from '@/i18n/i18n'
 import { parseWorkspaceKey } from '../../../../shared/workspace-scope'
+import { isOwnCredentialsClaudeTuiAgent } from '../../../../shared/own-credentials-claude-provider'
 import {
   canJumpToAiVaultSessionWorktree,
   resolveAiVaultSessionWorktreeInfo,
@@ -245,9 +246,10 @@ export function aiVaultSessionRowResumeGating(
   }
 }
 
-/** A pasted DeepSeek line is a bare `claude --resume`: outside Dolphin it lacks the DeepSeek env and runs on the Claude login. */
+/** A pasted DeepSeek or API-key line is a bare `claude --resume`: outside Dolphin it lacks the
+ *  agent's env and runs on the Claude login. */
 export function canCopyAiVaultResumeCommand(session: Pick<AiVaultSession, 'agent'>): boolean {
-  return session.agent !== 'deepseek'
+  return !isOwnCredentialsClaudeTuiAgent(session.agent)
 }
 
 export function aiVaultSessionResumeLabel(

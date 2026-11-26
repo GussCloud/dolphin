@@ -26,10 +26,21 @@ describe('ompSessionsRootDirs', () => {
 describe('claudeTranscriptRootDirs', () => {
   const profileProjects = join('/data', 'claude-accounts', 'work', 'config', 'projects')
 
+  const apiProjects = join('/data', 'claude-accounts', 'api-1', 'config', 'projects')
+
   it('admits Claude account profile histories for Claude only', () => {
-    expect(claudeTranscriptRootDirs('claude', [], [profileProjects])).toContain(profileProjects)
-    expect(claudeTranscriptRootDirs('deepseek', [], [profileProjects])).not.toContain(
+    expect(claudeTranscriptRootDirs('claude', [], { plan: [profileProjects] })).toContain(
       profileProjects
     )
+    expect(claudeTranscriptRootDirs('deepseek', [], { plan: [profileProjects] })).not.toContain(
+      profileProjects
+    )
+  })
+
+  it('gives each API account profile history to claude-api only', () => {
+    const profiles = { plan: [profileProjects], api: [apiProjects] }
+    expect(claudeTranscriptRootDirs('claude-api', ['/wsl/home'], profiles)).toEqual([apiProjects])
+    expect(claudeTranscriptRootDirs('claude', [], profiles)).not.toContain(apiProjects)
+    expect(claudeTranscriptRootDirs('deepseek', [], profiles)).not.toContain(apiProjects)
   })
 })

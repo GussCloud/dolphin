@@ -19,6 +19,7 @@ import { StatsCollector } from '../stats/collector'
 import { AgentSessionTransitionRecorder } from '../stats/agent-session-transition-recorder'
 import { ClaudeUsageStore } from '../claude-usage/store'
 import { DeepSeekUsageStore } from '../deepseek-usage/store'
+import { ClaudeApiUsageStore } from '../claude-api-usage/store'
 import { CodexUsageStore } from '../codex-usage/store'
 import { OpenCodeUsageStore } from '../opencode-usage/store'
 import { MuseUsageStore } from '../muse-usage/store'
@@ -149,6 +150,7 @@ export function initializeMainProcessObservers(): void {
   agentHookServer.subscribePaneStatusClear((clear) => agentSessionRecorder.onCleared(clear))
   state.claudeUsage = new ClaudeUsageStore(store)
   state.deepSeekUsage = new DeepSeekUsageStore(store)
+  state.claudeApiUsage = new ClaudeApiUsageStore(store)
   state.codexUsage = new CodexUsageStore(store)
   state.openCodeUsage = new OpenCodeUsageStore(store)
   state.museUsage = new MuseUsageStore(store)

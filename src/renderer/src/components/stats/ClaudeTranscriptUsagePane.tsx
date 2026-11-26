@@ -70,6 +70,9 @@ export type ClaudeTranscriptUsageLabels = {
   options: string
   refreshAria: string
   empty: string
+  /** Replaces the cost card's "API-equivalent" label where the turns really were API billing. */
+  cost?: string
+  costNote?: string
 }
 
 type ClaudeTranscriptUsagePaneProps = {
@@ -82,7 +85,7 @@ type ClaudeTranscriptUsagePaneProps = {
   shareProvider?: 'claude'
 }
 
-/** Report pane for a Claude-format transcript corpus (Claude's own, or DeepSeek's). */
+/** Report pane for a Claude-format transcript corpus (Claude's own, DeepSeek's or the API's). */
 export function ClaudeTranscriptUsagePane({
   data,
   actions,
@@ -242,10 +245,13 @@ export function ClaudeTranscriptUsagePane({
           />
           {showCost ? (
             <StatCard
-              label={translate(
-                'auto.components.stats.ClaudeUsagePane.b26d4ddb58',
-                'Est. API-equivalent cost'
-              )}
+              label={
+                labels.cost ??
+                translate(
+                  'auto.components.stats.ClaudeUsagePane.b26d4ddb58',
+                  'Est. API-equivalent cost'
+                )
+              }
               value={formatCost(summary?.estimatedCostUsd ?? null)}
               icon={<Coins className="size-4" />}
             />
@@ -256,6 +262,7 @@ export function ClaudeTranscriptUsagePane({
             'auto.components.stats.ClaudeUsagePane.51ae85fa00',
             'Cache reuse rate is calculated as cache read tokens / (input tokens + cache read tokens).'
           )}
+          {labels.costNote ? ` ${labels.costNote}` : null}
         </p>
 
         <ClaudeUsageDetails

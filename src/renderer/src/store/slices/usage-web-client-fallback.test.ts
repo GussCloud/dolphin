@@ -8,6 +8,7 @@ import {
   createOpenCodeUsageSlice
 } from './usage-provider-slices'
 import { createDeepSeekUsageSlice } from './deepseek-usage-slice'
+import { createClaudeApiUsageSlice } from './claude-api-usage-slice'
 
 // Paired web clients resolve unbridged desktop usage calls to undefined.
 
@@ -27,6 +28,7 @@ function stubWebClientFallback(): void {
     api: {
       claudeUsage: provider,
       deepSeekUsage: provider,
+      claudeApiUsage: provider,
       codexUsage: provider,
       openCodeUsage: provider,
       museUsage: provider
@@ -87,5 +89,17 @@ describe('deepseek usage slice in the web client', () => {
     await expect(store.getState().enableDeepSeekUsage()).resolves.toBeUndefined()
     expect(store.getState().deepSeekUsageScanState).toBeNull()
     expect(store.getState().deepSeekUsageSummary).toBeNull()
+  })
+})
+
+describe('claude api usage slice in the web client', () => {
+  it('fetch and enable no-op without throwing', async () => {
+    stubWebClientFallback()
+    // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the test reads only this slice's own fields and actions.
+    const store = create<AppState>()((...args) => createClaudeApiUsageSlice(...args) as AppState)
+    await expect(store.getState().fetchClaudeApiUsage()).resolves.toBeUndefined()
+    await expect(store.getState().enableClaudeApiUsage()).resolves.toBeUndefined()
+    expect(store.getState().claudeApiUsageScanState).toBeNull()
+    expect(store.getState().claudeApiUsageSummary).toBeNull()
   })
 })

@@ -1,5 +1,6 @@
 import type { AgentHookEventPayload } from '../../../shared/agent-hook-listener/listener-event'
-import { resolveDeepSeekDisplayAgentType } from '../../../shared/deepseek-status-identity'
+import { resolveClaudeDisplayAgentType } from '../../../shared/claude-status-display-identity'
+import { isClaudeApiProfilePath } from '../../claude-accounts/profile/claude-profile-roots'
 
 /**
  * Decide the row's presentation identity once, at write time, so every reader (renderer, mobile,
@@ -10,8 +11,10 @@ export function withHostDisplayAgentType<T extends AgentHookEventPayload>(
   previous: AgentHookEventPayload | undefined,
   event: T
 ): T {
-  const displayAgentType = resolveDeepSeekDisplayAgentType({
+  const displayAgentType = resolveClaudeDisplayAgentType({
     agentType: event.payload.agentType,
+    // Why the account list: an API profile is `<accounts>/<id>/config`, which no segment names.
+    isClaudeApiTranscriptPath: isClaudeApiProfilePath,
     transcriptPath: event.providerSession?.transcriptPath,
     previousDisplayAgentType:
       previous?.payload.agentType === event.payload.agentType

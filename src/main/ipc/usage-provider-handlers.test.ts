@@ -20,6 +20,7 @@ describe('usage provider IPC handlers', () => {
     })
     const claudeUsage = createUsage()
     const deepSeekUsage = createUsage()
+    const claudeApiUsage = createUsage()
     const codexUsage = createUsage()
     const openCodeUsage = createUsage()
     const museUsage = createUsage()
@@ -27,13 +28,22 @@ describe('usage provider IPC handlers', () => {
       claudeUsage: claudeUsage as never,
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the mock implements every method the registrar calls on a usage store.
       deepSeekUsage: deepSeekUsage as never,
+      // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the mock implements every method the registrar calls on a usage store.
+      claudeApiUsage: claudeApiUsage as never,
       codexUsage: codexUsage as never,
       // oxlint-disable-next-line typescript/consistent-type-assertions -- SAFETY: the mock implements every method the registrar calls on a usage store.
       museUsage: museUsage as never,
       openCodeUsage: openCodeUsage as never
     })
 
-    const prefixes = ['claudeUsage', 'deepSeekUsage', 'codexUsage', 'openCodeUsage', 'museUsage']
+    const prefixes = [
+      'claudeUsage',
+      'deepSeekUsage',
+      'claudeApiUsage',
+      'codexUsage',
+      'openCodeUsage',
+      'museUsage'
+    ]
     const suffixes = Object.keys(claudeUsage)
     expect(handle.mock.calls.map(([channel]) => channel)).toEqual(
       prefixes.flatMap((prefix) => suffixes.map((suffix) => `${prefix}:${suffix}`))
@@ -47,6 +57,7 @@ describe('usage provider IPC handlers', () => {
     }
     call('claudeUsage', 'getScanState')
     call('deepSeekUsage', 'getScanState')
+    call('claudeApiUsage', 'getScanState')
     call('codexUsage', 'getScanState')
     call('openCodeUsage', 'getScanState')
     call('museUsage', 'getScanState')
@@ -61,6 +72,7 @@ describe('usage provider IPC handlers', () => {
 
     expect(claudeUsage.getScanState).toHaveBeenCalledWith()
     expect(deepSeekUsage.getScanState).toHaveBeenCalledWith()
+    expect(claudeApiUsage.getScanState).toHaveBeenCalledWith()
     expect(claudeUsage.getScanState).toHaveBeenCalledTimes(1)
     expect(codexUsage.getScanState).toHaveBeenCalledWith()
     expect(openCodeUsage.getScanState).toHaveBeenCalledWith()

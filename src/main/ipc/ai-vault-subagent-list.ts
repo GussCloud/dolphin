@@ -2,7 +2,11 @@ import { resolve } from 'node:path'
 import { getAiVaultWslHomeDirs } from '../ai-vault/cached-session-list'
 import { listAiVaultSubagentSessionsInBackground } from '../ai-vault/session-scanner-background'
 import { claudeTranscriptRootDirs, ompSessionsRootDirs } from '../ai-vault/session-scanner-roots'
-import { listClaudeProfileProjectsDirs } from '../claude-accounts/profile/claude-profile-roots'
+import {
+  listClaudeApiProfileProjectsDirs,
+  listClaudePlanProfileProjectsDirs
+} from '../claude-accounts/profile/claude-profile-roots'
+import { isClaudeTranscriptAgent } from '../ai-vault/session-scanner-primary-parsers'
 import { isPathInsideOrEqual } from '../../shared/cross-platform-path'
 import { LOCAL_EXECUTION_HOST_ID } from '../../shared/execution-host'
 import type {
@@ -10,7 +14,7 @@ import type {
   AiVaultSubagentListResult
 } from '../../shared/ai-vault-types'
 
-// Provider-gated: only Claude (and DeepSeek, the same CLI) and OMP materialize Task subagent transcripts as
+// Provider-gated: only Claude (and DeepSeek and API-key sessions, the same CLI) and OMP materialize Task subagent transcripts as
 // sibling files today; other agents resolve to an empty list.
 export async function listAiVaultSubagentSessions(
   args?: AiVaultSubagentListArgs
@@ -19,7 +23,7 @@ export async function listAiVaultSubagentSessions(
   // every other rejected input instead of throwing.
   if (
     !args ||
-    (args.agent !== 'claude' && args.agent !== 'deepseek' && args.agent !== 'omp') ||
+    (!isClaudeTranscriptAgent(args.agent) && args.agent !== 'omp') ||
     typeof args.parentFilePath !== 'string' ||
     !args.parentFilePath.trim()
   ) {
@@ -42,7 +46,10 @@ export async function listAiVaultSubagentSessions(
   const roots =
     args.agent === 'omp'
       ? ompSessionsRootDirs({ wslHomeDirs })
-      : claudeTranscriptRootDirs(args.agent, wslHomeDirs, listClaudeProfileProjectsDirs())
+      : claudeTranscriptRootDirs(args.agent, wslHomeDirs, {
+          plan: listClaudePlanProfileProjectsDirs(),
+          api: listClaudeApiProfileProjectsDirs()
+        })
   if (!roots.some((root) => isPathInsideOrEqual(resolve(root), parentFilePath))) {
     return { sessions: [], issues: [] }
   }

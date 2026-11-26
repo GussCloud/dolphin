@@ -14,6 +14,7 @@ import type { AgentAwakeApi, AgentStatusApi, AgentTrustApi } from './api/agent-s
 import type {
   ClaudeUsageApi,
   DeepSeekUsageApi,
+  ClaudeApiUsageApi,
   CodexUsageApi,
   MuseUsageApi,
   OpenCodeUsageApi,
@@ -147,6 +148,7 @@ export type PreloadApi = {
   memory: MemoryApi
   claudeUsage: ClaudeUsageApi
   deepSeekUsage: DeepSeekUsageApi
+  claudeApiUsage: ClaudeApiUsageApi
   codexUsage: CodexUsageApi
   openCodeUsage: OpenCodeUsageApi
   museUsage: MuseUsageApi
@@ -179,6 +181,7 @@ export type PreloadApi = {
 export type {
   ClaudeUsageApi,
   DeepSeekUsageApi,
+  ClaudeApiUsageApi,
   CodexUsageApi,
   MuseUsageApi,
   OpenCodeUsageApi
