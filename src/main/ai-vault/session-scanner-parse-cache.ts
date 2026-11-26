@@ -17,6 +17,7 @@ import type { ResumableSessionParseState, SessionFileCandidate } from './session
 import { refreshCachedCodexTitle } from './session-scanner-codex-cached-title'
 import {
   getSessionParseCacheEntry,
+  sessionParseCacheEntryMatchesAgent,
   storeSessionParseCacheEntry,
   type SessionParseCacheEntry
 } from './session-parse-cache-store'
@@ -161,6 +162,7 @@ function sessionParseCacheCoversTranscript(
   return (
     entry !== undefined &&
     entry.platform === platform &&
+    sessionParseCacheEntryMatchesAgent(entry, candidate.agent) &&
     entry.mtimeMs === file.mtimeMs &&
     (entry.sizeBytes === null || file.sizeBytes === undefined || entry.sizeBytes === file.sizeBytes)
   )
@@ -205,7 +207,10 @@ async function parseCachedInLane(
     const read = await readResumableTranscript({
       candidate,
       platform,
-      resume: entry?.platform === platform ? entry.resume : null,
+      resume:
+        entry?.platform === platform && sessionParseCacheEntryMatchesAgent(entry, candidate.agent)
+          ? entry.resume
+          : null,
       stateFactory,
       stats
     })
@@ -220,7 +225,8 @@ async function parseCachedInLane(
       // re-merges it without re-reading the transcript.
       sidecar: enriched.refused ? 'unknown' : file.sidecar,
       foldSession: read.session,
-      resume: read.resume
+      resume: read.resume,
+      agent: candidate.agent
     })
     return enriched.session
   }
@@ -239,7 +245,8 @@ async function parseCachedInLane(
     // sibling is recorded as unknown, so the next scan re-merges.
     sidecar: enriched.refused ? 'unknown' : file.sidecar,
     foldSession: session,
-    resume: null
+    resume: null,
+    agent: candidate.agent
   })
   return enriched.session
 }
