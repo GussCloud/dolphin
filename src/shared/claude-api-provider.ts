@@ -2,12 +2,15 @@ import { DEEPSEEK_PROVIDER_ENV_KEY } from './deepseek-claude-provider'
 import type { TuiAgent } from './tui-agent'
 
 /** The Claude Code CLI billed to a per-account Anthropic API key, inside that account's profile. */
-export const CLAUDE_API_TUI_AGENTS = ['claude-api'] as const satisfies readonly TuiAgent[]
+export const CLAUDE_API_TUI_AGENTS = [
+  'claude-api',
+  'claude-api-agent-teams'
+] as const satisfies readonly TuiAgent[]
 
 export type ClaudeApiTuiAgent = (typeof CLAUDE_API_TUI_AGENTS)[number]
 
 export function isClaudeApiTuiAgent(agent: unknown): agent is ClaudeApiTuiAgent {
-  return agent === 'claude-api'
+  return agent === 'claude-api' || agent === 'claude-api-agent-teams'
 }
 
 /** Same marker key as DeepSeek: one pane runs one provider. */

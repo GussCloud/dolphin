@@ -17,6 +17,7 @@ const TUI_AGENT_KIND_BY_AGENT = {
   claude: 'claude-code',
   'claude-agent-teams': 'claude-agent-teams',
   'claude-api': 'claude-api',
+  'claude-api-agent-teams': 'claude-api-agent-teams',
   deepseek: 'deepseek',
   'deepseek-agent-teams': 'deepseek-agent-teams',
   openclaude: 'openclaude',

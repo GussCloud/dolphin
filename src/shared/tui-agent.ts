@@ -4,6 +4,7 @@ export type TuiAgent =
   | 'claude' // Claude Code
   | 'claude-agent-teams' // Claude Code Agent Teams via Dolphin native panes
   | 'claude-api' // Claude Code billed to an Anthropic API key account
+  | 'claude-api-agent-teams' // API-key variant of Claude Code Agent Teams
   | 'deepseek' // Claude Code against DeepSeek's Anthropic-compatible API
   | 'deepseek-agent-teams' // DeepSeek variant of Claude Code Agent Teams
   | 'openclaude' // OpenClaude

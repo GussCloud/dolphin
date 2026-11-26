@@ -10,6 +10,7 @@ const CLAUDE_CLI_AGENTS: ReadonlySet<TuiAgent> = new Set([
   'claude',
   'claude-agent-teams',
   'claude-api',
+  'claude-api-agent-teams',
   'deepseek',
   'deepseek-agent-teams'
 ])

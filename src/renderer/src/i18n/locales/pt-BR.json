@@ -664,6 +664,7 @@
           "muse_label": "Muse",
           "zcode_label": "ZCode",
           "claude_api_label": "Claude (chave de API)",
+          "claude_api_agent_teams_label": "Claude Agent Teams (chave de API)",
           "deepseek_label": "DeepSeek",
           "deepseek_agent_teams_label": "DeepSeek Agent Teams",
           "d443a47995": "Prime Agent",

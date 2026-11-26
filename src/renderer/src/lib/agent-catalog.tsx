@@ -15,6 +15,8 @@ import {
 import { translate } from '@/i18n/i18n'
 import { createLocalizedCatalog } from '@/i18n/localized-catalog'
 import { AGENT_FAVICON_ASSETS } from './agent-favicon-assets'
+import { getClaudeApiAgentCatalogEntries } from './claude-api-agent-catalog'
+import { isClaudeApiTuiAgent } from '../../../shared/claude-api-provider'
 
 export type AgentCatalogEntry = {
   id: TuiAgent
@@ -341,13 +343,8 @@ export const getAgentCatalog = createLocalizedCatalog((): AgentCatalogEntry[] =>
     cmd: getTuiAgentLaunchCommand(TUI_AGENT_CONFIG['deepseek-agent-teams'], getCatalogPlatform()),
     homepageUrl: 'https://api-docs.deepseek.com/quick_start/agent_integrations/claude_code/'
   },
-  // Why last, like DeepSeek: it refuses to launch until an API account exists (auto-pick order).
-  {
-    id: 'claude-api',
-    label: translate('auto.lib.agent.catalog.claude_api_label', 'Claude (API key)'),
-    cmd: 'claude',
-    homepageUrl: 'https://code.claude.com/docs/en/iam'
-  }
+  // Why last, like DeepSeek: they refuse to launch until an API account exists (auto-pick order).
+  ...getClaudeApiAgentCatalogEntries(getCatalogPlatform())
 ])
 
 // Why: tests and a few legacy call sites still import a catalog snapshot.
@@ -371,7 +368,7 @@ export function AgentIcon({
   if (!agent) {
     return <AgentLetterIcon letter="?" size={size} />
   }
-  if (agent === 'claude' || agent === 'claude-agent-teams' || agent === 'claude-api') {
+  if (agent === 'claude' || agent === 'claude-agent-teams' || isClaudeApiTuiAgent(agent)) {
     return <ClaudeIcon size={size} />
   }
   if (agent === 'codex') {

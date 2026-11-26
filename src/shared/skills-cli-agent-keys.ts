@@ -16,6 +16,7 @@ export const SKILLS_CLI_AGENT_KEY_BY_TUI_AGENT = {
   'claude-agent-teams': 'claude-code',
   // Why: an API account's Claude Code reads user skills from its own profile dir, not ~/.claude.
   'claude-api': null,
+  'claude-api-agent-teams': null,
   // Why: DeepSeek's Claude Code reads user skills from ~/.claude-deepseek, not the `claude-code` key's ~/.claude.
   deepseek: null,
   'deepseek-agent-teams': null,

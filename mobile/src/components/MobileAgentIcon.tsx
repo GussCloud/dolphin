@@ -86,7 +86,12 @@ function AgentLetterIcon({ letter, size = 16 }: { letter: string; size?: number 
 }
 
 export function MobileAgentIcon({ agentId, size = 16 }: { agentId: string; size?: number }) {
-  if (agentId === 'claude' || agentId === 'claude-agent-teams' || agentId === 'claude-api') {
+  if (
+    agentId === 'claude' ||
+    agentId === 'claude-agent-teams' ||
+    agentId === 'claude-api' ||
+    agentId === 'claude-api-agent-teams'
+  ) {
     return <ClaudeIcon size={size} />
   }
   if (agentId === 'codex') {

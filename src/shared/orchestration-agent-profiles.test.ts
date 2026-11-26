@@ -19,9 +19,7 @@ const custom = {
 
 describe('normalizeOrchestrationAgents', () => {
   it('keeps valid agents, trimmed', () => {
-    expect(normalizeOrchestrationAgents([custom])).toEqual([
-      { ...custom, name: 'Strict reviewer' }
-    ])
+    expect(normalizeOrchestrationAgents([custom])).toEqual([{ ...custom, name: 'Strict reviewer' }])
   })
 
   it('drops rows that are malformed, duplicated or shadow the built-in agent', () => {
