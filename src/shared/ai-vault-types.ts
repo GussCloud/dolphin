@@ -23,7 +23,9 @@ export const AI_VAULT_AGENTS = [
   'kimi',
   'muse',
   // Claude Code transcripts under `~/.claude-deepseek/projects`, kept apart from Claude's.
-  'deepseek'
+  'deepseek',
+  // Claude Code transcripts in API account profiles (`<accounts>/<id>/config/projects`).
+  'claude-api'
 ] as const satisfies readonly TuiAgent[]
 
 // Why: the aiVault.listSessions RPC schema CLAMPS scopePaths to this bound
@@ -71,7 +73,8 @@ export const AI_VAULT_AGENT_LABELS = {
   cline: 'Cline',
   kimi: 'Kimi',
   muse: 'Muse',
-  deepseek: 'DeepSeek'
+  deepseek: 'DeepSeek',
+  'claude-api': 'Claude (API key)'
 } as const satisfies Record<AiVaultAgent, string>
 
 export type AiVaultSessionPreviewMessage = {

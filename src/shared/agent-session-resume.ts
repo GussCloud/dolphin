@@ -20,7 +20,8 @@ export const RESUMABLE_TUI_AGENTS = [
   'kimi',
   'muse',
   'zcode',
-  'deepseek'
+  'deepseek',
+  'claude-api'
 ] as const satisfies readonly TuiAgent[]
 
 export type ResumableTuiAgent = (typeof RESUMABLE_TUI_AGENTS)[number]
@@ -317,6 +318,9 @@ export function getAgentResumeArgv(
       return providerSession.key === 'session_id' ? ['zcode', '--resume', id] : null
     // Why: same Claude Code CLI; the DeepSeek launch env points it at the transcript's config dir.
     case 'deepseek':
+    // Why: the claude-api launch picks the API account whose profile holds this transcript.
+    // falls through
+    case 'claude-api':
       return providerSession.key === 'session_id' ? ['claude', '--resume', id] : null
   }
 }

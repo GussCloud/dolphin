@@ -2,6 +2,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 import { DEEPSEEK_CLAUDE_CONFIG_DIR_NAME } from '../../shared/deepseek-claude-provider'
 import { resolveOmpSessionsDir } from './omp-session-root'
+import type { ClaudeTranscriptAgent } from './session-scanner-primary-parsers'
 
 // The default local roots for the two agents whose subagent transcripts are
 // read back by renderer-supplied path (Claude and OMP). Discovery scans these;
@@ -39,13 +40,18 @@ export function deepSeekProjectsRootDirs(args: {
 
 /** Roots that hold Claude Code JSONL transcripts for `agent`, for by-path read guards. */
 export function claudeTranscriptRootDirs(
-  agent: 'claude' | 'deepseek',
+  agent: ClaudeTranscriptAgent,
   wslHomeDirs: readonly string[],
-  profileProjectsDirs: readonly string[] = []
+  profileProjectsDirs: { plan?: readonly string[]; api?: readonly string[] } = {}
 ): string[] {
-  return agent === 'deepseek'
-    ? deepSeekProjectsRootDirs({ wslHomeDirs })
-    : claudeProjectsRootDirs({ wslHomeDirs, profileProjectsDirs })
+  switch (agent) {
+    case 'deepseek':
+      return deepSeekProjectsRootDirs({ wslHomeDirs })
+    case 'claude-api':
+      return [...(profileProjectsDirs.api ?? [])]
+    case 'claude':
+      return claudeProjectsRootDirs({ wslHomeDirs, profileProjectsDirs: profileProjectsDirs.plan })
+  }
 }
 
 // The local host and each WSL distro's OMP sessions root. Callers reading OMP

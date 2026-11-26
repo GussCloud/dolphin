@@ -416,6 +416,7 @@ describe('scanAiVaultSessions', () => {
     )
     // No runnable line: a bare `claude --resume` would resume on the Claude login.
     expect(commandByAgent.get('deepseek')).toBe('')
+    expect(commandByAgent.get('claude-api')).toBe('')
     expect(commandByAgent.get('codex')).toBe(
       `cd '/tmp/codex' && CODEX_HOME='${root}' codex resume 'codex-session'`
     )

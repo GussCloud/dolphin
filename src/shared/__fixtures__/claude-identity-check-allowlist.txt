@@ -29,9 +29,10 @@ src/main/agent-hooks/server/server-status-inference.ts 5
 src/main/agent-launch/agent-launch-executor.ts 1
 src/main/agent-launch/agent-launch-mode.ts 1
 src/main/agent-turn-recovery/claude-connection-loss-retry.ts 1
-src/main/ai-vault/session-delete-target.ts 1
 src/main/ai-vault/session-scanner-agent-parser.ts 1
-src/main/ai-vault/session-scanner-parse-cache.ts 2
+src/main/ai-vault/session-scanner-parse-cache.ts 1
+src/main/ai-vault/session-scanner-primary-parsers.ts 1
+src/main/ai-vault/session-scanner-roots.ts 1
 src/main/ai-vault/session-scanner-service-entry.ts 1
 src/main/ai-vault/session-scanner-worker-entry.ts 1
 src/main/ai-vault/session-title-result-validation.ts 1
@@ -41,7 +42,6 @@ src/main/claude/claude-dangerous-rm-launch-env.ts 2
 src/main/claude/claude-structured-history-window.ts 1
 src/main/claude/claude-structured-launch-resolution.ts 7
 src/main/claude/hook-service.ts 8
-src/main/ipc/ai-vault-subagent-list.ts 1
 src/main/native-chat/agent-model-catalog/agent-model-catalog-fingerprint.ts 1
 src/main/native-chat/agent-model-catalog/agent-model-catalog-persistence.ts 1
 src/main/native-chat/agent-session-journal/journal-legacy-identity.ts 1

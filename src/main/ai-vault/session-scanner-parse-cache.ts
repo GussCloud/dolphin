@@ -4,7 +4,10 @@ import { createAntigravitySessionResumeState } from './session-scanner-antigravi
 import { createCodexSessionResumeState } from './session-scanner-codex-parser'
 import { createDroidSessionResumeState } from './session-scanner-droid-parser'
 import { createMessageGraphSessionResumeState } from './session-scanner-graph-parsers'
-import { createClaudeSessionResumeState } from './session-scanner-primary-parsers'
+import {
+  createClaudeSessionResumeState,
+  isClaudeTranscriptAgent
+} from './session-scanner-primary-parsers'
 import { createGeminiJsonlSessionResumeState } from './session-scanner-gemini-parsers'
 import { createCopilotSessionResumeState } from './session-scanner-copilot-parser'
 import { createCursorSessionResumeState } from './session-scanner-cursor-parser'
@@ -50,7 +53,8 @@ function resumableStateFactoryFor(
 ): ((messages: TranscriptMessageSink) => ResumableSessionParseState) | null {
   switch (candidate.agent) {
     case 'claude':
-    case 'deepseek': {
+    case 'deepseek':
+    case 'claude-api': {
       const agent = candidate.agent
       return (messages) => createClaudeSessionResumeState(candidate.file, messages, agent)
     }
@@ -254,12 +258,11 @@ async function reuseCachedSession(
   // subagent finishing). The mtime+size key can't see that, so refresh the
   // cheap directory count on reuse.
   if (entry.session && entry.session.messageCount === 0) {
-    const subagentTranscriptCount =
-      candidate.agent === 'claude' || candidate.agent === 'deepseek'
-        ? await countSubagentTranscripts(candidate.file.path)
-        : candidate.agent === 'omp'
-          ? await countOmpSubagentTranscripts(candidate.file.path)
-          : null
+    const subagentTranscriptCount = isClaudeTranscriptAgent(candidate.agent)
+      ? await countSubagentTranscripts(candidate.file.path)
+      : candidate.agent === 'omp'
+        ? await countOmpSubagentTranscripts(candidate.file.path)
+        : null
     if (
       subagentTranscriptCount !== null &&
       subagentTranscriptCount !== entry.session.subagentTranscriptCount

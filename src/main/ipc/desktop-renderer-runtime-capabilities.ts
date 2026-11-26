@@ -4,11 +4,11 @@ import {
   AGENT_SESSION_BACKGROUND_TASK_STOP_CAPABILITY,
   AGENT_SESSION_PENDING_SEND_RESULT_RUNTIME_CAPABILITY,
   AGENT_SESSION_TURN_ITEM_CAPABILITY,
-  AI_VAULT_DEEPSEEK_SESSIONS_RUNTIME_CAPABILITY,
   CLAUDE_STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY,
   STRUCTURED_AGENT_SESSION_RUNTIME_CAPABILITY,
   type RuntimeCapability
 } from '../../shared/protocol-version'
+import { AI_VAULT_GATED_AGENT_RUNTIME_CAPABILITIES } from '../../shared/ai-vault-agent-runtime-capabilities'
 
 /**
  * What the desktop renderer advertises when it calls its own main process over `runtime:call`.
@@ -33,6 +33,6 @@ export const DESKTOP_RENDERER_RUNTIME_CLIENT_CAPABILITIES: readonly RuntimeCapab
   // Without this `supportsAgentLaunch` refuses the renderer outright, while the same renderer
   // targeting a remote host is admitted — the asymmetry this constant exists to close.
   AGENT_LAUNCH_RUNTIME_CAPABILITY,
-  // Same build as main, so it reads DeepSeek AI Vault rows; without it they are withheld.
-  AI_VAULT_DEEPSEEK_SESSIONS_RUNTIME_CAPABILITY
+  // Same build as main, so it reads DeepSeek and API-key AI Vault rows; without them they are withheld.
+  ...AI_VAULT_GATED_AGENT_RUNTIME_CAPABILITIES
 ] as const

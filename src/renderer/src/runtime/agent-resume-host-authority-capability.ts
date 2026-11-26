@@ -9,6 +9,7 @@ import {
   AGENT_SESSION_OMP_RESUME_PATH_RUNTIME_CAPABILITY,
   type RuntimeCapability
 } from '../../../shared/protocol-version'
+import { AGENT_SESSION_CLAUDE_API_RESUME_RUNTIME_CAPABILITY } from '../../../shared/claude-api-runtime-capability'
 
 // Why: every agent added to RESUMABLE_TUI_AGENTS after agent-session.host-authority.v1 widens the
 // host's ensureAgentSession enum. An older host answers the unknown member with invalid_argument,
@@ -37,6 +38,7 @@ const RESUME_HOST_AUTHORITY_CAPABILITY_BY_AGENT = {
   muse: AGENT_SESSION_MUSE_RESUME_RUNTIME_CAPABILITY,
   zcode: AGENT_SESSION_ZCODE_RESUME_RUNTIME_CAPABILITY,
   deepseek: AGENT_SESSION_DEEPSEEK_RESUME_RUNTIME_CAPABILITY,
+  'claude-api': AGENT_SESSION_CLAUDE_API_RESUME_RUNTIME_CAPABILITY,
   omp: AGENT_SESSION_OMP_RESUME_PATH_RUNTIME_CAPABILITY,
   kimi: AGENT_SESSION_KIMI_RESUME_RUNTIME_CAPABILITY
 } satisfies Record<ResumableTuiAgent, RuntimeCapability | undefined>

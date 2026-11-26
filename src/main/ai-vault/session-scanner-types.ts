@@ -17,8 +17,10 @@ export type AiVaultScanOptions = {
   deepSeekProjectsDir?: string
   codexSessionsDir?: string
   additionalCodexSessionsDirs?: readonly string[]
-  /** `projects/` of each isolated Claude account profile (claude-account-profiles.md). */
+  /** `projects/` of each isolated Claude plan account profile (claude-account-profiles.md). */
   additionalClaudeProjectsDirs?: readonly string[]
+  /** `projects/` of each API account profile; the only roots of the `claude-api` agent. */
+  claudeApiProjectsDirs?: readonly string[]
   // Why: tests inject a sandbox "real ~/.codex" so real-home attribution
   // (codexHome null → unprefixed resume) is testable without the user's home.
   defaultCodexHomeDir?: string

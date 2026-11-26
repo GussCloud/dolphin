@@ -67,6 +67,7 @@ describe('agentResumeHostAuthorityCapability', () => {
       'prime-agent': undefined,
       zcode: 'agent-session.zcode-resume.v1',
       deepseek: 'agent-session.deepseek-resume.v1',
+      'claude-api': 'agent-session.claude-api-resume.v1',
       copilot: undefined,
       muse: AGENT_SESSION_MUSE_RESUME_RUNTIME_CAPABILITY,
       omp: AGENT_SESSION_OMP_RESUME_PATH_RUNTIME_CAPABILITY,

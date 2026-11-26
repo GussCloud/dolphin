@@ -83,6 +83,7 @@ export async function parseAgentSessionFile(
   switch (candidate.agent) {
     case 'claude':
     case 'deepseek':
+    case 'claude-api':
       return parseClaudeSessionFile(candidate.file, platform, messages, candidate.agent)
     case 'codex':
       return parseCodexSessionFile(

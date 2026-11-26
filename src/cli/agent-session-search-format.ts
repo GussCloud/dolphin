@@ -8,6 +8,7 @@ import type {
   AiVaultSearchResponse,
   AiVaultSearchStatus
 } from '../shared/ai-vault-search-types'
+import { isOwnCredentialsClaudeTuiAgent } from '../shared/own-credentials-claude-provider'
 
 type SessionSearchResults = Extract<AiVaultSearchResponse, { kind: 'results' }>
 /** Malformed cursors are a caller mistake and leave through the CLI error channel. */
@@ -44,9 +45,10 @@ function formatHit(hit: AiVaultSearchHit): string {
     ? `    ${hit.evidence.role}: ${oneLine(hit.evidence.snippet)}`
     : '    no text evidence for this match'
   // Withheld for paired callers by the contract, so its absence is not a failure.
-  // DeepSeek's is a bare `claude --resume`: pasted outside Dolphin it runs on the Claude login.
+  // DeepSeek's and API-key sessions' is a bare `claude --resume`: pasted outside Dolphin it runs
+  // on the Claude login.
   const resume =
-    hit.resumeCommand && hit.agent !== 'deepseek'
+    hit.resumeCommand && !isOwnCredentialsClaudeTuiAgent(hit.agent)
       ? [`    resume: ${oneLine(hit.resumeCommand)}`]
       : []
   return [header, evidence, ...resume].join('\n')

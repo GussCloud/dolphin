@@ -46,6 +46,21 @@ export async function writeLogAgentFixtures(
     ])
   )
 
+  const [claudeApiProjectsDir] = roots.claudeApiProjectsDirs
+  await mkdir(join(claudeApiProjectsDir, 'project'), { recursive: true })
+  await writeFile(
+    join(claudeApiProjectsDir, 'project', 'claude-api-session.jsonl'),
+    jsonlBody([
+      {
+        type: 'user',
+        sessionId: 'claude-api-session',
+        timestamp: '2026-05-01T10:00:40.000Z',
+        cwd: '/tmp/claude-api',
+        message: { role: 'user', content: 'Claude API title' }
+      }
+    ])
+  )
+
   await mkdir(join(roots.codexSessionsDir, '2026', '05', '01'), { recursive: true })
   await writeFile(
     join(roots.codexSessionsDir, '2026', '05', '01', 'rollout-2026-codex-session.jsonl'),
