@@ -117,8 +117,11 @@ below asks the host's account list which profiles bill an API key
 (`src/main/claude-accounts/profile/claude-profile-roots.ts`: `listClaudePlanProfileConfigDirs`,
 `listClaudeApiProfileConfigDirs`, `isClaudeApiProfilePath`). Readers that attribute a session to
 an agent use that split; trust revocation, worktree retirement and native chat keep reading every
-profile. A profile whose account is no longer in settings (a remove that left the folder) belongs
-to neither agent and drops out of history and stats.
+profile. `claude-api-agent-teams` leaders and teammates write to the same API profile, so they
+follow every rule below as `claude-api`: status label, AI Vault agent, and resume from the vault as
+a `claude-api` launch (as DeepSeek Agent Teams sessions are `deepseek`). A profile whose account is
+no longer in settings (a remove that left the folder) belongs to neither agent and drops out of
+history and stats.
 
 Builds before this split stored API transcripts as `claude` in the AI Vault parse cache and the
 search index. Both re-read a transcript whose stored agent differs from the one discovery now
