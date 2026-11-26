@@ -4213,7 +4213,8 @@
           "eb6a066185": "claude",
           "eee19cfade": "概览",
           "grokUsageTab": "Grok",
-          "trackingSince": "自 {{value0}} 开始跟踪"
+          "trackingSince": "自 {{value0}} 开始跟踪",
+          "claudeApiUsageTab": "Claude (API)"
         },
         "UsageOverviewPane": {
           "22ed1b7669": "会话",
@@ -4235,7 +4236,8 @@
           "55c910f4f1": "- 部分型号价格不详",
           "enableMuse": "启用 Muse",
           "noLocalUsageYetWithDeepSeek": "尚未找到本地 Claude、DeepSeek、Codex、OpenCode 或 Muse 使用情况。概览将在下一个智能体会话写入token日志后填充。",
-          "enableDeepSeek": "启用 DeepSeek"
+          "enableDeepSeek": "启用 DeepSeek",
+          "enableClaudeApi": "启用 Claude (API)"
         },
         "share": {
           "card": {
@@ -4274,7 +4276,8 @@
             "a3b6c7d8e9": "grok 使用量",
             "9f2a3b4c5d": "xai",
             "museKeyword": "muse",
-            "deepseekKeyword": "deepseek"
+            "deepseekKeyword": "deepseek",
+            "claudeApiKeyword": "api 密钥"
           }
         },
         "usage": {
@@ -4282,7 +4285,8 @@
             "model": {
               "bc474051e5": "OpenCode",
               "eb220d193b": "Codex",
-              "544d6d4c16": "Claude"
+              "544d6d4c16": "Claude",
+              "claudeApi": "Claude (API)"
             },
             "sections": {
               "9564a3b21b": "会话 -",
@@ -4361,6 +4365,17 @@
           "options": "DeepSeek 使用量选项",
           "refresh": "刷新 DeepSeek 使用量",
           "empty": "此范围内尚无本地 DeepSeek 使用记录。"
+        },
+        "ClaudeApiUsagePane": {
+          "title": "Claude (API) 用量跟踪",
+          "enable": "启用 Claude (API) 用量分析",
+          "disabledDescription": "读取 Claude API 账户的本地用量日志，显示令牌、模型、会话和预估费用统计。",
+          "allScope": "所有本地 Claude (API) 用量",
+          "options": "Claude (API) 用量选项",
+          "refresh": "刷新 Claude (API) 用量",
+          "empty": "此范围内尚未找到本地 Claude (API) 用量。",
+          "cost": "预估费用（标价）",
+          "costNote": "费用按 Anthropic 标价估算，实际账单可能不同。"
         }
       },
       "sparse": {
