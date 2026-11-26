@@ -1,4 +1,4 @@
-import { isClaudeApiKeyAccount } from './claude-api-account'
+import { claudeAccountDisplayName, isClaudeApiKeyAccount } from './claude-api-account'
 import type { GlobalSettings } from './global-settings-types'
 import {
   normalizeCodexAccountSelectionTarget,
@@ -103,6 +103,19 @@ function laneAccepts(lane: AccountLane, target?: CodexAccountSelectionTarget | n
     lane.wslDistro === null ||
     lane.wslDistro.toLowerCase() === normalized.wslDistro.toLowerCase()
   )
+}
+
+/** API accounts a `claude-api` worktree may pin; they run on this computer only. */
+export function listClaudeApiAccountChoices(
+  settings: WorktreeAgentAccountSettings
+): WorktreeAgentAccountChoice[] {
+  return (settings.claudeManagedAccounts ?? [])
+    .filter((account) => isClaudeApiKeyAccount(account) && account.managedAuthRuntime !== 'wsl')
+    .map((account) => ({
+      id: account.id,
+      email: claudeAccountDisplayName(account),
+      workspaceLabel: null
+    }))
 }
 
 /** Accounts a worktree on `target` may pin for `agent`. */

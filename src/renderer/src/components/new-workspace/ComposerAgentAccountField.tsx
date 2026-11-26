@@ -26,7 +26,9 @@ export function ComposerAgentAccountField({
     return null
   }
   // Why: an unpinned worktree launches with the project's default (main: worktree-launch-owner).
-  const projectAccountId = projectAgentAccountId(repo, picker.agent)
+  // Why not for claude-api: the project default is a plan account, which that agent never bills.
+  const projectAccountId =
+    picker.agent === 'claude-api' ? undefined : projectAgentAccountId(repo, picker.agent)
   const inheritedChoice = picker.choices.find((choice) => choice.id === projectAccountId) ?? null
   return (
     <AgentAccountPicker

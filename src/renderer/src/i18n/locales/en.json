@@ -6589,7 +6589,7 @@
           "missingDetail": "The account this workspace was created with is no longer available. Launches here use the active account.",
           "claudePinned": "Claude account: {{value0}}",
           "apiKeyRefused": "Launch refused",
-          "apiKeyRefusedDetail": "This workspace is pinned to a Claude API account. Plain Claude launches here are refused, because they never use an API account."
+          "apiKeyRefusedDetail": "This workspace is pinned to a Claude API account. The Claude API agent bills it; plain Claude launches here are refused, because they never use an API account."
         }
       },
       "shared": {
@@ -12737,6 +12737,9 @@
           "importDone": "Import finished."
         },
         "ClaudeApiAccounts": {
+          "defaultAccount": "Claude API agent uses",
+          "defaultOnly": "The only API account",
+          "defaultNone": "No default: pick one per workspace",
           "title": "API accounts",
           "description": "Bill Claude to an Anthropic API key instead of your plan. Each API account has its own profile and key, and plain Claude launches never use it.",
           "add": "Add API account",
@@ -17238,6 +17241,7 @@
           "fc0268e4ed": "Agents"
         },
         "AgentAccountPicker": {
+          "claudeApiDefault": "Default API account",
           "label": "Account",
           "active": "Active account",
           "projectDefault": "Project account ({{value0}})"

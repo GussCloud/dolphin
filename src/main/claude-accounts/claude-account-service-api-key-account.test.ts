@@ -76,7 +76,8 @@ async function createService() {
   let settings = {
     claudeManagedAccounts: [planAccount()],
     activeClaudeManagedAccountId: 'plan',
-    activeClaudeManagedAccountIdsByRuntime: { host: 'plan', wsl: {} }
+    activeClaudeManagedAccountIdsByRuntime: { host: 'plan', wsl: {} },
+    claudeApiDefaultAccountId: null as string | null
   }
   const store = {
     getSettings: () => settings,
@@ -198,11 +199,15 @@ describe('ClaudeAccountService API key accounts', () => {
   })
 
   it('deletes the key and the profile when the account is removed', async () => {
-    const { service } = await createService()
+    const { service, store } = await createService()
     const state = await service.addApiKeyAccount({ label: 'Work', apiKey: FAKE_KEY })
     const id = state.accounts.find((entry) => entry.authMethod === 'api-key')!.id
+    store.updateSettings({ claudeApiDefaultAccountId: id })
 
     await service.removeAccount(id)
+
+    // A default naming a removed account would refuse every claude-api launch.
+    expect(store.getSettings().claudeApiDefaultAccountId).toBeNull()
 
     expect(existsSync(keyPath(id))).toBe(false)
     expect(existsSync(join(paths.userData, 'claude-accounts', id))).toBe(false)

@@ -3,6 +3,7 @@ import type { TuiAgent } from '../../../../shared/tui-agent'
 import { LOCAL_EXECUTION_HOST_ID } from '../../../../shared/execution-host'
 import { parseWslUncPath } from '../../../../shared/wsl-paths'
 import {
+  listClaudeApiAccountChoices,
   listWorktreeAgentAccountChoices,
   type WorktreeAccountAgent,
   type WorktreeAgentAccountChoice
@@ -18,6 +19,9 @@ const PICKABLE_ACCOUNT_AGENTS: Partial<Record<TuiAgent, WorktreeAccountAgent>> =
 function toPickableAccountAgent(agent: TuiAgent | null): WorktreeAccountAgent | null {
   return agent ? (PICKABLE_ACCOUNT_AGENTS[agent] ?? null) : null
 }
+
+/** The account kind a picker offers: a managed plan/Codex account, or a Claude API account. */
+export type AgentAccountPickerAgent = WorktreeAccountAgent | 'claude-api'
 
 /**
  * Accounts a new worktree may pin, or null when the picker must stay hidden:
@@ -36,7 +40,18 @@ export function resolveAgentAccountPickerChoices(args: {
       >
     | null
     | undefined
-}): { agent: WorktreeAccountAgent; choices: WorktreeAgentAccountChoice[] } | null {
+}): { agent: AgentAccountPickerAgent; choices: WorktreeAgentAccountChoice[] } | null {
+  // Why its own list: `claude-api` bills an API account, never a plan account; WSL is refused.
+  if (args.agent === 'claude-api') {
+    const settings = args.settings
+    const local =
+      settings &&
+      !settings.activeRuntimeEnvironmentId?.trim() &&
+      args.executionHostId === LOCAL_EXECUTION_HOST_ID &&
+      !(args.repoPath && parseWslUncPath(args.repoPath))
+    const choices = settings && local ? listClaudeApiAccountChoices(settings) : []
+    return choices.length > 0 ? { agent: 'claude-api', choices } : null
+  }
   const agent = toPickableAccountAgent(args.agent)
   if (
     !agent ||

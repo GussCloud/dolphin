@@ -2,7 +2,10 @@ import { useId, useState } from 'react'
 import { KeyRound, Loader2, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { translate } from '@/i18n/i18n'
-import { claudeAccountDisplayName } from '../../../../shared/claude-api-account'
+import {
+  claudeAccountDisplayName,
+  isClaudeApiKeyAccount
+} from '../../../../shared/claude-api-account'
 import type { ClaudeRateLimitAccountsState } from '../../../../shared/managed-account-types'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
@@ -13,12 +16,68 @@ import type { ClaudeAccountAction, ClaudeAccountActionRunner } from './accounts-
 
 const T = 'auto.components.settings.ClaudeApiAccounts'
 const NO_COPY_VALUE = '__none__'
+const NO_DEFAULT_VALUE = '__none__'
+
+/** Which API account the `claude-api` agent bills when the workspace pins none. */
+function ClaudeApiDefaultAccountSelect(props: {
+  accounts: ClaudeRateLimitAccountsState['accounts']
+  defaultAccountId: string | null
+  onDefaultAccountChange: (accountId: string | null) => void
+  disabled: boolean
+}): React.JSX.Element | null {
+  const selectId = useId()
+  const apiAccounts = props.accounts.filter((account) => isClaudeApiKeyAccount(account))
+  if (apiAccounts.length === 0) {
+    return null
+  }
+  // Why: a stale id must read as "none chosen", the same way main refuses it.
+  const value = apiAccounts.some((account) => account.id === props.defaultAccountId)
+    ? (props.defaultAccountId ?? NO_DEFAULT_VALUE)
+    : NO_DEFAULT_VALUE
+  return (
+    <div className="flex flex-col gap-1">
+      <label id={selectId} className="text-xs text-muted-foreground">
+        {translate(`${T}.defaultAccount`, 'Claude API agent uses')}
+      </label>
+      <Select
+        value={value}
+        disabled={props.disabled}
+        onValueChange={(next) =>
+          props.onDefaultAccountChange(next === NO_DEFAULT_VALUE ? null : next)
+        }
+      >
+        <SelectTrigger
+          size="sm"
+          className="w-full"
+          aria-labelledby={selectId}
+          data-testid="claude-api-default-account"
+        >
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={NO_DEFAULT_VALUE}>
+            {apiAccounts.length === 1
+              ? translate(`${T}.defaultOnly`, 'The only API account')
+              : translate(`${T}.defaultNone`, 'No default: pick one per workspace')}
+          </SelectItem>
+          {apiAccounts.map((account) => (
+            <SelectItem key={account.id} value={account.id}>
+              {claudeAccountDisplayName(account)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
+}
 
 /** Adds a Claude account billed to an Anthropic API key, optionally copying another profile. */
 export function ClaudeApiAccountForm(props: {
   accounts: ClaudeRateLimitAccountsState['accounts']
   claudeAction: ClaudeAccountAction
   runClaudeAccountAction: ClaudeAccountActionRunner
+  defaultAccountId: string | null
+  onDefaultAccountChange: (accountId: string | null) => void
 }): React.JSX.Element {
   const { accounts, claudeAction, runClaudeAccountAction } = props
   const [open, setOpen] = useState(false)
@@ -82,6 +141,12 @@ export function ClaudeApiAccountForm(props: {
           </Button>
         )}
       </div>
+      <ClaudeApiDefaultAccountSelect
+        accounts={accounts}
+        defaultAccountId={props.defaultAccountId}
+        onDefaultAccountChange={props.onDefaultAccountChange}
+        disabled={busy}
+      />
       {open ? (
         <form
           className="space-y-2 border-t border-border/50 pt-2"
