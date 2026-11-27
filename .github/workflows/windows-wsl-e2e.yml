@@ -23,8 +23,10 @@ permissions:
 env:
   DOLPHIN_E2E_RETRIES: ${{ inputs.retries || '0' }}
 
+# Why github.workflow: in a called workflow it names the caller, so E2E develop and Release Promote
+# testing the same commit no longer cancel each other; a new push to a PR still replaces its run.
 concurrency:
-  group: windows-wsl-e2e-${{ github.event.pull_request.number || inputs.ref || github.ref }}
+  group: windows-wsl-e2e-${{ github.workflow }}-${{ github.event.pull_request.number || inputs.ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
