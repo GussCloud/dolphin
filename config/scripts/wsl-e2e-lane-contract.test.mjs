@@ -69,4 +69,35 @@ describe('real WSL terminal lane', () => {
       'node config/scripts/verify-wsl-e2e-participation.mjs test-results/wsl-results.json'
     )
   })
+
+  // Why: E2E develop and Release Promote both call this lane with the same commit. With a group
+  // keyed only by the ref, the promote's call cancelled E2E develop's WSL run (2026-11-26, run
+  // 45869173262), which left main's commit marked as failed.
+  it('lets two different callers test the same commit without cancelling each other', () => {
+    const { group } = parse(read('.github/workflows/windows-wsl-e2e.yml')).concurrency
+    // Resolves `${{ a || b }}` the way Actions does: the first non-empty operand.
+    const resolve = (context) =>
+      group.replace(/\$\{\{\s*(.+?)\s*\}\}/g, (_, expression) =>
+        String(
+          expression
+            .split('||')
+            .map((operand) => context[operand.trim()])
+            .find((value) => value !== undefined && value !== '') ?? ''
+        )
+      )
+    const sha = '4a5c2aeef8406c9adc9af5cab733e1eb7dbe5e6d'
+    const call = (workflow) => ({
+      'github.workflow': workflow,
+      'inputs.ref': sha,
+      'github.ref': 'refs/heads/develop'
+    })
+    expect(resolve(call('E2E develop'))).not.toBe(resolve(call('Release Promote')))
+    // A newer push to the same PR must still replace the older run.
+    const pr = (ref) => ({
+      'github.workflow': 'PR Checks',
+      'github.event.pull_request.number': 252,
+      'inputs.ref': ref
+    })
+    expect(resolve(pr('a'.repeat(40)))).toBe(resolve(pr('b'.repeat(40))))
+  })
 })
