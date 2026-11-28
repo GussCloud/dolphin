@@ -23,7 +23,13 @@ const AGENT_TEAMS_SESSION_INSTRUCTIONS =
   "Coordinate only via SendMessage to the teammate's name: follow-ups, corrections, asking for truncated " +
   "reports. Validate each teammate's result yourself, reading the diff/evidence, before acting on it. When a " +
   "teammate's work is validated, end it with SendMessage {'type':'shutdown_request'} and confirm " +
-  'shutdown_approved. Keep an implementer alive until its review is validated.'
+  'shutdown_approved. Keep an implementer alive until its review is validated.\n\n' +
+  // Why: Claude Code's dangerous-rm check prompts even in bypass mode, and a teammate's prompt goes
+  // to the lead with no hook Dolphin can answer; a guarded or literal target is not flagged.
+  'When deleting with rm, never target a bare variable such as $OUT/*: wrap the guarded form ${OUT:?} ' +
+  'in double quotes before the /*, or use a literal absolute path, and never target a command ' +
+  'substitution. Otherwise Claude Code stops for a deletion approval nobody may be watching. Copy ' +
+  "this rule into every teammate's spawn prompt."
 
 const DEFAULT_TUI_AGENT_SESSION_INSTRUCTIONS: Partial<Record<TuiAgent, string>> = {
   'claude-agent-teams': AGENT_TEAMS_SESSION_INSTRUCTIONS,

@@ -18549,8 +18549,8 @@
         "catalog": "Configurable list",
         "approveAll": "Approve everything",
         "askDescription": "Claude asks you before every risky deletion. Dolphin approves nothing on its own.",
-        "catalogDescription": "Dolphin approves only the kinds of deletion you check. Anything else still asks you.",
-        "approveAllWarning": "Dolphin approves every deletion Claude asks about in bypass mode, including deleting this workspace folder. Nothing asks you first.",
+        "catalogDescription": "Dolphin approves only the kinds of deletion you check. Anything else, and every teammate's deletion, still asks you.",
+        "approveAllWarning": "Dolphin approves every deletion Claude asks about in bypass mode, including deleting this workspace folder. Agent Teams teammates still ask in the lead's pane: Claude doesn't let Dolphin answer for them.",
         "unseenTargetCaution": "Dolphin can't see the target: this can delete any folder"
       }
     },

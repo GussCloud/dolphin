@@ -18549,8 +18549,8 @@
         "catalog": "Lista configurável",
         "approveAll": "Aprovar tudo",
         "askDescription": "O Claude pergunta a você antes de cada exclusão arriscada. O Dolphin não aprova nada sozinho.",
-        "catalogDescription": "O Dolphin aprova só os tipos de exclusão marcados. O resto continua perguntando a você.",
-        "approveAllWarning": "O Dolphin aprova toda exclusão que o Claude perguntar no modo bypass, inclusive apagar a pasta deste workspace. Nada pergunta a você antes.",
+        "catalogDescription": "O Dolphin aprova só os tipos de exclusão marcados. O resto, e toda exclusão de um teammate, continua perguntando a você.",
+        "approveAllWarning": "O Dolphin aprova toda exclusão que o Claude perguntar no modo bypass, inclusive apagar a pasta deste workspace. Teammates do Agent Teams ainda perguntam no painel do líder: o Claude não deixa o Dolphin responder por eles.",
         "unseenTargetCaution": "O Dolphin não consegue ver o alvo: pode apagar qualquer pasta"
       }
     },
