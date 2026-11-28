@@ -108,6 +108,11 @@ describe('Agent Teams default session instructions', () => {
     expect(defaultText.length).toBeLessThanOrEqual(MAX_TUI_AGENT_SESSION_INSTRUCTIONS_LENGTH)
   })
 
+  it('asks for guarded rm targets and hands the rule to teammates', () => {
+    expect(defaultText).toContain('${OUT:?}')
+    expect(defaultText).toContain("every teammate's spawn prompt")
+  })
+
   it('avoids characters a Windows launch line cannot carry', () => {
     // Why: PowerShell 5.1 drops embedded `"` from native argv, cmd cannot quote it, and a
     // backtick in cmd's "…" makes isDirectClaudeCommand drop the Agent Teams env.

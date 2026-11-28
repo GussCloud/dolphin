@@ -236,7 +236,7 @@ export function AgentPermissionPolicyPicker({
           <p className="text-xs text-muted-foreground">
             {translate(
               'auto.components.ComposerAgentPermissionPolicyField.catalogDescription',
-              'Dolphin approves only the kinds of deletion you check. Anything else still asks you.'
+              "Dolphin approves only the kinds of deletion you check. Anything else, and every teammate's deletion, still asks you."
             )}
           </p>
           <CategoryList
@@ -249,7 +249,7 @@ export function AgentPermissionPolicyPicker({
         <p className="text-xs text-destructive">
           {translate(
             'auto.components.ComposerAgentPermissionPolicyField.approveAllWarning',
-            'Dolphin approves every deletion Claude asks about in bypass mode, including deleting this workspace folder. Nothing asks you first.'
+            "Dolphin approves every deletion Claude asks about in bypass mode, including deleting this workspace folder. Agent Teams teammates still ask in the lead's pane: Claude doesn't let Dolphin answer for them."
           )}
         </p>
       ) : null}
